@@ -36,7 +36,7 @@ public class SecurityConfig {
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
 
-    private final String[] PUBLIC_ENDPOINTS = {"/api/v1/users","/api/v1//auth/**", "/api/v1//login/**","/api/v1//users/**"};
+    private final String[] PUBLIC_ENDPOINTS = {"/api/v1/users","/api/v1/auth/**","/api/v1/users/**"};
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
