@@ -12,6 +12,7 @@ import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,12 +56,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse changePassword(Long id, String oldPassword, String newPassword) {
-        return null;
+    public UserResponse changePassword(UserUpdateRequest request) {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        boolean authenticated =  passwordEncoder.matches(request.getOldPassword(), user.getPassword());
+        if(!authenticated) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        else{
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+        userRepository.save(user);
+        return modelMapper.map(user, UserResponse.class);
     }
 
     @Override
-    public UserResponse getMyProfile(Long id) {
-        return null;
+    public UserResponse getMyInfo() {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+
+        return modelMapper.map(user, UserResponse.class);
     }
 }

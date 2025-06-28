@@ -45,8 +45,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request ->
                         request.requestMatchers(HttpMethod.POST,PUBLIC_ENDPOINTS).permitAll()
-
                                 .requestMatchers(HttpMethod.PUT,PUBLIC_ENDPOINTS).permitAll()
+
+                                // User
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/password").hasAnyRole("USER","ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/users/my-info").hasAnyRole("USER","ADMIN")
 
 
                                 .anyRequest().authenticated());

@@ -10,6 +10,6 @@ public interface UserService {
     UserResponse createUser(UserCreateRequest request) ;
     List<UserResponse> getUsers();
     UserResponse updateUser(Long id, UserUpdateRequest request);
-    UserResponse changePassword(Long id, String oldPassword, String newPassword);
-    UserResponse getMyProfile(Long id);
+    UserResponse changePassword(UserUpdateRequest request);
+    UserResponse getMyInfo();
 }
