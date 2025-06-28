@@ -1,0 +1,115 @@
+.custom-header {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0;
+  height: 70px;
+  line-height: 70px;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.logo {
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.desktop-menu {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 40px;
+}
+
+.main-menu {
+  border-bottom: none;
+  background: transparent;
+  font-weight: 500;
+}
+
+.main-menu .ant-menu-item {
+  height: 70px;
+  line-height: 70px;
+  margin: 0 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.main-menu .ant-menu-item:hover {
+  background: #f0f2f5;
+  color: #1890ff;
+}
+
+.main-menu .ant-menu-item-selected {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.header-actions {
+  flex-shrink: 0;
+}
+
+.action-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.action-button:hover {
+  background: #f0f2f5;
+  color: #1890ff;
+}
+
+.cta-button {
+  border-radius: 20px;
+  font-weight: 500;
+  padding: 0 20px;
+}
+
+.mobile-menu-button {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+}
+
+.mobile-drawer .ant-drawer-header {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mobile-menu {
+  border-right: none;
+}
+
+.drawer-actions {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
+}
+
+.drawer-cta {
+  border-radius: 6px;
+  font-weight: 500;
+  height: 44px;
+}
