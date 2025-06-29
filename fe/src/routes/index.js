@@ -2,6 +2,7 @@ import Home from "../pages/home"
 import Login from "../pages/login"
 import Layout from "../layout"
 import PrivateRoutes from "../components/PrivateRoutes"
+import Register from "../pages/register"
 // import PrivateRoutesAdmin from "../components/PrivateRoutesAdmin"
 
 const Routes = [
@@ -20,6 +21,10 @@ const Routes = [
             {
                 path: 'login',
                 element: <Login />
+            },
+            {
+                path: 'register',
+                element: <Register />
             },
             {
                 element: <PrivateRoutes />,

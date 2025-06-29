@@ -174,7 +174,7 @@ function Header() {
           onClick={closeDrawer}
         />
         <div style={{ marginTop: 16 }}>
-          <Dropdown overlay={userMenu} placement="bottomRight" trigger={["click"]}>
+          <Dropdown menu={userMenu} placement="bottomRight" trigger={["click"]}>
             <Avatar
               size="large"
               icon={<UserOutlined />}

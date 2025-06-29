@@ -1,0 +1,205 @@
+/* Container chính */
+.register-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.register-wrapper {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Card styling */
+.register-card {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+/* Header section */
+.register-header {
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.register-icon {
+  font-size: 48px;
+  color: #1890ff;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.register-title {
+  color: #262626;
+  margin-bottom: 8px !important;
+  font-weight: 600;
+}
+
+.register-subtitle {
+  font-size: 16px;
+  color: #8c8c8c;
+}
+
+/* Form styling */
+.register-form {
+  margin-top: 24px;
+}
+
+.register-form .ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+}
+
+.register-form .ant-input-affix-wrapper,
+.register-form .ant-input {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.register-form .ant-input-affix-wrapper:hover,
+.register-form .ant-input:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.register-form .ant-input-affix-wrapper:focus,
+.register-form .ant-input-affix-wrapper-focused,
+.register-form .ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Button styling */
+.register-buttons {
+  margin-top: 32px;
+  margin-bottom: 0;
+}
+
+.button-group {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  border: none;
+  border-radius: 8px;
+  height: 44px;
+  padding: 0 32px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #40a9ff, #1890ff);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.4);
+}
+
+.cancel-button {
+  border-radius: 8px;
+  height: 44px;
+  padding: 0 32px;
+  font-weight: 500;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.cancel-button:hover {
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+}
+
+/* Footer */
+.register-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.register-footer .ant-btn-link {
+  padding: 0;
+  font-weight: 500;
+  color: #1890ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-container {
+    padding: 16px;
+  }
+
+  .register-card {
+    margin: 0;
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .submit-button,
+  .cancel-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .register-icon {
+    font-size: 36px;
+  }
+
+  .register-title {
+    font-size: 20px !important;
+  }
+
+  .register-subtitle {
+    font-size: 14px;
+  }
+}
+
+/* Animation */
+.register-card {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom scrollbar */
+.register-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.register-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.register-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.register-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

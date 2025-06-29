@@ -29,7 +29,7 @@ function AppLayout(){
     const isLoginPage = location.pathname === "/login";
 
     return (
-        <Layout style={{ minHeight: "100vh" }}>
+        <Layout style={{ minHeight: "100vh", padding: 0, margin: 0 }}>
             {/* Chỉ hiển thị Sider khi user là ADMIN và đang ở trang admin */}
             {userRole === "ADMIN" && isAdminPage && (
                 <Sider collapsed={collapsed} theme="light" className="sider" width={250}>
@@ -39,13 +39,13 @@ function AppLayout(){
                     {/* <MenuSider /> */}
                 </Sider>
             )}
-            <Layout>
+            <Layout style={{ padding: 0, margin: 0 }}>
                 {/* Chỉ hiển thị Header khi không phải trang login */}
                 {!isLoginPage && <Header />}
                 
                 <Content style={{ 
-                    margin: isLoginPage ? "0" : "0", // Bỏ margin để Header/Footer căn chỉnh full width
-                    padding: isLoginPage ? "0" : "20px",
+                    margin:  "0", 
+                    padding: "0" ,
                     background: isLoginPage ? "#fff" : "#f5f5f5",
                     flex: 1 // Đảm bảo content chiếm không gian còn lại
                 }}>
