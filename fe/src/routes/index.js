@@ -4,6 +4,7 @@ import Layout from "../layout"
 import PrivateRoutes from "../components/PrivateRoutes"
 import Register from "../pages/register"
 import Profile from "../pages/profile"
+import UpdateProfile from "../pages/updateProfile"
 // import PrivateRoutesAdmin from "../components/PrivateRoutesAdmin"
 
 const Routes = [
@@ -22,6 +23,10 @@ const Routes = [
             {
                 path: 'profile',
                 element: <PrivateRoutes><Profile /></PrivateRoutes>
+            },
+            {
+                path: 'update-profile',
+                element: <PrivateRoutes><UpdateProfile /></PrivateRoutes>
             },
             {
                 path: 'login',

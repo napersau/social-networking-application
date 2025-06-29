@@ -48,7 +48,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.PUT,PUBLIC_ENDPOINTS).permitAll()
 
                                 // User
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/password").hasAnyRole("USER","ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/password", "/api/v1/users/profile").hasAnyRole("USER","ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/users/my-info").hasAnyRole("USER","ADMIN")
 
 

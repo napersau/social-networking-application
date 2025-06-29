@@ -51,8 +51,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUser(Long id, UserUpdateRequest request) {
-        return null;
+    public UserResponse updateUser(UserUpdateRequest request) {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setBio(request.getBio());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setEmail(request.getEmail());
+        user.setAddress(request.getAddress());
+        user.setPhone(request.getPhone());
+        user.setAvatarUrl(request.getAvatarUrl());
+        user.setBirthDate(request.getBirthDate());
+        user.setGender(request.getGender());
+        user.setCoverUrl(request.getCoverUrl());
+        userRepository.save(user);
+        return modelMapper.map(user, UserResponse.class);
     }
 
     @Override

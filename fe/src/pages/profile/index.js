@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   Card,
   Avatar,
@@ -16,7 +16,7 @@ import {
   Modal,
   Form,
   Input,
-} from "antd"
+} from "antd";
 import {
   UserOutlined,
   EditOutlined,
@@ -27,43 +27,49 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CrownOutlined,
-} from "@ant-design/icons"
-import axios from "axios"
-import "./styles.css"
+} from "@ant-design/icons";
+import axios from "axios";
+import "./styles.css";
+import { useNavigate } from "react-router-dom";
 
-const { Title, Text, Paragraph } = Typography
+
+const { Title, Text, Paragraph } = Typography;
 
 function Profile() {
-  const [userInfo, setUserInfo] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form] = Form.useForm()
+  const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchUserInfo()
-  }, [])
+    fetchUserInfo();
+  }, []);
 
   const fetchUserInfo = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const response = await axios.get("http://localhost:8080/api/v1/users/my-info", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        "http://localhost:8080/api/v1/users/my-info",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      setUserInfo(response.data.result)
+      setUserInfo(response.data.result);
     } catch (error) {
-      console.error("Error fetching user info:", error)
-      message.error("Không thể tải thông tin người dùng")
+      console.error("Error fetching user info:", error);
+      message.error("Không thể tải thông tin người dùng");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handlePasswordChange = async (values) => {
     try {
-      const token = localStorage.getItem("token")
+      const token = localStorage.getItem("token");
       const response = await axios.put(
         "http://localhost:8080/api/v1/users/password",
         values,
@@ -72,63 +78,63 @@ function Profile() {
             Authorization: `Bearer ${token}`,
           },
         }
-      )
+      );
 
       if (response.data.code === 1000) {
-        message.success("Đổi mật khẩu thành công!")
-        setIsModalOpen(false)
-        form.resetFields()
+        message.success("Đổi mật khẩu thành công!");
+        setIsModalOpen(false);
+        form.resetFields();
       } else {
-        message.error(response.data.message || "Đổi mật khẩu thất bại!")
+        message.error(response.data.message || "Đổi mật khẩu thất bại!");
       }
     } catch (error) {
-      console.error("Password change error:", error)
-      message.error("Có lỗi xảy ra khi đổi mật khẩu")
+      console.error("Password change error:", error);
+      message.error("Có lỗi xảy ra khi đổi mật khẩu");
     }
-  }
+  };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "Chưa cập nhật"
-    return new Date(dateString).toLocaleDateString("vi-VN")
-  }
+    if (!dateString) return "Chưa cập nhật";
+    return new Date(dateString).toLocaleDateString("vi-VN");
+  };
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return "Chưa có thông tin"
-    return new Date(dateString).toLocaleString("vi-VN")
-  }
+    if (!dateString) return "Chưa có thông tin";
+    return new Date(dateString).toLocaleString("vi-VN");
+  };
 
   const getRoleColor = (roleName) => {
     switch (roleName?.toUpperCase()) {
       case "ADMIN":
-        return "red"
+        return "red";
       case "MODERATOR":
-        return "orange"
+        return "orange";
       case "USER":
-        return "blue"
+        return "blue";
       default:
-        return "#1677ff"
+        return "#1677ff";
     }
-  }
+  };
 
   const getGenderText = (gender) => {
     switch (gender?.toLowerCase()) {
       case "male":
-        return "Nam"
+        return "Nam";
       case "female":
-        return "Nữ"
+        return "Nữ";
       case "other":
-        return "Khác"
+        return "Khác";
       default:
-        return "Chưa cập nhật"
+        return "Chưa cập nhật";
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="loading-container">
         <Spin size="large" />
       </div>
-    )
+    );
   }
 
   if (!userInfo) {
@@ -136,33 +142,52 @@ function Profile() {
       <div className="error-container">
         <Text type="danger">Không thể tải thông tin người dùng</Text>
       </div>
-    )
+    );
   }
 
   return (
     <div className="my-info-container">
       <div className="cover-section">
         {userInfo.coverUrl ? (
-          <Image src={userInfo.coverUrl || "/placeholder.svg"} alt="Cover" className="cover-image" preview={false} />
+          <Image
+            src={userInfo.coverUrl || "/placeholder.svg"}
+            alt="Cover"
+            className="cover-image"
+            preview={false}
+          />
         ) : (
           <div className="cover-placeholder" />
         )}
 
         <div className="profile-header">
           <div className="avatar-section">
-            <Avatar size={120} src={userInfo.avatarUrl} icon={<UserOutlined />} className="profile-avatar" />
+            <Avatar
+              size={120}
+              src={userInfo.avatarUrl}
+              icon={<UserOutlined />}
+              className="profile-avatar"
+            />
             <div className="profile-basic-info">
               <Title level={2} className="profile-name">
                 {userInfo.firstName} {userInfo.lastName}
               </Title>
               <Text className="profile-username">@{userInfo.username}</Text>
               <div className="profile-tags">
-                <Tag color={getRoleColor(userInfo.role?.name)} icon={<CrownOutlined />}>
+                <Tag
+                  color={getRoleColor(userInfo.role?.name)}
+                  icon={<CrownOutlined />}
+                >
                   {userInfo.role?.name || "USER"}
                 </Tag>
                 <Tag
                   color={userInfo.isActive ? "green" : "red"}
-                  icon={userInfo.isActive ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+                  icon={
+                    userInfo.isActive ? (
+                      <CheckCircleOutlined />
+                    ) : (
+                      <CloseCircleOutlined />
+                    )
+                  }
                 >
                   {userInfo.isActive ? "Hoạt động" : "Không hoạt động"}
                 </Tag>
@@ -176,7 +201,11 @@ function Profile() {
           </div>
           <div className="profile-actions">
             <Space>
-              <Button type="primary" icon={<EditOutlined />}>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => navigate("/update-profile")} // or your routing method
+              >
                 Chỉnh sửa hồ sơ
               </Button>
               <Button type="default" onClick={() => setIsModalOpen(true)}>
@@ -200,19 +229,50 @@ function Profile() {
 
             <Card title="Thông tin cá nhân" className="info-card">
               <Descriptions column={{ xs: 1, sm: 2 }} bordered>
-                <Descriptions.Item label={<><CalendarOutlined /> Ngày sinh</>}>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <CalendarOutlined /> Ngày sinh
+                    </>
+                  }
+                >
                   {formatDate(userInfo.birthDate)}
                 </Descriptions.Item>
-                <Descriptions.Item label={<><UserOutlined /> Giới tính</>}>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <UserOutlined /> Giới tính
+                    </>
+                  }
+                >
                   {getGenderText(userInfo.gender)}
                 </Descriptions.Item>
-                <Descriptions.Item label={<><PhoneOutlined /> Số điện thoại</>}>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <PhoneOutlined /> Số điện thoại
+                    </>
+                  }
+                >
                   {userInfo.phone || "Chưa cập nhật"}
                 </Descriptions.Item>
-                <Descriptions.Item label={<><MailOutlined /> Email</>}>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <MailOutlined /> Email
+                    </>
+                  }
+                >
                   {userInfo.email || "Chưa cập nhật"}
                 </Descriptions.Item>
-                <Descriptions.Item label={<><HomeOutlined /> Địa chỉ</>} span={2}>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <HomeOutlined /> Địa chỉ
+                    </>
+                  }
+                  span={2}
+                >
                   {userInfo.address || "Chưa cập nhật"}
                 </Descriptions.Item>
               </Descriptions>
@@ -221,7 +281,11 @@ function Profile() {
 
           <Col xs={24} lg={8}>
             <Card title="Thông tin tài khoản" className="info-card">
-              <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              <Space
+                direction="vertical"
+                size="middle"
+                style={{ width: "100%" }}
+              >
                 <div className="account-item">
                   <Text strong>Tên đăng nhập:</Text>
                   <br />
@@ -233,7 +297,9 @@ function Profile() {
                 <div className="account-item">
                   <Text strong>Vai trò:</Text>
                   <br />
-                  <Tag color={getRoleColor(userInfo.role?.name)}>{userInfo.role?.name || "USER"}</Tag>
+                  <Tag color={getRoleColor(userInfo.role?.name)}>
+                    {userInfo.role?.name || "USER"}
+                  </Tag>
                   {userInfo.role?.description && (
                     <div style={{ marginTop: 4 }}>
                       <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -251,7 +317,13 @@ function Profile() {
                   <Space>
                     <Tag
                       color={userInfo.isActive ? "green" : "red"}
-                      icon={userInfo.isActive ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+                      icon={
+                        userInfo.isActive ? (
+                          <CheckCircleOutlined />
+                        ) : (
+                          <CloseCircleOutlined />
+                        )
+                      }
                     >
                       {userInfo.isActive ? "Hoạt động" : "Không hoạt động"}
                     </Tag>
@@ -268,7 +340,9 @@ function Profile() {
                 <div className="account-item">
                   <Text strong>Lần đăng nhập cuối:</Text>
                   <br />
-                  <Text type="secondary">{formatDateTime(userInfo.lastLogin)}</Text>
+                  <Text type="secondary">
+                    {formatDateTime(userInfo.lastLogin)}
+                  </Text>
                 </div>
               </Space>
             </Card>
@@ -307,7 +381,7 @@ function Profile() {
         </Form>
       </Modal>
     </div>
-  )
+  );
 }
 
-export default Profile
+export default Profile;

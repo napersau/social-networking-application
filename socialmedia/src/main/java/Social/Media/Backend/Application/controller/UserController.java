@@ -36,11 +36,15 @@ public class UserController {
 //    }
 //
 //
-//    @PutMapping("/{userId}")
-//    UserResponse updateUser(@PathVariable("userId") Long userId, @RequestBody @Valid UserUpdateRequest userUpdateRequest) {
-//        return userService.updateUser(userId, userUpdateRequest);
-//    }
-//
+    @PutMapping("/profile")
+    ApiResponse<UserResponse> updateUser(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
+        UserResponse user = userService.updateUser(userUpdateRequest);
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(user)
+                .build();
+    }
+
     @PutMapping("/password")
     ApiResponse<UserResponse> changePassword(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
         UserResponse user = userService.changePassword(userUpdateRequest);
