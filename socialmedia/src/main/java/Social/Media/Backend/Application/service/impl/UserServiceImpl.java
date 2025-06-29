@@ -37,8 +37,8 @@ public class UserServiceImpl implements UserService {
 
         User user = modelMapper.map(userCreateRequest, User.class);
         user.setPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
-        user.setActive(true);
-        user.setVerified(false);
+        user.setIsActive(true);
+        user.setIsVerified(false);
         Role role = roleRepository.findById(2L).get();
         user.setRole(role);
 

@@ -19,8 +19,8 @@ public class UserResponse {
     private String phone;
     private String email;
     private String address;
-    private boolean isActive;
-    private boolean isVerified;
+    private Boolean isActive;
+    private Boolean isVerified;
     private Date lastLogin;
     private Role role;
 }

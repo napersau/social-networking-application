@@ -21,6 +21,7 @@ import {
   LogoutOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import "./styles.css";
 
 const { Header: AntHeader } = Layout;
@@ -29,13 +30,14 @@ const { Text } = Typography;
 function Header() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [user, setUser] = useState({ role: "USER" }); // Mặc định là USER
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1])); // Giải mã phần payload của JWT
-        const role = payload.scope?.name || "USER"; // Lấy scope.name làm role
+        const payload = JSON.parse(atob(token.split(".")[1])); // Giải mã payload
+        const role = payload.scope?.name || "USER";
         setUser({ role });
       } catch (error) {
         console.error("Lỗi khi giải mã token:", error);
@@ -45,32 +47,40 @@ function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   const handleMenuClick = ({ key }) => {
     if (key === "logout") {
       handleLogout();
     } else if (key === "admin" && user.role === "ADMIN") {
-      window.location.href = "/admin";
+      navigate("/admin");
+    } else if (key === "profile") {
+      navigate("/profile"); // ✅ Chuyển sang trang profile
     }
   };
 
-  const userMenu = (
-    <Menu onClick={handleMenuClick}>
-      {user.role === "ADMIN" && (
-        <Menu.Item key="admin" icon={<InfoCircleOutlined />}>
-          Trang quản trị
-        </Menu.Item>
-      )}
-      <Menu.Item key="profile" icon={<UserOutlined />}>
-        Thông tin cá nhân
-      </Menu.Item>
-      <Menu.Item key="logout" icon={<LogoutOutlined />}>
-        Đăng xuất
-      </Menu.Item>
-    </Menu>
-  );
+  const userMenuItems = [
+    ...(user.role === "ADMIN"
+      ? [
+          {
+            key: "admin",
+            icon: <InfoCircleOutlined />,
+            label: "Trang quản trị",
+          },
+        ]
+      : []),
+    {
+      key: "profile",
+      icon: <UserOutlined />,
+      label: "Thông tin cá nhân",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Đăng xuất",
+    },
+  ];
 
   const menuItems = [
     {
@@ -138,7 +148,11 @@ function Header() {
             </Badge>
 
             {/* Avatar Dropdown */}
-            <Dropdown overlay={userMenu} placement="bottomRight">
+            <Dropdown
+              menu={{ items: userMenuItems, onClick: handleMenuClick }}
+              placement="bottomRight"
+              trigger={["click"]}
+            >
               <Avatar
                 size="large"
                 icon={<UserOutlined />}
@@ -174,7 +188,11 @@ function Header() {
           onClick={closeDrawer}
         />
         <div style={{ marginTop: 16 }}>
-          <Dropdown menu={userMenu} placement="bottomRight" trigger={["click"]}>
+          <Dropdown
+            menu={{ items: userMenuItems, onClick: handleMenuClick }}
+            placement="bottomRight"
+            trigger={["click"]}
+          >
             <Avatar
               size="large"
               icon={<UserOutlined />}

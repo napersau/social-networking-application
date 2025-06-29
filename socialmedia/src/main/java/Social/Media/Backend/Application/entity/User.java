@@ -56,10 +56,10 @@ public class User {
     private String address;
 
     @Column(name = "is_active")
-    private boolean isActive;
+    private Boolean isActive;
 
     @Column(name = "is_verified")
-    private boolean isVerified;
+    private Boolean isVerified;
 
     @Column(name = "last_login")
     private Date lastLogin;
