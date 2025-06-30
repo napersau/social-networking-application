@@ -103,14 +103,8 @@ function UpdateProfile() {
       if (response.data.code === 1000) {
         message.success("Cập nhật thông tin thành công!")
         setTimeout(() => {
-          // Option 1: Use browser back navigation
           window.history.back()
           
-          // Option 2: If you're using React Router, uncomment this instead:
-          // navigate('/profile')
-          
-          // Option 3: If you have a specific profile route, uncomment this:
-          // window.location.href = '/profile'
         }, 1500)
       } else {
         message.error(response.data.message || "Cập nhật thông tin thất bại!")

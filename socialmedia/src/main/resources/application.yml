@@ -14,8 +14,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-      format_sql: true
-      enable_lazy_load_no_trans: true
+        format_sql: true
+        enable_lazy_load_no_trans: true
 
   data:
     redis:
@@ -30,5 +30,11 @@ spring:
 jwt:
   signerKey: DWZ2Go7aj6GCJkkcF8OS8KmbEQMZpwSvh4RQDlrjwLPU4IhPdENlZH7VOh7g6d8b
 
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:dif55ggpc}
+  api-key: ${CLOUDINARY_API_KEY:965242185826623}
+  api-secret: ${CLOUDINARY_API_SECRET:ajHVTTQgACjxP3ZP7VX4F0dyemQ}
+
 server:
   port: 8080
+
