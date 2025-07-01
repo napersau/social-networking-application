@@ -26,16 +26,17 @@ public class UserController {
                 .result(user)
                 .build();
     }
-//
-//    @GetMapping
-//    ApiResponse<List<UserResponse>> getUsers() {
-//        return ApiResponse.<List<UserResponse>>builder()
-//                .code(1000)
-//                .result(userService.getUsers())
-//                .build();
-//    }
-//
-//
+
+    @GetMapping
+    ApiResponse<List<UserResponse>> getUsers() {
+        List<UserResponse> users = userService.getUsers();
+        return ApiResponse.<List<UserResponse>>builder()
+                .code(1000)
+                .result(users)
+                .build();
+    }
+
+
     @PutMapping("/profile")
     ApiResponse<UserResponse> updateUser(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
         UserResponse user = userService.updateUser(userUpdateRequest);

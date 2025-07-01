@@ -5,6 +5,7 @@ import PrivateRoutes from "../components/PrivateRoutes"
 import Register from "../pages/register"
 import Profile from "../pages/profile"
 import UpdateProfile from "../pages/updateProfile"
+import ChatApp from "../pages/chatApp"
 // import PrivateRoutesAdmin from "../components/PrivateRoutesAdmin"
 
 const Routes = [
@@ -27,6 +28,10 @@ const Routes = [
             {
                 path: 'update-profile',
                 element: <PrivateRoutes><UpdateProfile /></PrivateRoutes>
+            },
+            {
+                path: 'chat',
+                element: <PrivateRoutes><ChatApp /></PrivateRoutes>
             },
             {
                 path: 'login',

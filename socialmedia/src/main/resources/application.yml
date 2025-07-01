@@ -2,6 +2,10 @@ spring:
   application:
     name: social-media-backend
 
+  websocket:
+    stomp:
+      enable-heartbeat: true
+
   datasource:
     url: ${DBMS_CONNECTION:jdbc:postgresql://localhost:5432/social-media}
     username: ${DB_USERNAME:postgres}
@@ -34,6 +38,11 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:dif55ggpc}
   api-key: ${CLOUDINARY_API_KEY:965242185826623}
   api-secret: ${CLOUDINARY_API_SECRET:ajHVTTQgACjxP3ZP7VX4F0dyemQ}
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
 
 server:
   port: 8080

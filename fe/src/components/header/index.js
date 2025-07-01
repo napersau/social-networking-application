@@ -56,8 +56,17 @@ function Header() {
     } else if (key === "admin" && user.role === "ADMIN") {
       navigate("/admin");
     } else if (key === "profile") {
-      navigate("/profile"); // ✅ Chuyển sang trang profile
+      navigate("/profile");
+    } else if (key === "messages") {
+      navigate("/chat"); // Điều hướng đến trang chat
+    } else if (key === "home") {
+      navigate("/home");
+    } else if (key === "friends") {
+      navigate("/friends");
+    } else if (key === "notifications") {
+      navigate("/notifications");
     }
+    setDrawerVisible(false); // Đóng Drawer sau khi chọn
   };
 
   const userMenuItems = [
@@ -128,6 +137,7 @@ function Header() {
             items={menuItems}
             className="main-menu"
             selectedKeys={["home"]}
+            onClick={handleMenuClick}
           />
         </div>
 
@@ -185,7 +195,7 @@ function Header() {
           items={menuItems}
           className="mobile-menu"
           selectedKeys={["home"]}
-          onClick={closeDrawer}
+          onClick={handleMenuClick}
         />
         <div style={{ marginTop: 16 }}>
           <Dropdown

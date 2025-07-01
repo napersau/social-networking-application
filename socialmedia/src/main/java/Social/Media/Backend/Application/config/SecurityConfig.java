@@ -50,7 +50,12 @@ public class SecurityConfig {
                                 // User
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/password", "/api/v1/users/profile").hasAnyRole("USER","ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/users/my-info").hasAnyRole("USER","ADMIN")
+                                // Chat
+                                .requestMatchers( "/api/v1/users/chat/**","/api/v1/messages.**").hasAnyRole("USER","ADMIN")
+                                .requestMatchers( "/ws/**").permitAll()
 
+                                // Conversaton
+                                .requestMatchers( "/api/v1/conversations").hasAnyRole("USER","ADMIN")
 
                                 .anyRequest().authenticated());
 //                .oauth2Login(oauth2 -> oauth2
