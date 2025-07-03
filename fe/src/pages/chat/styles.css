@@ -1,0 +1,285 @@
+/* Chat Component Styles */
+.chat-container {
+  width: 100%;
+  height: calc(100vh - 64px);
+  max-height: 100%;
+  margin-bottom: -64px;
+  overflow: hidden;
+}
+
+.chat-layout {
+  height: 100%;
+}
+
+/* Sidebar Styles */
+.chat-sidebar {
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+}
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header .ant-typography {
+  margin: 0;
+}
+
+.new-chat-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.conversations-container {
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100vh - 180px);
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+}
+
+.conversation-item {
+  cursor: pointer;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.conversation-item:hover {
+  background-color: #f5f5f5;
+}
+
+.conversation-item.selected {
+  background-color: #e6f7ff;
+}
+
+.conversation-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.conversation-time {
+  font-size: 11px;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* New Chat Popover Styles */
+.new-chat-popover {
+  width: 300px;
+  max-height: 400px;
+}
+
+.search-input {
+  margin-bottom: 12px;
+}
+
+.user-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.user-item {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background-color 0.2s;
+}
+
+.user-item:hover {
+  background-color: #f5f5f5;
+}
+
+/* Chat Content Styles */
+.chat-content {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-title {
+  margin: 0;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.message-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.message-item.own-message {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  flex-shrink: 0;
+}
+
+.own-avatar {
+  background-color: #1890ff;
+  color: white;
+  font-size: 10px;
+}
+
+.message-card {
+  max-width: 70%;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: #f5f5f5;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-card.own-message-card {
+  background-color: #e6f7ff;
+}
+
+.message-card.failed-message {
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+}
+
+.message-card.pending-message {
+  opacity: 0.7;
+}
+
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  gap: 8px;
+}
+
+.message-status {
+  font-size: 11px;
+}
+
+.message-time {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.message-input-container {
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 8px;
+}
+
+.message-input {
+  flex: 1;
+}
+
+.send-button {
+  flex-shrink: 0;
+}
+
+.no-conversation-selected {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-container {
+    height: calc(100vh - 56px);
+    margin-bottom: -56px;
+  }
+  
+  .chat-sidebar {
+    width: 280px !important;
+  }
+  
+  .conversation-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .conversation-time {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  
+  .message-card {
+    max-width: 85%;
+  }
+  
+  .new-chat-popover {
+    width: 280px;
+  }
+}
+
+/* Scrollbar Styles */
+.conversations-container::-webkit-scrollbar,
+.messages-container::-webkit-scrollbar,
+.user-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.conversations-container::-webkit-scrollbar-track,
+.messages-container::-webkit-scrollbar-track,
+.user-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.conversations-container::-webkit-scrollbar-thumb,
+.messages-container::-webkit-scrollbar-thumb,
+.user-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.conversations-container::-webkit-scrollbar-thumb:hover,
+.messages-container::-webkit-scrollbar-thumb:hover,
+.user-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

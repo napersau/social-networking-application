@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import { useTheme } from "@mui/material";
-import SideMenu from "../../components/sideMenu";
+
 
 const drawerWidth = 300;
 
@@ -84,7 +84,7 @@ function Scene({ children }) {
               },
             }}
           >
-            <SideMenu />
+   
           </Drawer>
           <Drawer
             variant="permanent"
@@ -97,7 +97,7 @@ function Scene({ children }) {
             }}
             open
           >
-            <SideMenu />
+        
           </Drawer>
         </Box>
         <Box
