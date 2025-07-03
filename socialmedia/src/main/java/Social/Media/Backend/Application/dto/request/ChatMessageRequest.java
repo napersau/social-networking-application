@@ -1,17 +1,18 @@
 package Social.Media.Backend.Application.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatMessageRequest {
-    private Long conversationId;
-    private Long recipientId; // For creating new conversation
-    private String content;
-    private String messageType;
+    @NotBlank
+    Long conversationId;
+
+    @NotBlank
+    String message;
 }

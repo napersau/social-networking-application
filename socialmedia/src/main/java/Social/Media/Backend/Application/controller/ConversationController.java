@@ -1,29 +1,35 @@
 package Social.Media.Backend.Application.controller;
 
-import Social.Media.Backend.Application.dto.request.CreateConversationRequest;
+import Social.Media.Backend.Application.dto.request.ConversationRequest;
 import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.ConversationResponse;
 import Social.Media.Backend.Application.service.ConversationService;
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.experimental.FieldDefaults;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/conversations")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/chat/conversations")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ConversationController {
+    ConversationService conversationService;
 
-    private final ConversationService conversationService;
-
-    @PostMapping
-    public ApiResponse<ConversationResponse> createConversation(@RequestBody @Valid CreateConversationRequest request) {
-        ConversationResponse conversation = conversationService.createConversation(request.getUserId());
+    @PostMapping("/create")
+    ApiResponse<ConversationResponse> createConversation(@RequestBody @Valid ConversationRequest request) {
         return ApiResponse.<ConversationResponse>builder()
-                .code(1000)
-                .result(conversation)
+                .result(conversationService.create(request))
+                .build();
+    }
+
+    @GetMapping("/my-conversations")
+    ApiResponse<List<ConversationResponse>> myConversations() {
+        return ApiResponse.<List<ConversationResponse>>builder()
+                .result(conversationService.myConversations())
                 .build();
     }
 }

@@ -1,48 +1,133 @@
 package Social.Media.Backend.Application.service.impl;
 
-
+import Social.Media.Backend.Application.dto.request.ConversationRequest;
 import Social.Media.Backend.Application.dto.response.ConversationResponse;
 import Social.Media.Backend.Application.entity.Conversation;
-import Social.Media.Backend.Application.entity.ConversationParticipant;
+import Social.Media.Backend.Application.entity.ParticipantInfo;
 import Social.Media.Backend.Application.entity.User;
+import Social.Media.Backend.Application.exception.AppException;
+import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.ConversationRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.ConversationService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ConversationServiceImpl implements ConversationService {
-
-    private final ConversationRepository conversationRepository;
-    private final ModelMapper modelMapper;
+    ConversationRepository conversationRepository;
+    UserRepository userRepository;
+    ModelMapper modelMapper;
 
     @Override
-    public ConversationResponse createConversation(Long userId) {
-        // 1. Tạo một conversation mới
-        Conversation conversation = Conversation.builder()
-                .isGroup(false)
-                .name(null) // có thể tự đặt tên nếu muốn, ví dụ: "Direct Message"
-                .build();
+    public List<ConversationResponse> myConversations() {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        List<Conversation> conversations = conversationRepository.findAllByParticipantIdsContains(user.getId());
 
-        // 2. Tạo participant
-        ConversationParticipant participant = ConversationParticipant.builder()
-                .user(User.builder().id(userId).build()) // hoặc findById nếu cần
-                .conversation(conversation)
-                .build();
+        return conversations.stream().map(this::toConversationResponse).toList();
+    }
 
-        conversation.setParticipants(List.of(participant));
+    @Override
+    public ConversationResponse create(ConversationRequest request) {
+        // Fetch user infos
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Long userId = user.getId();
+        User userInfo = userRepository.findById(userId).get();
+//        var participantInfoResponse = profileClient.getProfile(
+//                request.getParticipantIds().getFirst());
+        User participantInfo = userRepository.findById(request.getParticipantIds().get(0)).get();
 
-        // 3. Lưu vào database
-        Conversation savedConversation = conversationRepository.save(conversation);
+        if (Objects.isNull(userInfo) || Objects.isNull(participantInfo)) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
 
-        // 4. Chuyển sang DTO để trả về
-        return modelMapper.map(savedConversation, ConversationResponse.class);
+
+        List<Long> userIds = new ArrayList<>();
+        userIds.add(userId);
+        userIds.add(participantInfo.getId());
+
+        List<String> sortedIds = userIds.stream()
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.toList());
+        String userIdHash = generateParticipantHash(sortedIds);
+
+        var conversation = conversationRepository.findByParticipantsHash(userIdHash)
+                .orElseGet(() -> {
+                    List<ParticipantInfo> participantInfos = List.of(
+                            ParticipantInfo.builder()
+                                    .userId(userInfo.getId())
+                                    .username(userInfo.getUsername())
+                                    .firstName(userInfo.getFirstName())
+                                    .lastName(userInfo.getLastName())
+                                    .avatar(userInfo.getAvatarUrl())
+                                    .build(),
+                            ParticipantInfo.builder()
+                                    .userId(participantInfo.getId())
+                                    .username(participantInfo.getUsername())
+                                    .firstName(participantInfo.getFirstName())
+                                    .lastName(participantInfo.getLastName())
+                                    .avatar(participantInfo.getAvatarUrl())
+                                    .build()
+                    );
+
+                    // Build conversation info
+                    Conversation newConversation = Conversation.builder()
+                            .type(request.getType())
+                            .participantsHash(userIdHash)
+                            .createdDate(Instant.now())
+                            .modifiedDate(Instant.now())
+                            .participants(participantInfos)
+                            .build();
+
+                    return conversationRepository.save(newConversation);
+                });
+
+        return toConversationResponse(conversation);
+    }
+
+    private String generateParticipantHash(List<String> ids) {
+        StringJoiner stringJoiner = new StringJoiner("_");
+        ids.forEach(stringJoiner::add);
+
+        // SHA 256
+
+        return stringJoiner.toString();
+    }
+
+    private ConversationResponse toConversationResponse(Conversation conversation) {
+        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+//        ConversationResponse conversationResponse = conversationMapper.toConversationResponse(conversation);
+        ConversationResponse conversationResponse = modelMapper.map(conversation, ConversationResponse.class);
+
+        conversation.getParticipants().stream()
+                .filter(participantInfo -> !participantInfo.getUserId().equals(currentUserId))
+                .findFirst().ifPresent(participantInfo -> {
+                    conversationResponse.setConversationName(participantInfo.getUsername());
+                    conversationResponse.setConversationAvatar(participantInfo.getAvatar());
+                });
+
+        return conversationResponse;
     }
 }

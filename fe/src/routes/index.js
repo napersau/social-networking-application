@@ -5,7 +5,7 @@ import PrivateRoutes from "../components/PrivateRoutes"
 import Register from "../pages/register"
 import Profile from "../pages/profile"
 import UpdateProfile from "../pages/updateProfile"
-import ChatApp from "../pages/chatApp"
+import Chat from "../pages/chat"
 // import PrivateRoutesAdmin from "../components/PrivateRoutesAdmin"
 
 const Routes = [
@@ -31,7 +31,7 @@ const Routes = [
             },
             {
                 path: 'chat',
-                element: <PrivateRoutes><ChatApp /></PrivateRoutes>
+                element: <PrivateRoutes><Chat /></PrivateRoutes>
             },
             {
                 path: 'login',
