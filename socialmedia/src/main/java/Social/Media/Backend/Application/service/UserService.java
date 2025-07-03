@@ -12,4 +12,5 @@ public interface UserService {
     UserResponse updateUser(UserUpdateRequest request);
     UserResponse changePassword(UserUpdateRequest request);
     UserResponse getMyInfo();
+    List<UserResponse> searchUsers(String username);
 }

@@ -1,6 +1,7 @@
 package Social.Media.Backend.Application.controller;
 
 import Social.Media.Backend.Application.dto.request.UserCreateRequest;
+import Social.Media.Backend.Application.dto.request.UserSearch;
 import Social.Media.Backend.Application.dto.request.UserUpdateRequest;
 import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.UserResponse;
@@ -22,6 +23,15 @@ public class UserController {
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreateRequest userCreateRequest) {
         UserResponse user = userService.createUser(userCreateRequest);
         return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(user)
+                .build();
+    }
+
+    @PostMapping("/search")
+    ApiResponse<List<UserResponse>> searchUsers(@RequestBody @Valid UserSearch userSearch) {
+        List<UserResponse> user = userService.searchUsers(userSearch.getUsername());
+        return ApiResponse.<List<UserResponse>>builder()
                 .code(1000)
                 .result(user)
                 .build();

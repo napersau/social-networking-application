@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 // User
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/password", "/api/v1/users/profile").hasAnyRole("USER","ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/users/my-info").hasAnyRole("USER","ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/users/search").hasAnyRole("USER","ADMIN")
                                 // Chat
                                 .requestMatchers( "/api/v1/users/chat/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/ws/**").permitAll()

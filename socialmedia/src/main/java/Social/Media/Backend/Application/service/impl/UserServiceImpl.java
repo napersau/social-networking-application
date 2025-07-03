@@ -98,4 +98,12 @@ public class UserServiceImpl implements UserService {
 
         return modelMapper.map(user, UserResponse.class);
     }
+
+    @Override
+    public List<UserResponse> searchUsers(String username) {
+        List<User> users = userRepository.findByUsernameContaining(username);
+        List<UserResponse> userResponses = new ArrayList<>();
+        users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
+        return userResponses;
+    }
 }
