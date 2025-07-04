@@ -11,6 +11,7 @@ export const getMyConversations = async () => {
 };
 
 export const createConversation = async (data) => {
+  console.log(data)
   return await httpClient.post(
     API.CREATE_CONVERSATION,
     {

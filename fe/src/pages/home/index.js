@@ -39,7 +39,7 @@ function Home() {
     return (
         <div className="home-container">
             {/* Header Welcome Section */}
-            <Card className="welcome-card" bordered={false}>
+            <Card className="welcome-card" variant="borderless">
                 <Row justify="space-between" align="middle">
                     <Col>
                         <Space direction="vertical" size={4}>

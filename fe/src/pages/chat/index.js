@@ -156,9 +156,10 @@ export default function Chat() {
   };
 
   const handleSelectNewChatUser = async (user) => {
+    console.log(user)
     const response = await createConversation({
       type: "DIRECT",
-      participantIds: [user.userId],
+      participantIds: [user.id],
     });
 
     const newConversation = response?.data?.result;
@@ -354,7 +355,7 @@ export default function Chat() {
   };
 
   return (
-    <Card className="chat-container">
+    <Card className="chat-container" variant="outlined">
       <Layout className="chat-layout">
         <Sider width={300} className="chat-sidebar">
           <div className="sidebar-header">
@@ -475,6 +476,7 @@ export default function Chat() {
                         } ${msg.failed ? "failed-message" : ""} ${
                           msg.pending ? "pending-message" : ""
                         }`}
+                        variant="outlined"
                       >
                         <Text>{msg.message}</Text>
                         <div className="message-footer">
@@ -532,5 +534,3 @@ export default function Chat() {
     </Card>
   );
 }
-
-

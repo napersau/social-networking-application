@@ -1,15 +1,7 @@
-import React, { useState, useEffect } from "react";
-import {
-  Layout,
-  Menu,
-  Button,
-  Drawer,
-  Space,
-  Avatar,
-  Dropdown,
-  Typography,
-  Badge,
-} from "antd";
+"use client"
+
+import { useState, useEffect } from "react"
+import { Layout, Menu, Button, Drawer, Space, Avatar, Dropdown, Typography, Badge } from "antd"
 import {
   MenuOutlined,
   HomeOutlined,
@@ -20,54 +12,72 @@ import {
   SearchOutlined,
   LogoutOutlined,
   InfoCircleOutlined,
-} from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
-import "./styles.css";
+} from "@ant-design/icons"
+import { useNavigate, useLocation } from "react-router-dom"
+import "./styles.css"
 
-const { Header: AntHeader } = Layout;
-const { Text } = Typography;
+const { Header: AntHeader } = Layout
+const { Text } = Typography
 
 function Header() {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [user, setUser] = useState({ role: "USER" }); // Mặc định là USER
-  const navigate = useNavigate();
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const [user, setUser] = useState({ role: "USER" })
+  const [activeKey, setActiveKey] = useState("home")
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token")
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1])); // Giải mã payload
-        const role = payload.scope?.name || "USER";
-        setUser({ role });
+        const payload = JSON.parse(atob(token.split(".")[1]))
+        const role = payload.scope?.name || "USER"
+        setUser({ role })
       } catch (error) {
-        console.error("Lỗi khi giải mã token:", error);
+        console.error("Lỗi khi giải mã token:", error)
       }
     }
-  }, []);
+  }, [])
+
+  // Cập nhật active key dựa trên route hiện tại
+  useEffect(() => {
+    const path = location.pathname
+    if (path === "/home" || path === "/") {
+      setActiveKey("home")
+    } else if (path === "/friends") {
+      setActiveKey("friends")
+    } else if (path === "/chat") {
+      setActiveKey("messages")
+    } else if (path === "/notifications") {
+      setActiveKey("notifications")
+    }
+  }, [location.pathname])
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+    localStorage.removeItem("token")
+    navigate("/login")
+  }
 
   const handleMenuClick = ({ key }) => {
+    setActiveKey(key)
+
     if (key === "logout") {
-      handleLogout();
+      handleLogout()
     } else if (key === "admin" && user.role === "ADMIN") {
-      navigate("/admin");
+      navigate("/admin")
     } else if (key === "profile") {
-      navigate("/profile");
+      navigate("/profile")
     } else if (key === "messages") {
-      navigate("/chat"); // Điều hướng đến trang chat
+      navigate("/chat")
     } else if (key === "home") {
-      navigate("/home");
+      navigate("/home")
     } else if (key === "friends") {
-      navigate("/friends");
+      navigate("/friends")
     } else if (key === "notifications") {
-      navigate("/notifications");
+      navigate("/notifications")
     }
-    setDrawerVisible(false); // Đóng Drawer sau khi chọn
-  };
+    setDrawerVisible(false)
+  }
 
   const userMenuItems = [
     ...(user.role === "ADMIN"
@@ -89,7 +99,7 @@ function Header() {
       icon: <LogoutOutlined />,
       label: "Đăng xuất",
     },
-  ];
+  ]
 
   const menuItems = [
     {
@@ -112,22 +122,28 @@ function Header() {
       icon: <BellOutlined />,
       label: "Thông báo",
     },
-  ];
+  ]
 
   const showDrawer = () => {
-    setDrawerVisible(true);
-  };
+    setDrawerVisible(true)
+  }
 
   const closeDrawer = () => {
-    setDrawerVisible(false);
-  };
+    setDrawerVisible(false)
+  }
 
   return (
     <AntHeader className="custom-header">
       <div className="header-content">
         {/* Logo */}
         <div className="logo">
-          <Text className="logo-text">SocialNet</Text>
+          <img
+            src="https://res.cloudinary.com/dif55ggpc/image/upload/v1751630179/pngtree-sleeping-capybara-clipart-icon-hand-drawn-png-image_16394362_ilfxxz.avif"
+            alt="SocialNet Logo"
+            className="logo-icon"
+            style={{ width: "50px", height: "50px", marginRight: "8px" }}
+          />
+       
         </div>
 
         {/* Menu desktop */}
@@ -136,25 +152,17 @@ function Header() {
             mode="horizontal"
             items={menuItems}
             className="main-menu"
-            selectedKeys={["home"]}
+            selectedKeys={[activeKey]}
             onClick={handleMenuClick}
           />
         </div>
 
         {/* Actions */}
         <div className="header-actions">
-          <Space size="middle">
-            <Button
-              type="text"
-              icon={<SearchOutlined />}
-              className="action-button"
-            />
-            <Badge count={3} size="small">
-              <Button
-                type="text"
-                icon={<BellOutlined />}
-                className="action-button"
-              />
+          <Space size="large">
+            <Button type="text" icon={<SearchOutlined />} className="action-button search-button" size="large" />
+            <Badge count={3} size="small" className="notification-badge">
+              <Button type="text" icon={<BellOutlined />} className="action-button notification-button" size="large" />
             </Badge>
 
             {/* Avatar Dropdown */}
@@ -162,13 +170,14 @@ function Header() {
               menu={{ items: userMenuItems, onClick: handleMenuClick }}
               placement="bottomRight"
               trigger={["click"]}
+              overlayClassName="user-dropdown"
             >
-              <Avatar
-                size="large"
-                icon={<UserOutlined />}
-                className="avatar-icon"
-                style={{ cursor: "pointer", backgroundColor: "#1677ff" }}
-              />
+              <div className="avatar-container">
+                <Avatar size="large" icon={<UserOutlined />} className="avatar-icon" />
+                <div className="user-info">
+                  <Text className="user-role">{user.role}</Text>
+                </div>
+              </div>
             </Dropdown>
 
             {/* Mobile menu toggle */}
@@ -177,6 +186,7 @@ function Header() {
               icon={<MenuOutlined />}
               className="mobile-menu-button"
               onClick={showDrawer}
+              size="large"
             />
           </Space>
         </div>
@@ -184,36 +194,64 @@ function Header() {
 
       {/* Drawer mobile */}
       <Drawer
-        title="Menu"
+        title={
+          <div className="drawer-header">
+            <div className="logo">
+              <img
+                src="https://res.cloudinary.com/dif55ggpc/image/upload/v1751630179/pngtree-sleeping-capybara-clipart-icon-hand-drawn-png-image_16394362_ilfxxz.avif"
+                alt="SocialNet Logo"
+                className="logo-icon"
+                style={{ width: "32px", height: "32px", marginRight: "8px" }}
+              />
+              <Text className="logo-text">SocialNet</Text>
+            </div>
+          </div>
+        }
         placement="right"
         onClose={closeDrawer}
         open={drawerVisible}
-        width={280}
+        width={300}
+        className="mobile-drawer"
       >
         <Menu
           mode="vertical"
           items={menuItems}
           className="mobile-menu"
-          selectedKeys={["home"]}
+          selectedKeys={[activeKey]}
           onClick={handleMenuClick}
         />
-        <div style={{ marginTop: 16 }}>
-          <Dropdown
-            menu={{ items: userMenuItems, onClick: handleMenuClick }}
-            placement="bottomRight"
-            trigger={["click"]}
-          >
-            <Avatar
-              size="large"
-              icon={<UserOutlined />}
-              className="avatar-icon"
-              style={{ cursor: "pointer", backgroundColor: "#1677ff" }}
-            />
-          </Dropdown>
+
+        <div className="drawer-footer">
+          <div className="avatar-container mobile-avatar">
+            <Avatar size="large" icon={<UserOutlined />} className="avatar-icon" />
+            <div className="user-info">
+              <Text className="user-role">{user.role}</Text>
+            </div>
+          </div>
+
+          <div className="user-actions">
+            {user.role === "ADMIN" && (
+              <Button type="text" icon={<InfoCircleOutlined />} onClick={() => handleMenuClick({ key: "admin" })} block>
+                Trang quản trị
+              </Button>
+            )}
+            <Button type="text" icon={<UserOutlined />} onClick={() => handleMenuClick({ key: "profile" })} block>
+              Thông tin cá nhân
+            </Button>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={() => handleMenuClick({ key: "logout" })}
+              block
+              danger
+            >
+              Đăng xuất
+            </Button>
+          </div>
         </div>
       </Drawer>
     </AntHeader>
-  );
+  )
 }
 
-export default Header;
+export default Header
