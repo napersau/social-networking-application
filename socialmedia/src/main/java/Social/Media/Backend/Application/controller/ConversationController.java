@@ -21,8 +21,9 @@ public class ConversationController {
 
     @PostMapping("/create")
     ApiResponse<ConversationResponse> createConversation(@RequestBody @Valid ConversationRequest request) {
+        ConversationResponse response = conversationService.create(request);
         return ApiResponse.<ConversationResponse>builder()
-                .result(conversationService.create(request))
+                .result(response)
                 .build();
     }
 

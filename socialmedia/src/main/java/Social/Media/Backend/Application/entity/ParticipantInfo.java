@@ -1,11 +1,13 @@
 package Social.Media.Backend.Application.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,6 +16,10 @@ import lombok.experimental.FieldDefaults;
 public class ParticipantInfo {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Thêm auto-generate ID
+    @Column(name = "id")
+    Long id;
+
     @Column(name = "user_id")
     Long userId;
 
@@ -29,7 +35,8 @@ public class ParticipantInfo {
     @Column(name = "avatar")
     String avatar;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id") // Tên cột FK trong participant_info
+    @JsonBackReference
     Conversation conversation;
 }

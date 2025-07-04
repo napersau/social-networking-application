@@ -8,6 +8,7 @@ import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.ConversationRepository;
+import Social.Media.Backend.Application.repository.ParticipantInfoRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.ConversationService;
 import lombok.AccessLevel;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,10 +32,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Transactional
 public class ConversationServiceImpl implements ConversationService {
     ConversationRepository conversationRepository;
     UserRepository userRepository;
     ModelMapper modelMapper;
+    ParticipantInfoRepository participantInfoRepository;
 
     @Override
     public List<ConversationResponse> myConversations() {
@@ -51,10 +55,10 @@ public class ConversationServiceImpl implements ConversationService {
         var context = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         Long userId = user.getId();
         User userInfo = userRepository.findById(userId).get();
-//        var participantInfoResponse = profileClient.getProfile(
-//                request.getParticipantIds().getFirst());
+
         User participantInfo = userRepository.findById(request.getParticipantIds().get(0)).get();
 
         if (Objects.isNull(userInfo) || Objects.isNull(participantInfo)) {
@@ -74,6 +78,13 @@ public class ConversationServiceImpl implements ConversationService {
 
         var conversation = conversationRepository.findByParticipantsHash(userIdHash)
                 .orElseGet(() -> {
+                    Conversation newConversation = Conversation.builder()
+                            .type(request.getType())
+                            .participantsHash(userIdHash)
+                            .createdDate(Instant.now())
+                            .modifiedDate(Instant.now())
+                            .build();
+
                     List<ParticipantInfo> participantInfos = List.of(
                             ParticipantInfo.builder()
                                     .userId(userInfo.getId())
@@ -81,6 +92,7 @@ public class ConversationServiceImpl implements ConversationService {
                                     .firstName(userInfo.getFirstName())
                                     .lastName(userInfo.getLastName())
                                     .avatar(userInfo.getAvatarUrl())
+                                    .conversation(newConversation)
                                     .build(),
                             ParticipantInfo.builder()
                                     .userId(participantInfo.getId())
@@ -88,19 +100,13 @@ public class ConversationServiceImpl implements ConversationService {
                                     .firstName(participantInfo.getFirstName())
                                     .lastName(participantInfo.getLastName())
                                     .avatar(participantInfo.getAvatarUrl())
+                                    .conversation(newConversation)
                                     .build()
                     );
 
-                    // Build conversation info
-                    Conversation newConversation = Conversation.builder()
-                            .type(request.getType())
-                            .participantsHash(userIdHash)
-                            .createdDate(Instant.now())
-                            .modifiedDate(Instant.now())
-                            .participants(participantInfos)
-                            .build();
-
-                    return conversationRepository.save(newConversation);
+                    newConversation.setParticipants(participantInfos);
+                    Conversation conversationSaved = conversationRepository.save(newConversation);
+                    return conversationSaved;
                 });
 
         return toConversationResponse(conversation);

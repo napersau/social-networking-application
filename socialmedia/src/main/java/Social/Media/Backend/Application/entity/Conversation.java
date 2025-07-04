@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +9,8 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,6 +28,7 @@ public class Conversation {
     @Column(name = "participants_hash", unique = true)
     String participantsHash;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ParticipantInfo> participants;
 
