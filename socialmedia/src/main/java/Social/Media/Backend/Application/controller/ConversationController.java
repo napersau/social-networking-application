@@ -29,8 +29,9 @@ public class ConversationController {
 
     @GetMapping("/my-conversations")
     ApiResponse<List<ConversationResponse>> myConversations() {
+        List<ConversationResponse> conversationResponseList = conversationService.myConversations();
         return ApiResponse.<List<ConversationResponse>>builder()
-                .result(conversationService.myConversations())
+                .result(conversationResponseList)
                 .build();
     }
 }

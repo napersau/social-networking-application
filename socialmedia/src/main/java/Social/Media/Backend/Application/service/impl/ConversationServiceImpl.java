@@ -122,13 +122,14 @@ public class ConversationServiceImpl implements ConversationService {
     }
 
     private ConversationResponse toConversationResponse(Conversation conversation) {
-        String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-//        ConversationResponse conversationResponse = conversationMapper.toConversationResponse(conversation);
         ConversationResponse conversationResponse = modelMapper.map(conversation, ConversationResponse.class);
 
         conversation.getParticipants().stream()
-                .filter(participantInfo -> !participantInfo.getUserId().equals(currentUserId))
+                .filter(participantInfo -> !participantInfo.getUserId().equals(user.getId()))
                 .findFirst().ifPresent(participantInfo -> {
                     conversationResponse.setConversationName(participantInfo.getUsername());
                     conversationResponse.setConversationAvatar(participantInfo.getAvatar());
