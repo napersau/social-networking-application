@@ -22,16 +22,18 @@ public class ChatMessageController {
     @PostMapping("/create")
     ApiResponse<ChatMessageResponse> create(
             @RequestBody @Valid ChatMessageRequest request) {
+        ChatMessageResponse response = chatMessageService.create(request);
         return ApiResponse.<ChatMessageResponse>builder()
-                .result(chatMessageService.create(request))
+                .result(response)
                 .build();
     }
 
     @GetMapping
     ApiResponse<List<ChatMessageResponse>> getMessages(
             @RequestParam("conversationId") Long conversationId) {
+        List<ChatMessageResponse> chatMessageResponseList = chatMessageService.getMessages(conversationId);
         return ApiResponse.<List<ChatMessageResponse>>builder()
-                .result(chatMessageService.getMessages(conversationId))
+                .result(chatMessageResponseList)
                 .build();
     }
 }

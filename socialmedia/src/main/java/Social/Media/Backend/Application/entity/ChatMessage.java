@@ -25,8 +25,6 @@ public class ChatMessage {
     @Column(name = "message")
     String message;
 
-
-
     @ManyToOne
     @JoinColumn(name = "sender_id") // tên cột trong bảng chat_message
     ParticipantInfo sender;

@@ -1,6 +1,7 @@
 package Social.Media.Backend.Application.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,9 +11,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatMessageRequest {
-    @NotBlank
+    @NotNull(message = "conversationId must not be null")
     Long conversationId;
 
-    @NotBlank
+    @NotBlank(message = "message must not be blank")
     String message;
 }

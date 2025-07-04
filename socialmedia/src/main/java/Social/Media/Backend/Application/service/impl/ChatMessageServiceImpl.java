@@ -28,21 +28,24 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Transactional
 public class ChatMessageServiceImpl implements ChatMessageService {
-    ChatMessageRepository chatMessageRepository;
-    ConversationRepository conversationRepository;
-    ModelMapper modelMapper;
-    UserRepository userRepository;
-    SocketIOServer socketIOServer;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ConversationRepository conversationRepository;
+    private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
+    private final SocketIOServer socketIOServer;
 
 
     public List<ChatMessageResponse> getMessages(Long conversationId) {
         // Validate conversationId
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND))
                 .getParticipants()
                 .stream()
-                .filter(participantInfo -> userId.equals(participantInfo.getUserId()))
+                .filter(participantInfo -> user.getId().equals(participantInfo.getUserId()))
                 .findAny()
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
@@ -56,27 +59,20 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         // Validate conversationId
-        conversationRepository.findById(request.getConversationId())
-                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND))
-                .getParticipants()
-                .stream()
-                .filter(participantInfo -> user.getId().equals(participantInfo.getUserId()))
-                .findAny()
+        var conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
+        ParticipantInfo sender = conversation.getParticipants().stream()
+                .filter(p -> p.getUserId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
-        var userInfo = userRepository.findByUsername(context);
-
-        ChatMessage chatMessage = modelMapper.map(request, ChatMessage.class);
-
-        chatMessage.setSender(ParticipantInfo.builder()
-                .userId(user.getId())
-                .username(user.getUsername())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .avatar(user.getAvatarUrl())
-                .build());
-        chatMessage.setCreatedDate(Instant.now());
+        ChatMessage chatMessage = ChatMessage.builder()
+                .message(request.getMessage())
+                .sender(sender)
+                .createdDate(Instant.now())
+                .conversation(conversation)
+                .build();
 
         // Create chat message
         chatMessage = chatMessageRepository.save(chatMessage);
@@ -92,11 +88,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
-        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         var chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
 
-
-        chatMessageResponse.setMe(userId.equals(chatMessage.getSender().getUserId()));
+        chatMessageResponse.setMe(user.getId().equals(chatMessage.getSender().getUserId()));
 
         return chatMessageResponse;
     }

@@ -13,7 +13,7 @@ import java.time.Instant;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ChatMessageResponse {
     Long id;
-    String conversationId;
+    Long conversationId;
     boolean me;
     String message;
     ParticipantInfo sender;
