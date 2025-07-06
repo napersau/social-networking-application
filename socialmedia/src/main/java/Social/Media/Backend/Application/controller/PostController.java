@@ -26,6 +26,10 @@ public class PostController {
 
     @GetMapping
     ApiResponse<List<PostResponse>> getPosts() {
-        return null;
+        List<PostResponse> postResponseList = postService.getPosts();
+        return ApiResponse.<List<PostResponse>>builder()
+                .code(1000)
+                .result(postResponseList)
+                .build();
     }
 }

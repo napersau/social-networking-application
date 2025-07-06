@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +35,14 @@ public class PostServiceImpl implements PostService {
         Post post = modelMapper.map(request, Post.class);
         post.setUser(user);
         post.setCreatedAt(Instant.now());
+        postRepository.save(post);
 
         return modelMapper.map(post, PostResponse.class);
+    }
+
+    @Override
+    public List<PostResponse> getPosts() {
+        List<Post> posts = postRepository.findAll();
+        return posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
     }
 }
