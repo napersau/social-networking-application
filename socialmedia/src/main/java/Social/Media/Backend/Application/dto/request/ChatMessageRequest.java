@@ -16,4 +16,6 @@ public class ChatMessageRequest {
 
     @NotBlank(message = "message must not be blank")
     String message;
+
+    private String clientId;
 }

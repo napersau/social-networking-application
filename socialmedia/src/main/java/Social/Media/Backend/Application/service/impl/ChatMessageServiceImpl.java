@@ -74,17 +74,12 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .conversation(conversation)
                 .build();
 
-        // Create chat message
         chatMessage = chatMessageRepository.save(chatMessage);
-
-        String message = chatMessage.getMessage();
-
-        socketIOServer.getAllClients().forEach(client -> {
-            client.sendEvent("message", message);
-        });
-
-        // convert to Response
-        return toChatMessageResponse(chatMessage);
+        ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
+        chatMessageResponse.setClientId(request.getClientId()); // <-- THÊM DÒNG NÀY
+        socketIOServer.getRoomOperations(String.valueOf(request.getConversationId()))
+                .sendEvent("message", chatMessageResponse); // Gửi toàn bộ đối tượng response
+        return chatMessageResponse;
     }
 
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
