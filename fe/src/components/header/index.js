@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Layout, Menu, Button, Drawer, Space, Avatar, Dropdown, Typography, Badge } from "antd"
 import {
@@ -44,6 +42,8 @@ function Header() {
     const path = location.pathname
     if (path === "/home" || path === "/") {
       setActiveKey("home")
+    } else if (path === "/posts") {
+      setActiveKey("posts")
     } else if (path === "/friends") {
       setActiveKey("friends")
     } else if (path === "/chat") {
@@ -75,7 +75,10 @@ function Header() {
       navigate("/friends")
     } else if (key === "notifications") {
       navigate("/notifications")
+    } else if (key === "posts") {
+      navigate("/posts")
     }
+
     setDrawerVisible(false)
   }
 
@@ -106,6 +109,11 @@ function Header() {
       key: "home",
       icon: <HomeOutlined />,
       label: "Trang chủ",
+    },
+    {
+      key: "posts",
+      icon: <InfoCircleOutlined />,
+      label: "Bài viết",
     },
     {
       key: "friends",
@@ -143,7 +151,6 @@ function Header() {
             className="logo-icon"
             style={{ width: "50px", height: "50px", marginRight: "8px" }}
           />
-       
         </div>
 
         {/* Menu desktop */}

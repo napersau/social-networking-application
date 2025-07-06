@@ -18,4 +18,8 @@ export const API = {
   CREATE_CONVERSATION: "/chat/conversations/create",
   CREATE_MESSAGE: "/chat/messages/create",
   GET_CONVERSATION_MESSAGES: "/chat/messages",
+  CREATE_POST: "/posts",
+  GET_POSTS:"/posts",
+  GET_POST_BY_ID:"/posts/${postId}"
+
 };

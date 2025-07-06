@@ -29,11 +29,13 @@ export const createConversation = async (data) => {
 
 
 export const createMessage = async (data) => {
+  console.log(data)
   return await httpClient.post(
     API.CREATE_MESSAGE,
     {
       conversationId: data.conversationId,
       message: data.message,
+      clientId: data.clientId,
     },
     {
       headers: {
