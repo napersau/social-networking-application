@@ -154,7 +154,7 @@ const PostPage = () => {
       <div className="post-header">
         <Avatar size={40} src={post.userAvatar} icon={<UserOutlined />} />
         <div className="post-user-info">
-          <Text strong>{post.username || "Anonymous"}</Text>
+          <Text strong>{post.user.firstName || "Anonymous"} {post.user.lastName}</Text>
           <Text type="secondary" className="post-time">
             {post.createdAt
               ? new Date(post.createdAt).toLocaleString("vi-VN")

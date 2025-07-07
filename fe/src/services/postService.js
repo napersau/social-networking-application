@@ -15,7 +15,7 @@ export const postService = {
 
   // Lấy danh sách tất cả bài viết
   getPosts: async () => {
-    return await httpClient.get(API.GET_POSTS || "/api/v1/posts", {
+    return await httpClient.get(API.GET_POSTS || "/api/v1/posts/user", {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
