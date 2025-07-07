@@ -8,4 +8,5 @@ import java.util.List;
 public interface PostService {
     PostResponse createPost(PostRequest request);
     List<PostResponse> getPosts();
+    List<PostResponse> getPostsByUser();
 }

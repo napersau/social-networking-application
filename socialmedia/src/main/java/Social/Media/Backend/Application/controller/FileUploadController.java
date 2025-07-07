@@ -1,4 +1,4 @@
-package Social.Media.Backend.Application.config;
+package Social.Media.Backend.Application.controller;
 
 import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.FileUploadResponse;
@@ -145,3 +145,4 @@ public class FileUploadController {
         }
     }
 }
+

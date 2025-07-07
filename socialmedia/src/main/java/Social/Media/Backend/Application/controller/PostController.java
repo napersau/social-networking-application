@@ -32,4 +32,14 @@ public class PostController {
                 .result(postResponseList)
                 .build();
     }
+
+    @GetMapping( "/user")
+    ApiResponse<List<PostResponse>> getPostsByUser(){
+        List<PostResponse> postResponseList = postService.getPostsByUser();
+        return ApiResponse.<List<PostResponse>>builder()
+                .code(1000)
+                .result(postResponseList)
+                .build();
+    }
+
 }

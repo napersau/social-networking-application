@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.dto.response;
 
+import Social.Media.Backend.Application.entity.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 public class PostResponse {
     private Long id;
-    private Long userId;
+    private User user;
     private String content;
     private String imageUrl;
     private String videoUrl;

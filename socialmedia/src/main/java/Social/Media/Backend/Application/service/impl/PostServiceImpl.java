@@ -45,4 +45,13 @@ public class PostServiceImpl implements PostService {
         List<Post> posts = postRepository.findAll();
         return posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
     }
+
+    @Override
+    public List<PostResponse> getPostsByUser() {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        List<Post> posts = postRepository.findAllByUserId(user.getId());
+        return posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
+    }
 }
