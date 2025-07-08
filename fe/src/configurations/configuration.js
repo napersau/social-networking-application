@@ -29,5 +29,8 @@ export const API = {
   CHECK_LIKE_STATUS: "/{postId}/like-status", // GET - check if user liked a post
   GET_LIKE_COUNT: "/{postId}/like-count",     // GET - get like count for a post
   GET_USER_LIKES: "/users/{userId}/likes",          // GET - get posts liked by user
-  GET_MY_LIKES: "/users/me/likes",                  
+  GET_MY_LIKES: "/users/me/likes",   
+  
+  CREATE_COMMENT: "/comments/create",
+  UPDATE_COMMENT: "/comments/update",
 };

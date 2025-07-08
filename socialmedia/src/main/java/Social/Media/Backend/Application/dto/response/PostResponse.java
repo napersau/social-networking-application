@@ -16,7 +16,7 @@ public class PostResponse {
     private Boolean isLiked;
     private User user;
     private List<LikeResponse> likes;
-    private List<Comment> comments;
+    private List<CommentResponse> comments;
     private String content;
     private String imageUrl;
     private String videoUrl;

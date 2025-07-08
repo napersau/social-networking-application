@@ -16,6 +16,8 @@ import {
   Modal,
   Upload,
   Image,
+  Collapse,
+  Badge,
 } from "antd";
 import {
   LikeOutlined,
@@ -30,21 +32,28 @@ import {
   CommentOutlined,
   RetweetOutlined,
   CameraOutlined,
+  DownOutlined,
+  UpOutlined,
 } from "@ant-design/icons";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
+import { commentService } from "../../services/commentService";
 import "./styles.css";
 import axios from "axios";
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;
 
 const PostPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [likingPosts, setLikingPosts] = useState(new Set()); // Track posts being liked
+  const [commentingPosts, setCommentingPosts] = useState(new Set()); // Track posts being commented
+  const [expandedComments, setExpandedComments] = useState(new Set()); // Track expanded comment sections
   const [form] = Form.useForm();
+  const [commentForms] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [fileList, setFileList] = useState([]);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
@@ -185,19 +194,166 @@ const PostPage = () => {
   };
 
   const handleComment = (postId) => {
-    message.info("Tính năng bình luận đang phát triển");
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSubmitComment = async (postId, content) => {
+    if (!content.trim()) {
+      message.warning("Vui lòng nhập nội dung bình luận!");
+      return;
+    }
+
+    if (commentingPosts.has(postId)) {
+      return;
+    }
+
+    setCommentingPosts(prev => new Set(prev).add(postId));
+    
+    try {
+      const response = await commentService.createComment(postId, content.trim());
+      
+      if (response.data && response.data.code === 1000) {
+        // Update the specific post with new comment
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              const newComment = response.data.result;
+              return {
+                ...post,
+                comments: [...(post.comments || []), newComment],
+                commentCount: (post.commentCount || 0) + 1
+              };
+            }
+            return post;
+          })
+        );
+
+        // Reset comment form for this post
+        commentForms.setFieldsValue({
+          [`comment_${postId}`]: ""
+        });
+
+        message.success("Đã gửi bình luận!");
+      } else {
+        message.error("Không thể gửi bình luận!");
+      }
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      message.error("Đã xảy ra lỗi khi gửi bình luận!");
+    } finally {
+      setCommentingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
   };
 
   const handleShare = (postId) => {
     message.info("Tính năng chia sẻ đang phát triển");
   };
 
+  const CommentSection = ({ post }) => {
+    const isCommenting = commentingPosts.has(post.id);
+    const comments = post.comments || [];
+    const commentCount = post.commentCount || comments.length;
+
+    return (
+      <div className="comment-section">
+        <Divider className="comment-divider" />
+        
+        {/* Comment Input Form */}
+        <Form
+          form={commentForms}
+          onFinish={(values) => handleSubmitComment(post.id, values[`comment_${post.id}`])}
+        >
+          <Form.Item name={`comment_${post.id}`} style={{ marginBottom: 8 }}>
+            <div className="comment-input-container">
+              <Avatar size={32} icon={<UserOutlined />} />
+              <TextArea
+                placeholder="Viết bình luận..."
+                autoSize={{ minRows: 1, maxRows: 3 }}
+                className="comment-input"
+                onPressEnter={(e) => {
+                  if (e.shiftKey) return;
+                  e.preventDefault();
+                  const content = e.target.value;
+                  handleSubmitComment(post.id, content);
+                }}
+              />
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isCommenting}
+                icon={<SendOutlined />}
+                size="small"
+                className="comment-submit-btn"
+              >
+                Gửi
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+
+        {/* Comments List */}
+        {comments.length > 0 && (
+          <div className="comments-list">
+            <List
+              dataSource={comments}
+              renderItem={(comment) => (
+                <List.Item key={comment.id} className="comment-item">
+                  <div className="comment-content">
+                    <Avatar 
+                      size={32} 
+                      src={comment.user?.avatar} 
+                      icon={<UserOutlined />} 
+                    />
+                    <div className="comment-bubble">
+                      <div className="comment-header">
+                        <Text strong>
+                          {comment.user?.firstName || "Anonymous"} {comment.user?.lastName || ""}
+                        </Text>
+                        <Text type="secondary" className="comment-time">
+                          {comment.createdAt
+                            ? new Date(comment.createdAt).toLocaleString("vi-VN")
+                            : "Vừa xong"}
+                        </Text>
+                      </div>
+                      <Paragraph className="comment-text">
+                        {comment.content}
+                      </Paragraph>
+                    </div>
+                  </div>
+                </List.Item>
+              )}
+              split={false}
+            />
+          </div>
+        )}
+
+        {commentCount === 0 && (
+          <div className="no-comments">
+            <Text type="secondary">Chưa có bình luận nào</Text>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const PostCard = ({ post }) => {
     const isLiking = likingPosts.has(post.id);
     const isLiked = post.isLiked || false;
-    const likeCount = post.likes.length;
-    console.log(post)
-    console.log(isLiked)
+    const likeCount = post.likes?.length || 0;
+    const commentCount = post.commentCount || post.comments?.length || 0;
+    const isCommentsExpanded = expandedComments.has(post.id);
 
     return (
       <Card className="post-card" hoverable>
@@ -244,9 +400,9 @@ const PostPage = () => {
             type="text"
             icon={<CommentOutlined />}
             onClick={() => handleComment(post.id)}
-            className="action-button"
+            className={`action-button ${isCommentsExpanded ? 'active' : ''}`}
           >
-            Bình luận {post.comments ? `(${post.comments})` : ''}
+            Bình luận {commentCount > 0 && `(${commentCount})`}
           </Button>
 
           <Button
@@ -258,6 +414,9 @@ const PostPage = () => {
             Chia sẻ {post.shares ? `(${post.shares})` : ''}
           </Button>
         </div>
+
+        {/* Comment Section - Only show when expanded */}
+        {isCommentsExpanded && <CommentSection post={post} />}
       </Card>
     );
   };

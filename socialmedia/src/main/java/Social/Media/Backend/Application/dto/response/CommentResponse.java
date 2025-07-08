@@ -5,13 +5,14 @@ import Social.Media.Backend.Application.entity.Post;
 import Social.Media.Backend.Application.entity.User;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
 public class CommentResponse {
     private Long id;
     private String content;
-    private Post post;
+    private Long postId;
     private Long parentCommentId;
     private String imageUrl;
     private User user;
@@ -19,4 +20,6 @@ public class CommentResponse {
     private Integer likesCount;
     private Boolean isActive;
     private List<Comment> replies;
+    private Instant createdAt;
+    private Instant updatedAt;
 }

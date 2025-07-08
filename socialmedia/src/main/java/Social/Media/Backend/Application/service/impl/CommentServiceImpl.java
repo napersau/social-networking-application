@@ -17,6 +17,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
@@ -41,6 +43,7 @@ public class CommentServiceImpl implements CommentService {
                 .user(user)
                 .imageUrl(request.getImageUrl())
                 .post(post)
+                .createdAt(Instant.now())
                 .build();
         commentRepository.save(comment);
         return modelMapper.map(comment, CommentResponse.class);

@@ -3,6 +3,7 @@ package Social.Media.Backend.Application.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -40,6 +41,12 @@ public class Comment {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<Comment> replies;
