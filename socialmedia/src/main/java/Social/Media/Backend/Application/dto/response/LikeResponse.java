@@ -1,7 +1,9 @@
 package Social.Media.Backend.Application.dto.response;
 
 import Social.Media.Backend.Application.entity.User;
+import lombok.Data;
 
+@Data
 public class LikeResponse {
     private Long id;
     private User user;

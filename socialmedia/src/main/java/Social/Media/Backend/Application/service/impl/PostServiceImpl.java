@@ -6,6 +6,7 @@ import Social.Media.Backend.Application.entity.Post;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
+import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.PostService;
@@ -24,6 +25,7 @@ public class PostServiceImpl implements PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
+    private final LikeRepository likeRepository;
 
     @Override
     public PostResponse createPost(PostRequest request) {
@@ -52,6 +54,15 @@ public class PostServiceImpl implements PostService {
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         List<Post> posts = postRepository.findAllByUserId(user.getId());
-        return posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
+        List<PostResponse> result =  posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
+        for(PostResponse postResponse : result){
+            if(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent()){
+                postResponse.setIsLiked(true);
+            }
+            else{
+                postResponse.setIsLiked(false);
+            }
+        }
+        return result;
     }
 }

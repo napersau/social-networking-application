@@ -1,8 +1,7 @@
 package Social.Media.Backend.Application.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -11,6 +10,9 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "likes")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Like {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

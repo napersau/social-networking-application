@@ -26,11 +26,13 @@ import {
   PictureOutlined,
   SendOutlined,
   HeartOutlined,
+  HeartFilled,
   CommentOutlined,
   RetweetOutlined,
   CameraOutlined,
 } from "@ant-design/icons";
 import { postService } from "../../services/postService";
+import { likeService } from "../../services/likeService";
 import "./styles.css";
 import axios from "axios";
 
@@ -41,6 +43,7 @@ const PostPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [likingPosts, setLikingPosts] = useState(new Set()); // Track posts being liked
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [fileList, setFileList] = useState([]);
@@ -134,10 +137,50 @@ const PostPage = () => {
   };
 
   const handleLike = async (postId) => {
+    if (likingPosts.has(postId)) {
+      return;
+    }
+    setLikingPosts(prev => new Set(prev).add(postId));
     try {
-      message.info("Tính năng thích bài viết đang phát triển");
+      const reactionType = "Like"
+      // Sử dụng toggleLike nếu backend xử lý toggle, hoặc likePost nếu backend xử lý riêng
+      const response = await likeService.likePost(postId, reactionType);
+      if (response.data && response.data.code === 1000) {
+        // Update the specific post in the list
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post.id === postId) {
+              const wasLiked = post.isLiked;
+              return {
+                ...post,
+                isLiked: !wasLiked,
+                likes: wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1
+              };
+            }
+            return post;
+          })
+        );
+
+        // Show appropriate message
+        const currentPost = posts.find(p => p.id === postId);
+        if (currentPost?.isLiked) {
+          message.success("Đã bỏ thích bài viết!");
+        } else {
+          message.success("Đã thích bài viết!");
+        }
+      } else {
+        message.warning("Không thể thực hiện hành động này!");
+      }
     } catch (error) {
-      message.error("Lỗi khi thích bài viết");
+      console.error("Lỗi khi like/unlike bài viết:", error);
+      message.error("Đã xảy ra lỗi khi thực hiện hành động!");
+    } finally {
+      // Remove from loading set
+      setLikingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
     }
   };
 
@@ -149,59 +192,75 @@ const PostPage = () => {
     message.info("Tính năng chia sẻ đang phát triển");
   };
 
-  const PostCard = ({ post }) => (
-    <Card className="post-card" hoverable>
-      <div className="post-header">
-        <Avatar size={40} src={post.userAvatar} icon={<UserOutlined />} />
-        <div className="post-user-info">
-          <Text strong>{post.user.firstName || "Anonymous"} {post.user.lastName}</Text>
-          <Text type="secondary" className="post-time">
-            {post.createdAt
-              ? new Date(post.createdAt).toLocaleString("vi-VN")
-              : "Vừa xong"}
-          </Text>
+  const PostCard = ({ post }) => {
+    const isLiking = likingPosts.has(post.id);
+    const isLiked = post.isLiked || false;
+    const likeCount = post.likes.length;
+    console.log(post)
+    console.log(isLiked)
+
+    return (
+      <Card className="post-card" hoverable>
+        <div className="post-header">
+          <Avatar size={40} src={post.userAvatar} icon={<UserOutlined />} />
+          <div className="post-user-info">
+            <Text strong>
+              {post.user.firstName || "Anonymous"} {post.user.lastName}
+            </Text>
+            <Text type="secondary" className="post-time">
+              {post.createdAt
+                ? new Date(post.createdAt).toLocaleString("vi-VN")
+                : "Vừa xong"}
+            </Text>
+          </div>
         </div>
-      </div>
 
-      <div className="post-content">
-        <Paragraph>{post.content}</Paragraph>
-        <div className="post-images">
-          <Image src={post.imageUrl} className="post-image" />
+        <div className="post-content">
+          <Paragraph>{post.content}</Paragraph>
+          {post.imageUrl && (
+            <div className="post-images">
+              <Image src={post.imageUrl} className="post-image" />
+            </div>
+          )}
         </div>
-      </div>
 
-      <Divider className="post-divider" />
+        <Divider className="post-divider" />
 
-      <div className="post-actions">
-        <Button
-          type="text"
-          icon={<HeartOutlined />}
-          onClick={() => handleLike(post.id)}
-          className="action-button"
-        >
-          Thích {post.likes || 0}
-        </Button>
+        <div className="post-actions">
+          <Button
+            type="text"
+            icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
+            onClick={() => handleLike(post.id)}
+            loading={isLiking}
+            className={`action-button ${isLiked ? 'liked' : ''}`}
+            style={{
+              color: isLiked ? '#ff4d4f' : undefined,
+            }}
+          >
+            {isLiked ? 'Đã thích' : 'Thích'} {likeCount > 0 && `(${likeCount})`}
+          </Button>
 
-        <Button
-          type="text"
-          icon={<CommentOutlined />}
-          onClick={() => handleComment(post.id)}
-          className="action-button"
-        >
-          Bình luận {post.comments || 0}
-        </Button>
+          <Button
+            type="text"
+            icon={<CommentOutlined />}
+            onClick={() => handleComment(post.id)}
+            className="action-button"
+          >
+            Bình luận {post.comments ? `(${post.comments})` : ''}
+          </Button>
 
-        <Button
-          type="text"
-          icon={<RetweetOutlined />}
-          onClick={() => handleShare(post.id)}
-          className="action-button"
-        >
-          Chia sẻ {post.shares || 0}
-        </Button>
-      </div>
-    </Card>
-  );
+          <Button
+            type="text"
+            icon={<RetweetOutlined />}
+            onClick={() => handleShare(post.id)}
+            className="action-button"
+          >
+            Chia sẻ {post.shares ? `(${post.shares})` : ''}
+          </Button>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="post-page">
@@ -262,6 +321,7 @@ const PostPage = () => {
           setIsModalVisible(false);
           form.resetFields();
           setFileList([]);
+          setUploadedImageUrl(null);
         }}
         footer={null}
         className="create-post-modal"
