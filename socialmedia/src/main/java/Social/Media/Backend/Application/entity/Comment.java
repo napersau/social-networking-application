@@ -1,8 +1,7 @@
 package Social.Media.Backend.Application.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
@@ -10,6 +9,9 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "comments")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
