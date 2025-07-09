@@ -40,3 +40,16 @@ export const searchUsers = async (keyword) => {
     }
   );
 };
+
+export const searchUsersByFullName = async (keyword) => {
+  return await httpClient.post(
+    API.SEARCH_USER_BY_FULLNAME,
+    { fullName: keyword },
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};

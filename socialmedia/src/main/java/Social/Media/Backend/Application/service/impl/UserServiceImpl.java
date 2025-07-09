@@ -12,6 +12,7 @@ import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -102,6 +103,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserResponse> searchUsers(String username) {
         List<User> users = userRepository.findByUsernameContaining(username);
+        List<UserResponse> userResponses = new ArrayList<>();
+        users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
+        return userResponses;
+    }
+
+    @Override
+    public List<UserResponse> searchUsersByFullName(String fullName) {
+        List<User> users = userRepository.searchByFullName(fullName);
         List<UserResponse> userResponses = new ArrayList<>();
         users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
         return userResponses;

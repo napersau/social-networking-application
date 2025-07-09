@@ -1,17 +1,65 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Card, Row, Col, Typography, Button, Space, Statistic } from 'antd';
-import { UserOutlined, DashboardOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Typography, Input, Button, List, Avatar, Spin, Empty, Alert } from 'antd';
+import { UserOutlined, SearchOutlined } from '@ant-design/icons';
 import { getToken, removeToken } from '../../services/localStorageService';
+import { searchUsersByFullName } from '../../services/userService';
 import { jwtDecode } from 'jwt-decode';
 import './styles.css';
 
-const { Title, Text } = Typography;
+const { Title, Paragraph } = Typography;
+const { Search } = Input;
 
 function Home() {
+    // --- State Management ---
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [searched, setSearched] = useState(false);
+
+    // --- Debounce function for search ---
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return (...args) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    // --- Search function ---
+    const performSearch = async (keyword) => {
+        if (!keyword.trim()) {
+            setSearchResults([]);
+            setSearched(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSearched(true);
+
+        try {
+            const response = await searchUsersByFullName(keyword);
+            if (response && response.data && response.data.result) {
+                setSearchResults(response.data.result);
+            } else {
+                setSearchResults([]);
+            }
+        } catch (err) {
+            console.error("Error searching for users:", err);
+            setError("An error occurred while searching. Please try again.");
+            setSearchResults([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- Debounced search ---
+    const debouncedSearch = useCallback(debounce(performSearch, 300), []);
+
+    // --- Authentication ---
     const token = getToken();
-    
-    // Kiểm tra authentication
     if (!token) {
         return <Navigate to="/login" replace />;
     }
@@ -19,177 +67,103 @@ function Home() {
     let userInfo = null;
     try {
         userInfo = jwtDecode(token);
-    } catch (error) {
-        console.error("Token không hợp lệ:", error);
+        // Check for token expiration
+        if (userInfo.exp * 1000 < Date.now()) {
+            removeToken();
+            return <Navigate to="/login" replace />;
+        }
+    } catch (e) {
+        console.error("Invalid token:", e);
         removeToken();
         return <Navigate to="/login" replace />;
     }
 
-    // Kiểm tra token có hết hạn không
-    if (userInfo.exp * 1000 < Date.now()) {
-        removeToken();
-        return <Navigate to="/login" replace />;
-    }
-
-    const handleLogout = () => {
-        removeToken();
-        window.location.href = '/login';
+    // --- Handle input change ---
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setSearchKeyword(value);
+        debouncedSearch(value);
     };
 
+    // --- Handle search on Enter ---
+    const handleSearch = async (value) => {
+        const keyword = value.trim();
+        if (!keyword) {
+            setSearchResults([]);
+            setSearched(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSearched(true);
+
+        try {
+            const response = await searchUsersByFullName(keyword);
+            if (response && response.data && response.data.result) {
+                setSearchResults(response.data.result);
+            } else {
+                setSearchResults([]);
+            }
+        } catch (err) {
+            console.error("Error searching for users:", err);
+            setError("An error occurred while searching. Please try again.");
+            setSearchResults([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- UI Rendering ---
     return (
         <div className="home-container">
-            {/* Header Welcome Section */}
-            <Card className="welcome-card" variant="borderless">
-                <Row justify="space-between" align="middle">
-                    <Col>
-                        <Space direction="vertical" size={4}>
-                            <Title level={2} className="welcome-title">
-                                Chào mừng bạn trở lại!
-                            </Title>
-                            <Text className="welcome-subtitle">
-                                Xin chào {userInfo?.username || userInfo?.sub}, 
-                                vai trò: {userInfo?.scope?.name || 'User'}
-                            </Text>
-                        </Space>
-                    </Col>
-                    <Col>
-                        <Button 
-                            type="primary" 
-                            danger 
-                            icon={<LogoutOutlined />}
-                            onClick={handleLogout}
+            <Row justify="center">
+                <Col xs={24} sm={22} md={20} lg={16} xl={14}>
+                    {/* Search Card */}
+                    <Card title="Tìm kiếm người dùng" className="search-card">
+                        <Paragraph type="secondary" className="search-description">
+                            Nhập tên đầy đủ của người dùng bạn muốn tìm kiếm trong hệ thống.
+                        </Paragraph>
+                        <Search
+                            placeholder="Nhập tên đầy đủ..."
+                            enterButton={<><SearchOutlined /> Tìm kiếm</>}
                             size="large"
-                        >
-                            Đăng xuất
-                        </Button>
-                    </Col>
-                </Row>
-            </Card>
+                            value={searchKeyword}
+                            onChange={handleInputChange}
+                            onSearch={handleSearch}
+                            loading={loading}
+                            className="search-input"
+                        />
 
-            {/* Stats Section */}
-            <Row gutter={[16, 16]} className="stats-section">
-                <Col xs={24} sm={12} lg={6}>
-                    <Card className="stat-card">
-                        <Statistic
-                            title="Tổng người dùng"
-                            value={1128}
-                            prefix={<UserOutlined />}
-                            valueStyle={{ color: '#3f8600' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card className="stat-card">
-                        <Statistic
-                            title="Hoạt động hôm nay"
-                            value={93}
-                            suffix="%"
-                            valueStyle={{ color: '#cf1322' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card className="stat-card">
-                        <Statistic
-                            title="Doanh thu"
-                            value={112893}
-                            prefix="₫"
-                            precision={2}
-                            valueStyle={{ color: '#1890ff' }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card className="stat-card">
-                        <Statistic
-                            title="Đơn hàng"
-                            value={93}
-                            valueStyle={{ color: '#722ed1' }}
-                        />
+                        {/* Error Display */}
+                        {error && <Alert message={error} type="error" showIcon className="error-alert" />}
+
+                        {/* Results Section */}
+                        <Spin spinning={loading} tip="Đang tìm kiếm...">
+                            {searched && !loading && searchResults.length === 0 ? (
+                                <Empty description="Không tìm thấy người dùng nào phù hợp." />
+                            ) : (
+                                <List
+                                    itemLayout="horizontal"
+                                    dataSource={searchResults}
+                                    renderItem={(user) => (
+                                        <List.Item
+                                            key={user.id}
+                                            className="user-list-item"
+                                        >
+                                            <List.Item.Meta
+                                                avatar={<Avatar src={user.avatarUrl} icon={<UserOutlined />} size={48} />}
+                                                title={<a href={`/profile/${user.id}`} className="user-name">{`${user.firstName} ${user.lastName}`}</a>}
+                                            />
+                                            <Button type="default" className="profile-button">Xem hồ sơ</Button>
+                                        </List.Item>
+                                    )}
+                                />
+                            )}
+                        </Spin>
                     </Card>
                 </Col>
             </Row>
-
-            {/* Quick Actions */}
-            <Card title="Hành động nhanh" className="quick-actions-card">
-                <Row gutter={[16, 16]}>
-                    <Col xs={24} sm={8}>
-                        <Card 
-                            hoverable 
-                            className="action-card"
-                            cover={<DashboardOutlined className="action-icon" />}
-                        >
-                            <Card.Meta
-                                title="Dashboard"
-                                description="Xem tổng quan hệ thống"
-                            />
-                            <Button type="primary" block style={{ marginTop: 16 }}>
-                                Xem chi tiết
-                            </Button>
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card 
-                            hoverable 
-                            className="action-card"
-                            cover={<UserOutlined className="action-icon" />}
-                        >
-                            <Card.Meta
-                                title="Quản lý người dùng"
-                                description="Thêm, sửa, xóa người dùng"
-                            />
-                            <Button type="primary" block style={{ marginTop: 16 }}>
-                                Quản lý
-                            </Button>
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card 
-                            hoverable 
-                            className="action-card"
-                            cover={<SettingOutlined className="action-icon" />}
-                        >
-                            <Card.Meta
-                                title="Cài đặt"
-                                description="Cấu hình hệ thống"
-                            />
-                            <Button type="primary" block style={{ marginTop: 16 }}>
-                                Cài đặt
-                            </Button>
-                        </Card>
-                    </Col>
-                </Row>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card title="Hoạt động gần đây" className="recent-activity-card">
-                <div className="activity-list">
-                    <div className="activity-item">
-                        <UserOutlined className="activity-icon" />
-                        <div className="activity-content">
-                            <Text strong>Người dùng mới đăng ký</Text>
-                            <br />
-                            <Text type="secondary">2 phút trước</Text>
-                        </div>
-                    </div>
-                    <div className="activity-item">
-                        <DashboardOutlined className="activity-icon" />
-                        <div className="activity-content">
-                            <Text strong>Báo cáo tháng được tạo</Text>
-                            <br />
-                            <Text type="secondary">1 giờ trước</Text>
-                        </div>
-                    </div>
-                    <div className="activity-item">
-                        <SettingOutlined className="activity-icon" />
-                        <div className="activity-content">
-                            <Text strong>Cập nhật cài đặt hệ thống</Text>
-                            <br />
-                            <Text type="secondary">3 giờ trước</Text>
-                        </div>
-                    </div>
-                </div>
-            </Card>
         </div>
     );
 }

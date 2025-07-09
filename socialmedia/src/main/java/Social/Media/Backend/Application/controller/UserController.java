@@ -37,6 +37,15 @@ public class UserController {
                 .build();
     }
 
+    @PostMapping("/search-user")
+    ApiResponse<List<UserResponse>> searchUsersByFullName(@RequestBody @Valid UserSearch userSearch) {
+        List<UserResponse> user = userService.searchUsersByFullName(userSearch.getFullName());
+        return ApiResponse.<List<UserResponse>>builder()
+                .code(1000)
+                .result(user)
+                .build();
+    }
+
     @GetMapping
     ApiResponse<List<UserResponse>> getUsers() {
         List<UserResponse> users = userService.getUsers();

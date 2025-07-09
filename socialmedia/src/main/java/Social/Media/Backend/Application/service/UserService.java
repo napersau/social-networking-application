@@ -13,4 +13,5 @@ public interface UserService {
     UserResponse changePassword(UserUpdateRequest request);
     UserResponse getMyInfo();
     List<UserResponse> searchUsers(String username);
+    List<UserResponse> searchUsersByFullName(String fullName);
 }
