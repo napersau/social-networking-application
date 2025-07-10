@@ -33,6 +33,15 @@ public class PostController {
                 .build();
     }
 
+    @GetMapping("{/userId}")
+    ApiResponse<List<PostResponse>> getPostsByUserId(@PathVariable("userId") Long userId) {
+        List<PostResponse> postResponseList = postService.getPosts();
+        return ApiResponse.<List<PostResponse>>builder()
+                .code(1000)
+                .result(postResponseList)
+                .build();
+    }
+
     @GetMapping( "/user")
     ApiResponse<List<PostResponse>> getPostsByUser(){
         List<PostResponse> postResponseList = postService.getPostsByUser();

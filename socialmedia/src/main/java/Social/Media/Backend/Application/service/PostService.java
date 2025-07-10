@@ -9,4 +9,5 @@ public interface PostService {
     PostResponse createPost(PostRequest request);
     List<PostResponse> getPosts();
     List<PostResponse> getPostsByUser();
+    List<PostResponse> getPostsByUserId(Long userId);
 }

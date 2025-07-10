@@ -65,4 +65,10 @@ public class PostServiceImpl implements PostService {
         }
         return result;
     }
+
+    @Override
+    public List<PostResponse> getPostsByUserId(Long userId) {
+        List<Post> posts = postRepository.findAllByUserId(userId);
+        return posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
+    }
 }
