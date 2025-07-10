@@ -21,6 +21,8 @@ const NewChatPopover = ({ open, onClose, onSelectUser }) => {
     return () => clearTimeout(timeout);
   }, [searchKeyword]);
 
+  console.log(users)
+
   const content = (
     <div className="new-chat-popover">
       <Input
@@ -49,7 +51,7 @@ const NewChatPopover = ({ open, onClose, onSelectUser }) => {
                 className="user-item"
               >
                 <List.Item.Meta
-                  avatar={<Avatar src={user.avatar} />}
+                  avatar={<Avatar src={user.avatarUrl} />}
                   title={user.displayName}
                   description={`@${user.username}`}
                 />

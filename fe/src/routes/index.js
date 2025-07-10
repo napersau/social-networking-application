@@ -8,6 +8,7 @@ import UpdateProfile from "../pages/updateProfile";
 import Chat from "../pages/chat";
 import Post from "../pages/post";
 import InforUser from "../pages/inforUser";
+import PostUser from "../pages/postUser";
 
 const Routes = [
   {
@@ -34,6 +35,7 @@ const Routes = [
           { path: "profile/:userId", element: <InforUser /> },
           { path: "update-profile", element: <UpdateProfile /> },
           { path: "posts", element: <Post /> },
+          { path: "posts/:userId", element: <PostUser /> },
           { path: "chat", element: <Chat /> },
         ],
       },

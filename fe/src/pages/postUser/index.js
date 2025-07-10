@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   Card,
   Form,
@@ -14,135 +14,58 @@ import {
   Row,
   Col,
   Divider,
-  Modal,
-  Upload,
   Image,
-  Collapse,
   Badge,
 } from "antd";
 import {
-  LikeOutlined,
-  MessageOutlined,
-  ShareAltOutlined,
-  PlusOutlined,
   UserOutlined,
-  PictureOutlined,
   SendOutlined,
   HeartOutlined,
   HeartFilled,
   CommentOutlined,
   RetweetOutlined,
-  CameraOutlined,
-  DownOutlined,
-  UpOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
 import { commentService } from "../../services/commentService";
 import "./styles.css";
-import axios from "axios";
 
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
-const { Panel } = Collapse;
 
-const PostPage = () => {
+const PostUser = () => {
+  const { userId } = useParams(); // Lấy userId từ URL params
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [likingPosts, setLikingPosts] = useState(new Set()); // Track posts being liked
-  const [commentingPosts, setCommentingPosts] = useState(new Set()); // Track posts being commented
-  const [expandedComments, setExpandedComments] = useState(new Set()); // Track expanded comment sections
-  const [form] = Form.useForm();
+  const [likingPosts, setLikingPosts] = useState(new Set());
+  const [commentingPosts, setCommentingPosts] = useState(new Set());
+  const [expandedComments, setExpandedComments] = useState(new Set());
   const [commentForms] = Form.useForm();
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [fileList, setFileList] = useState([]);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (userId) {
+      fetchUserPosts();
+    }
+  }, [userId]);
 
-  const fetchPosts = async () => {
+  const fetchUserPosts = async () => {
     setLoading(true);
     try {
-      const response = await postService.getPosts();
+      const response = await postService.getPostsByUserId(userId);
       if (response.data && response.data.code === 1000) {
         setPosts(response.data.result);
+        // Lấy thông tin user từ bài viết đầu tiên (nếu có)
+        if (response.data.result.length > 0) {
+          setUserInfo(response.data.result[0].user);
+        }
       }
     } catch (error) {
-      message.error("Không thể tải danh sách bài viết");
-      console.error("Error fetching posts:", error);
+      message.error("Không thể tải danh sách bài viết của người dùng");
+      console.error("Error fetching user posts:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePostImageUpload = async ({ file, onSuccess, onError }) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:8080/api/v1/upload/post-image",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      if (response.data.code === 1000) {
-        const imageUrl = response.data.result.url;
-
-        // ❗ Chỉ set 1 ảnh duy nhất
-        setUploadedImageUrl(imageUrl);
-        setFileList([
-          {
-            uid: file.uid,
-            name: file.name,
-            status: "done",
-            url: imageUrl,
-          },
-        ]);
-
-        onSuccess(response.data.result);
-      } else {
-        onError(new Error("Upload thất bại"));
-        message.error("Tải ảnh bài viết thất bại");
-      }
-    } catch (err) {
-      console.error("Upload post image error:", err);
-      onError(err);
-      message.error("Có lỗi khi tải ảnh");
-    }
-  };
-
-  const handleCreatePost = async (values) => {
-    setCreateLoading(true);
-    try {
-      const postData = {
-        content: values.content,
-        imageUrl: uploadedImageUrl, // ✅ chỉ 1 ảnh
-      };
-
-      const response = await postService.createPost(postData);
-      if (response.data && response.data.code === 1000) {
-        message.success("Đăng bài viết thành công!");
-        form.resetFields();
-        setFileList([]);
-        setUploadedImageUrl(null); // reset
-        setIsModalVisible(false);
-        fetchPosts();
-      }
-    } catch (error) {
-      message.error("Đăng bài viết thất bại");
-      console.error("Error creating post:", error);
-    } finally {
-      setCreateLoading(false);
     }
   };
 
@@ -153,10 +76,8 @@ const PostPage = () => {
     setLikingPosts(prev => new Set(prev).add(postId));
     try {
       const reactionType = "Like"
-      // Sử dụng toggleLike nếu backend xử lý toggle, hoặc likePost nếu backend xử lý riêng
       const response = await likeService.likePost(postId, reactionType);
       if (response.data && response.data.code === 1000) {
-        // Update the specific post in the list
         setPosts(prevPosts => 
           prevPosts.map(post => {
             if (post.id === postId) {
@@ -171,7 +92,6 @@ const PostPage = () => {
           })
         );
 
-        // Show appropriate message
         const currentPost = posts.find(p => p.id === postId);
         if (currentPost?.isLiked) {
           message.success("Đã bỏ thích bài viết!");
@@ -185,7 +105,6 @@ const PostPage = () => {
       console.error("Lỗi khi like/unlike bài viết:", error);
       message.error("Đã xảy ra lỗi khi thực hiện hành động!");
     } finally {
-      // Remove from loading set
       setLikingPosts(prev => {
         const newSet = new Set(prev);
         newSet.delete(postId);
@@ -222,7 +141,6 @@ const PostPage = () => {
       const response = await commentService.createComment(postId, content.trim());
       
       if (response.data && response.data.code === 1000) {
-        // Update the specific post with new comment
         setPosts(prevPosts => 
           prevPosts.map(post => {
             if (post.id === postId) {
@@ -237,7 +155,6 @@ const PostPage = () => {
           })
         );
 
-        // Reset comment form for this post
         commentForms.setFieldsValue({
           [`comment_${postId}`]: ""
         });
@@ -262,13 +179,12 @@ const PostPage = () => {
     message.info("Tính năng chia sẻ đang phát triển");
   };
 
+  console.log("tt user",userInfo)
 
   const CommentSection = ({ post }) => {
     const isCommenting = commentingPosts.has(post.id);
     const comments = post.comments || [];
     const commentCount = post.commentCount || comments.length;
-
-    console.log("post",post)
 
     return (
       <div className="comment-section">
@@ -281,7 +197,7 @@ const PostPage = () => {
         >
           <Form.Item name={`comment_${post.id}`} style={{ marginBottom: 8 }}>
             <div className="comment-input-container">
-              <Avatar src={post.user.avatarUrl} size={32} icon={<UserOutlined />} />
+              <Avatar size={32} icon={<UserOutlined />} />
               <TextArea
                 placeholder="Viết bình luận..."
                 autoSize={{ minRows: 1, maxRows: 3 }}
@@ -362,7 +278,7 @@ const PostPage = () => {
     return (
       <Card className="post-card" hoverable>
         <div className="post-header">
-          <Avatar size={40} src={post.user.avatarUrl} icon={<UserOutlined />} />
+          <Avatar size={40} src={userInfo.avatarUrl} icon={<UserOutlined />} />
           <div className="post-user-info">
             <Text strong>
               {post.user.firstName || "Anonymous"} {post.user.lastName}
@@ -430,21 +346,22 @@ const PostPage = () => {
       <div className="post-container">
         <Row gutter={[16, 16]} justify="center">
           <Col span={16}>
-            {/* Create Post Section */}
-            <Card className="create-post-card">
-              <div className="create-post-header">
-                <Avatar size={40} src={posts[0]?.user?.avatarUrl} icon={<UserOutlined />} />
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<PlusOutlined />}
-                  onClick={() => setIsModalVisible(true)}
-                  className="create-post-button"
-                >
-                  Tạo bài viết mới
-                </Button>
-              </div>
-            </Card>
+            {/* User Info Header */}
+            {userInfo && (
+              <Card className="user-info-card">
+                <div className="user-info-header">
+                  <Avatar size={60} src={userInfo.avatarUrl} icon={<UserOutlined />} />
+                  <div className="user-info-content">
+                    <Title level={3}>
+                      {userInfo.firstName} {userInfo.lastName}
+                    </Title>
+                    <Text type="secondary">
+                      {posts.length} bài viết
+                    </Text>
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Posts List */}
             <div className="posts-list">
@@ -453,9 +370,9 @@ const PostPage = () => {
                   <Card className="empty-posts">
                     <div className="empty-content">
                       <MessageOutlined className="empty-icon" />
-                      <Title level={4}>Chưa có bài viết nào</Title>
+                      <Title level={4}>Người dùng chưa có bài viết nào</Title>
                       <Text type="secondary">
-                        Hãy tạo bài viết đầu tiên của bạn!
+                        Chưa có bài viết nào được đăng bởi người dùng này.
                       </Text>
                     </div>
                   </Card>
@@ -475,73 +392,8 @@ const PostPage = () => {
           </Col>
         </Row>
       </div>
-
-      {/* Create Post Modal */}
-      <Modal
-        title="Tạo bài viết mới"
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          form.resetFields();
-          setFileList([]);
-          setUploadedImageUrl(null);
-        }}
-        footer={null}
-        className="create-post-modal"
-        width={600}
-      >
-        <Form form={form} layout="vertical" onFinish={handleCreatePost}>
-          <Form.Item
-            name="content"
-            rules={[
-              { required: true, message: "Vui lòng nhập nội dung bài viết!" },
-            ]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Bạn đang nghĩ gì?"
-              className="post-textarea"
-            />
-          </Form.Item>
-
-          <Form.Item name="images" label="Thêm hình ảnh">
-            <Upload
-              listType="picture-card"
-              fileList={fileList}
-              customRequest={handlePostImageUpload}
-              onRemove={() => {
-                setFileList([]);
-                setUploadedImageUrl(null);
-              }}
-              accept="image/*"
-              maxCount={1} // ✅ chỉ 1 ảnh
-            >
-              {fileList.length >= 1 ? null : (
-                <div>
-                  <PictureOutlined />
-                  <div style={{ marginTop: 8 }}>Tải ảnh</div>
-                </div>
-              )}
-            </Upload>
-          </Form.Item>
-
-          <Form.Item>
-            <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-              <Button onClick={() => setIsModalVisible(false)}>Hủy</Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={createLoading}
-                icon={<SendOutlined />}
-              >
-                Đăng bài
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };
 
-export default PostPage;
+export default PostUser;

@@ -22,6 +22,14 @@ export const postService = {
     });
   },
 
+  getPostsByUserId: async (userId) => {
+    return await httpClient.get(API.GET_POSTS_BY_USERID(userId) , {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+  },
+
   // Lấy bài viết theo ID
   getPostById: async (postId) => {
     return await httpClient.get(API.GET_POST_BY_ID || `/api/v1/posts/${postId}`, {

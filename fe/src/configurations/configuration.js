@@ -22,6 +22,7 @@ export const API = {
   GET_CONVERSATION_MESSAGES: "/chat/messages",
   CREATE_POST: "/posts",
   GET_POSTS:"/posts/user",
+  GET_POSTS_BY_USERID: (userId) => `/posts/${userId}`,
   GET_POST_BY_ID: (postId) => `/posts/${postId}`,
 
   LIKE_POST: "/like",           // POST - like a post

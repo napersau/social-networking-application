@@ -33,7 +33,7 @@ public class PostController {
                 .build();
     }
 
-    @GetMapping("{/userId}")
+    @GetMapping("/{userId}")
     ApiResponse<List<PostResponse>> getPostsByUserId(@PathVariable("userId") Long userId) {
         List<PostResponse> postResponseList = postService.getPostsByUserId (userId);
         return ApiResponse.<List<PostResponse>>builder()
