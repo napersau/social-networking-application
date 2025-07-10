@@ -115,4 +115,11 @@ public class UserServiceImpl implements UserService {
         users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
         return userResponses;
     }
+
+    @Override
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return modelMapper.map(user, UserResponse.class);
+    }
 }

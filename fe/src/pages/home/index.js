@@ -153,7 +153,13 @@ function Home() {
                                         >
                                             <List.Item.Meta
                                                 avatar={<Avatar src={user.avatarUrl} icon={<UserOutlined />} size={48} />}
-                                                title={<a href={`/profile/${user.id}`} className="user-name">{`${user.firstName} ${user.lastName}`}</a>}
+                                                title={
+                                                    <a href={`/profile/${user.id}`}>
+                                                        {user.firstName || user.lastName
+                                                            ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+                                                            : 'Tên không xác định'}
+                                                    </a>
+                                                }
                                             />
                                             <Button type="default" className="profile-button">Xem hồ sơ</Button>
                                         </List.Item>

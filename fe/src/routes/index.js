@@ -7,6 +7,7 @@ import Profile from "../pages/profile";
 import UpdateProfile from "../pages/updateProfile";
 import Chat from "../pages/chat";
 import Post from "../pages/post";
+import InforUser from "../pages/inforUser";
 
 const Routes = [
   {
@@ -30,6 +31,7 @@ const Routes = [
           { path: "", element: <Home /> },
           { path: "home", element: <Home /> },
           { path: "profile", element: <Profile /> },
+          { path: "profile/:userId", element: <InforUser /> },
           { path: "update-profile", element: <UpdateProfile /> },
           { path: "posts", element: <Post /> },
           { path: "chat", element: <Chat /> },

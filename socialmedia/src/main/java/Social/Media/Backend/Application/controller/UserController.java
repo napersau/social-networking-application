@@ -82,4 +82,13 @@ public class UserController {
                 .result(user)
                 .build();
     }
+
+    @GetMapping("/{userId}")
+    ApiResponse<UserResponse> getUserById(@PathVariable("userId") Long userId) {
+        UserResponse user = userService.getUserById (userId);
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(user)
+                .build();
+    }
 }

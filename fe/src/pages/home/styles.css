@@ -1,187 +1,55 @@
-/* Home Container */
 .home-container {
-    padding: 20px;
+    padding: 24px;
     background-color: #f5f5f5;
     min-height: 100vh;
 }
 
-/* Welcome Card */
-.welcome-card {
-    margin-bottom: 24px;
-    border-radius: 12px;
+.search-card {
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.welcome-card .ant-card-body {
-    padding: 32px;
-}
-
-.welcome-title {
-    color: white !important;
-    margin-bottom: 8px !important;
-    font-weight: 600;
-}
-
-.welcome-subtitle {
-    color: rgba(255, 255, 255, 0.85) !important;
-    font-size: 16px;
-}
-
-/* Stats Section */
-.stats-section {
     margin-bottom: 24px;
 }
 
-.stat-card {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-    height: 100%;
+.search-description {
+    margin-bottom: 16px;
+    font-size: 14px;
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+.search-input {
+    margin-bottom: 16px;
 }
 
-.stat-card .ant-statistic-title {
-    font-weight: 500;
-    color: #666;
+.error-alert {
+    margin-top: 16px;
+    margin-bottom: 16px;
 }
 
-.stat-card .ant-statistic-content {
-    font-weight: 600;
+.user-list-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
 }
 
-/* Quick Actions */
-.quick-actions-card {
-    margin-bottom: 24px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+.user-name:hover {
+    color: #40a9ff !important;
+    text-decoration: underline;
 }
 
-.quick-actions-card .ant-card-head {
-    border-bottom: 2px solid #f0f0f0;
+.profile-button {
+    margin-left: auto;
 }
 
-.quick-actions-card .ant-card-head-title {
-    font-weight: 600;
-    font-size: 18px;
+.user-list-item .ant-list-item-meta {
+    align-items: center;
 }
 
-.action-card {
-    text-align: center;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    height: 100%;
+.user-list-item .ant-list-item-meta-title {
+    margin: 0;
+    line-height: 1.5;
 }
 
-.action-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+:where(.css-dev-only-do-not-override-0s2fvf .ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-title a) {
+    transition: all 0.3s;
 }
 
-.action-card .ant-card-cover {
-    padding: 24px 0 16px 0;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    border-radius: 8px 8px 0 0;
-}
-
-.action-icon {
-    font-size: 48px;
-    color: white;
-}
-
-.action-card .ant-card-meta-title {
-    font-weight: 600;
-    margin-bottom: 8px;
-}
-
-.action-card .ant-card-meta-description {
-    color: #666;
-}
-
-/* Recent Activity */
-.recent-activity-card {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.recent-activity-card .ant-card-head {
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.recent-activity-card .ant-card-head-title {
-    font-weight: 600;
-    font-size: 18px;
-}
-
-.activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.activity-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    background: #fafafa;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-}
-
-.activity-item:hover {
-    background: #f0f0f0;
-    transform: translateX(4px);
-}
-
-.activity-icon {
-    font-size: 24px;
-    color: #1890ff;
-    margin-top: 4px;
-}
-
-.activity-content {
-    flex: 1;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .home-container {
-        padding: 16px;
-    }
-    
-    .welcome-card .ant-card-body {
-        padding: 24px 16px;
-    }
-    
-    .welcome-title {
-        font-size: 24px !important;
-    }
-    
-    .action-card .ant-card-cover {
-        padding: 16px 0 12px 0;
-    }
-    
-    .action-icon {
-        font-size: 36px;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-section .ant-col {
-        margin-bottom: 16px;
-    }
-    
-    .activity-item {
-        padding: 12px;
-    }
-    
-    .activity-icon {
-        font-size: 20px;
-    }
-}

@@ -53,3 +53,15 @@ export const searchUsersByFullName = async (keyword) => {
     }
   );
 };
+
+export const getUserById = async (userId) => {
+  return await httpClient.get(
+    API.GET_USER(userId),
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};

@@ -13,6 +13,7 @@ export const API = {
   CREATE_POST: "/post/create",
   UPDATE_PROFILE: "/profile/users/my-profile",
   UPDATE_AVATAR: "/profile/users/avatar",
+  GET_USER: (userId) => `/users/${userId}`,
   SEARCH_USER: "/users/search",
   SEARCH_USER_BY_FULLNAME: "/users/search-user",
   MY_CONVERSATIONS: "/chat/conversations/my-conversations",
@@ -21,7 +22,7 @@ export const API = {
   GET_CONVERSATION_MESSAGES: "/chat/messages",
   CREATE_POST: "/posts",
   GET_POSTS:"/posts/user",
-  GET_POST_BY_ID:"/posts/${postId}",
+  GET_POST_BY_ID: (postId) => `/posts/${postId}`,
 
   LIKE_POST: "/like",           // POST - like a post
   UNLIKE_POST: "/{postId}/like", // DELETE - unlike a post

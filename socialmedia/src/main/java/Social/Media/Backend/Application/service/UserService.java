@@ -14,4 +14,5 @@ public interface UserService {
     UserResponse getMyInfo();
     List<UserResponse> searchUsers(String username);
     List<UserResponse> searchUsersByFullName(String fullName);
+    UserResponse getUserById(Long userId);
 }
