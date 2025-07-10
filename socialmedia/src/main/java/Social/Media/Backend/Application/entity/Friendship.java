@@ -2,6 +2,8 @@ package Social.Media.Backend.Application.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.Instant;
 import java.util.Date;
 
 @Entity
@@ -10,6 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "friendships")
+
 public class Friendship {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,8 +32,8 @@ public class Friendship {
     private String status;
 
     @Column(name = "created_at")
-    private Date createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private Date updatedAt;
+    private Instant updatedAt;
 }

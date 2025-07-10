@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -28,7 +29,18 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public FriendshipResponse createFriendship(FriendshipRequest request) {
-        return null;
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User friend = userRepository.findById(request.getFriendId()).get();
+        Friendship friendship = Friendship.builder()
+                .user(user)
+                .friend(friend)
+                .status(request.getStatus())
+                .createdAt(Instant.now())
+                .build();
+        friendshipRepository.save(friendship);
+        return modelMapper.map(friendship, FriendshipResponse.class);
     }
 
     @Override
