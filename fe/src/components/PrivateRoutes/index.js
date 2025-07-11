@@ -13,7 +13,7 @@ const PrivateRoutes = () => {
 
     try {
         const decoded = jwtDecode(token);
-
+        localStorage.setItem("userId", decoded.userId);
         if (decoded.exp * 1000 < Date.now()) {
             localStorage.removeItem('token');
             return <Navigate to="/login" state={{ from: location }} replace />;

@@ -35,3 +35,12 @@ export const createFriendshipResponse = async (friendId, userId ,status) => {
     },
   });
 };
+
+export const getMyFriends = async () => {
+  return await httpClient.get(`${API.FRIENDSHIP}/my-friend`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};

@@ -117,3 +117,8 @@
   transform: scale(0.95);
   transition: opacity 300ms, transform 300ms;
 }
+
+.friendship-title {
+  margin-top: 40px;
+  font-size: 20px;
+}
