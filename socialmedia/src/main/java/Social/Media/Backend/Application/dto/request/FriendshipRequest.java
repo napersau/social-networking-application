@@ -1,8 +1,11 @@
 package Social.Media.Backend.Application.dto.request;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class FriendshipRequest {
     private Long userId;
     private Long friendId;

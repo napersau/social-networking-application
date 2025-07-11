@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface FriendshipService {
     FriendshipResponse createFriendship(FriendshipRequest request);
-    FriendshipResponse acceptFriendship(FriendshipRequest request);
-    FriendshipResponse rejectFriendship(FriendshipRequest request);
-    FriendshipResponse deleteFriendship(FriendshipRequest request);
+    FriendshipResponse respondToFriendRequest(FriendshipRequest request);
     List<FriendshipResponse> getFriendship();
 }

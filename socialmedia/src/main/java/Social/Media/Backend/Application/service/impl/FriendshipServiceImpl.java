@@ -32,7 +32,8 @@ public class FriendshipServiceImpl implements FriendshipService {
         var context = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        User friend = userRepository.findById(request.getFriendId()).get();
+        User friend = userRepository.findById(request.getFriendId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Friendship friendship = Friendship.builder()
                 .user(user)
                 .friend(friend)
@@ -44,26 +45,28 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
-    public FriendshipResponse acceptFriendship(FriendshipRequest request) {
-        return null;
+    public FriendshipResponse respondToFriendRequest(FriendshipRequest request) {
+        Friendship friendship = friendshipRepository.findByUserIdAndFriendId(request.getUserId(), request.getFriendId());
+        friendship.setUpdatedAt(Instant.now());
+        FriendshipResponse friendshipResponse = modelMapper.map(friendship, FriendshipResponse.class);
+        friendshipResponse.setStatus(request.getStatus());
+        if(request.getStatus().equals("ACCEPTED")){
+            friendship.setStatus("ACCEPTED");
+            friendshipRepository.save(friendship);
+        }
+        else if(request.getStatus().equals("REJECTED")){
+            friendshipRepository.delete(friendship);
+        }
+        return friendshipResponse;
     }
 
-    @Override
-    public FriendshipResponse rejectFriendship(FriendshipRequest request) {
-        return null;
-    }
-
-    @Override
-    public FriendshipResponse deleteFriendship(FriendshipRequest request) {
-        return null;
-    }
 
     @Override
     public List<FriendshipResponse> getFriendship() {
         var context = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        List<Friendship> friendshipList = friendshipRepository.findAllByFriendId(user.getId());
+        List<Friendship> friendshipList = friendshipRepository.findAllByFriendIdAndStatusNot(user.getId(), "ACCEPTED");
         return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
     }
 

@@ -66,6 +66,7 @@ public class SecurityConfig {
 
                                 //Comment
                                 .requestMatchers( "/api/v1/comments/**").hasAnyRole("USER","ADMIN")
+                                .requestMatchers( "/api/v1/friendship/**").hasAnyRole("USER","ADMIN")
 
                                 .anyRequest().authenticated());
 //                .oauth2Login(oauth2 -> oauth2

@@ -5,10 +5,7 @@ import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.FriendshipResponse;
 import Social.Media.Backend.Application.service.FriendshipService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,7 +17,7 @@ public class FriendshipController {
     private final FriendshipService friendshipService;
 
     @GetMapping
-    ApiResponse<List<FriendshipResponse>> getFriends() {
+    ApiResponse<List<FriendshipResponse>> getFriendsRequests() {
         List<FriendshipResponse> friendshipResponseList = friendshipService.getFriendship();
         return ApiResponse.<List<FriendshipResponse>>builder()
                 .code(1000)
@@ -29,8 +26,17 @@ public class FriendshipController {
     }
 
     @PostMapping
-    ApiResponse<FriendshipResponse> createFriendship (FriendshipRequest request){
+    ApiResponse<FriendshipResponse> createFriendship (@RequestBody FriendshipRequest request){
         FriendshipResponse response = friendshipService.createFriendship(request);
+        return ApiResponse.<FriendshipResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
+    @PostMapping("/respond")
+    ApiResponse<FriendshipResponse> respondToFriendRequest (@RequestBody FriendshipRequest request){
+        FriendshipResponse response = friendshipService.respondToFriendRequest(request);
         return ApiResponse.<FriendshipResponse>builder()
                 .code(1000)
                 .result(response)
