@@ -62,11 +62,20 @@ public class FriendshipServiceImpl implements FriendshipService {
 
 
     @Override
-    public List<FriendshipResponse> getFriendship() {
+    public List<FriendshipResponse> getFriendshipRequest() {
         var context = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         List<Friendship> friendshipList = friendshipRepository.findAllByFriendIdAndStatusNot(user.getId(), "ACCEPTED");
+        return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
+    }
+
+    @Override
+    public List<FriendshipResponse> getFriendship() {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        List<Friendship> friendshipList = friendshipRepository.findAllFriendshipsByUserIdAndStatus(user.getId(), "ACCEPTED");
         return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
     }
 

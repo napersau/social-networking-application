@@ -18,7 +18,7 @@ public class FriendshipController {
 
     @GetMapping
     ApiResponse<List<FriendshipResponse>> getFriendsRequests() {
-        List<FriendshipResponse> friendshipResponseList = friendshipService.getFriendship();
+        List<FriendshipResponse> friendshipResponseList = friendshipService.getFriendshipRequest();
         return ApiResponse.<List<FriendshipResponse>>builder()
                 .code(1000)
                 .result(friendshipResponseList)
@@ -40,6 +40,15 @@ public class FriendshipController {
         return ApiResponse.<FriendshipResponse>builder()
                 .code(1000)
                 .result(response)
+                .build();
+    }
+
+    @GetMapping("/my-friend")
+    ApiResponse<List<FriendshipResponse>> getFriendship() {
+        List<FriendshipResponse> friendshipResponseList = friendshipService.getFriendship();
+        return ApiResponse.<List<FriendshipResponse>>builder()
+                .code(1000)
+                .result(friendshipResponseList)
                 .build();
     }
 }

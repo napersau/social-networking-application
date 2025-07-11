@@ -9,5 +9,6 @@ import java.util.List;
 public interface FriendshipService {
     FriendshipResponse createFriendship(FriendshipRequest request);
     FriendshipResponse respondToFriendRequest(FriendshipRequest request);
+    List<FriendshipResponse> getFriendshipRequest();
     List<FriendshipResponse> getFriendship();
 }
