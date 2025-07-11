@@ -1,0 +1,119 @@
+.friendship-container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.friendship-title {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+.friendship-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.friendship-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+
+.friendship-card:hover {
+  transform: translateY(-2px);
+}
+
+.friendship-avatar {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
+  border: 2px solid #ccc;
+}
+
+.friendship-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.friendship-info h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #222;
+}
+
+.friendship-info p {
+  margin: 3px 0 0;
+  color: #666;
+}
+
+.friendship-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  color: white;
+}
+
+.btn.accept {
+  background-color: #28a745;
+}
+
+.btn.accept:hover {
+  background-color: #218838;
+}
+
+.btn.reject {
+  background-color: #dc3545;
+}
+
+.btn.reject:hover {
+  background-color: #c82333;
+}
+
+.empty {
+  text-align: center;
+  color: #777;
+}
+
+.loading {
+  text-align: center;
+  color: #007bff;
+}
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+.fade-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+.fade-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 300ms, transform 300ms;
+}

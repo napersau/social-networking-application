@@ -36,4 +36,6 @@ export const API = {
   
   CREATE_COMMENT: "/comments/create",
   UPDATE_COMMENT: "/comments/update",
+
+  FRIENDSHIP: "/friendship",
 };

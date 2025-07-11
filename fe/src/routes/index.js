@@ -9,6 +9,7 @@ import Chat from "../pages/chat";
 import Post from "../pages/post";
 import InforUser from "../pages/inforUser";
 import PostUser from "../pages/postUser";
+import Friendship from "../pages/friendship";
 
 const Routes = [
   {
@@ -37,6 +38,7 @@ const Routes = [
           { path: "posts", element: <Post /> },
           { path: "posts/:userId", element: <PostUser /> },
           { path: "chat", element: <Chat /> },
+          { path: "friends", element: <Friendship /> },
         ],
       },
     ],
