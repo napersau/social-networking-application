@@ -14,7 +14,6 @@ import {
   Space,
   Divider,
   notification,
-  message,
   Badge,
 } from "antd";
 import {
@@ -26,12 +25,17 @@ import {
   IdcardOutlined,
   MessageOutlined,
   UserAddOutlined,
-  EditOutlined,
-  FileTextOutlined, // Thêm icon này
+  FileTextOutlined,
 } from "@ant-design/icons";
+
 import { getUserById } from "../../services/userService";
+import {
+  createFriendship,
+  createFriendshipResponse,
+  getFriendshipStatus,
+} from "../../services/friendshipService";
+
 import "./styles.css";
-import { createFriendship } from "../../services/friendshipService";
 
 const { Title, Text } = Typography;
 
@@ -39,22 +43,25 @@ function InforUser() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [friendshipStatus, setFriendshipStatus] = useState("NONE");
+
   const navigate = useNavigate();
   const { userId } = useParams();
+  const myId = localStorage.getItem("userId");
 
   useEffect(() => {
     if (!userId) {
-      setError("User ID is required");
+      setError("Thiếu ID người dùng");
       setLoading(false);
       return;
     }
     fetchUserInfo();
+    fetchFriendshipStatus();
   }, [userId]);
 
   const fetchUserInfo = async () => {
     try {
       setLoading(true);
-      setError(null);
       const response = await getUserById(userId);
       if (response?.data?.result) {
         setUserInfo(response.data.result);
@@ -63,14 +70,31 @@ function InforUser() {
       }
     } catch (err) {
       console.error("Lỗi khi tải thông tin người dùng:", err);
-      setError("Không thể tải thông tin người dùng. Vui lòng thử lại.");
+      setError("Không thể tải thông tin người dùng.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
+  const fetchFriendshipStatus = async () => {
+    try {
+      const res = await getFriendshipStatus(userId);
+      const data = res?.data?.result;
+
+      if (!data) {
+        setFriendshipStatus("NONE");
+      } else if (data.status === "ACCEPTED") {
+        setFriendshipStatus("FRIENDS");
+      } else if (data.status === "PENDING") {
+        if (data.user.id === parseInt(userId)) {
+          setFriendshipStatus("PENDING_RECEIVED");
+        } else {
+          setFriendshipStatus("PENDING_SENT");
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy trạng thái kết bạn:", err);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -82,38 +106,71 @@ function InforUser() {
     });
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   const handleViewPosts = () => {
     navigate(`/posts/${userId}`);
   };
 
   const handleAddFriend = async () => {
     try {
-      const friendshipRequest = {
+      const res = await createFriendship({
         friendId: parseInt(userId),
         status: "PENDING",
-      };
-
-      const res = await createFriendship(friendshipRequest);
+      });
 
       if (res?.data?.code === 1000) {
         notification.success({
-          message: "Gửi yêu cầu thành công",
-          description: "Yêu cầu kết bạn đã được gửi đến người dùng.",
-          placement: "topRight",
+          message: "Đã gửi lời mời kết bạn",
         });
+        setFriendshipStatus("PENDING_SENT");
       } else {
         notification.error({
-          message: "Thất bại",
-          description: res?.data?.message || "Gửi yêu cầu kết bạn thất bại.",
-          placement: "topRight",
+          message: "Lỗi gửi lời mời",
+          description: res?.data?.message || "Vui lòng thử lại.",
         });
       }
     } catch (err) {
-      console.error("Lỗi khi gửi yêu cầu kết bạn:", err);
+      console.error("Lỗi khi gửi lời mời:", err);
       notification.error({
         message: "Lỗi hệ thống",
-        description: "Có lỗi xảy ra khi gửi yêu cầu kết bạn.",
-        placement: "topRight",
+        description: "Không thể gửi lời mời.",
+      });
+    }
+  };
+
+  const handleAcceptFriend = async () => {
+    try {
+      const res = await createFriendshipResponse(myId, parseInt(userId), "ACCEPTED");
+      if (res?.data?.code === 1000) {
+        notification.success({
+          message: "Đã chấp nhận lời mời kết bạn",
+        });
+        setFriendshipStatus("FRIENDS");
+      }
+    } catch (err) {
+      console.error("Lỗi chấp nhận:", err);
+      notification.error({
+        message: "Không thể chấp nhận lời mời",
+      });
+    }
+  };
+
+  const handleRejectFriend = async () => {
+    try {
+      const res = await createFriendshipResponse(myId, parseInt(userId), "REJECTED");
+      if (res?.data?.code === 1000) {
+        notification.info({
+          message: "Đã từ chối hoặc hủy kết bạn",
+        });
+        setFriendshipStatus("NONE");
+      }
+    } catch (err) {
+      console.error("Lỗi khi từ chối/hủy:", err);
+      notification.error({
+        message: "Không thể thực hiện hành động",
       });
     }
   };
@@ -122,12 +179,8 @@ function InforUser() {
     return (
       <div className="info-user-container">
         <div className="loading-wrapper">
-          <div className="loading-content">
-            <Spin size="large" />
-            <Text className="loading-text">
-              Đang tải thông tin người dùng...
-            </Text>
-          </div>
+          <Spin size="large" />
+          <Text>Đang tải thông tin người dùng...</Text>
         </div>
       </div>
     );
@@ -136,35 +189,21 @@ function InforUser() {
   if (error) {
     return (
       <div className="info-user-container">
-        <div className="error-wrapper">
-          <Card className="error-card">
-            <div className="error-content">
-              <Alert
-                message="Oops! Có lỗi xảy ra"
-                description={error}
-                type="error"
-                showIcon
-                className="error-alert"
-              />
-              <div className="error-actions">
-                <Button
-                  onClick={handleGoBack}
-                  icon={<ArrowLeftOutlined />}
-                  className="error-button"
-                >
-                  Quay lại
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={fetchUserInfo}
-                  className="error-button"
-                >
-                  Thử lại
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
+        <Card>
+          <Alert message="Lỗi" description={error} type="error" showIcon />
+          <div style={{ marginTop: 16 }}>
+            <Button onClick={handleGoBack} icon={<ArrowLeftOutlined />}>
+              Quay lại
+            </Button>
+            <Button
+              type="primary"
+              onClick={fetchUserInfo}
+              style={{ marginLeft: 8 }}
+            >
+              Thử lại
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -176,7 +215,6 @@ function InforUser() {
           <Button
             onClick={handleGoBack}
             icon={<ArrowLeftOutlined />}
-            className="back-button"
             size="large"
           >
             Quay lại
@@ -186,7 +224,7 @@ function InforUser() {
         <Row gutter={[24, 24]} justify="center">
           <Col xs={24} sm={24} md={16} lg={14} xl={12}>
             <Card className="user-profile-card">
-              {/* Header Section */}
+              {/* Header */}
               <div className="user-header-section">
                 <div className="avatar-wrapper">
                   <Badge
@@ -198,144 +236,96 @@ function InforUser() {
                       src={userInfo?.avatarUrl}
                       icon={<UserOutlined />}
                       size={140}
-                      className="user-avatar"
                     />
                   </Badge>
                 </div>
-
                 <div className="user-info-header">
-                  <Title level={1} className="user-display-name">
-                    {`${userInfo?.firstName || ""} ${
-                      userInfo?.lastName || ""
-                    }`.trim() || "Người dùng"}
+                  <Title level={2}>
+                    {`${userInfo?.firstName || ""} ${userInfo?.lastName || ""}`}
                   </Title>
-                  <div className="user-status-wrapper">
-                    <Tag
-                      color={userInfo?.isActive ? "success" : "error"}
-                      className="status-tag"
-                    >
-                      {userInfo?.isActive
-                        ? "🟢 Đang hoạt động"
-                        : "🔴 Không hoạt động"}
-                    </Tag>
-                  </div>
+                  <Tag color={userInfo?.isActive ? "green" : "red"}>
+                    {userInfo?.isActive ? "Đang hoạt động" : "Không hoạt động"}
+                  </Tag>
                 </div>
               </div>
 
-              <Divider className="section-divider" />
+              <Divider />
 
-              {/* Details Section */}
-              <div className="details-section">
-                <Title level={3} className="section-title">
-                  Thông tin chi tiết
-                </Title>
+              {/* Info */}
+              <Descriptions bordered column={1}>
+                <Descriptions.Item label="ID người dùng">
+                  <Text code>{userInfo?.id}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Email">
+                  {userInfo?.email || "Chưa cập nhật"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Số điện thoại">
+                  {userInfo?.phone || "Chưa cập nhật"}
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tham gia">
+                  {formatDate(userInfo?.createdAt)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Cập nhật gần nhất">
+                  {formatDate(userInfo?.updatedAt)}
+                </Descriptions.Item>
+              </Descriptions>
 
-                <Descriptions
-                  bordered
-                  column={1}
-                  className="user-descriptions"
-                  styles={{
-                    label: {
-                      fontWeight: 600,
-                    },
-                  }}
+              <Divider />
+
+              {/* Actions */}
+              <Space size="middle" wrap>
+                <Button icon={<MessageOutlined />} type="primary" size="large">
+                  Nhắn tin
+                </Button>
+                <Button
+                  icon={<FileTextOutlined />}
+                  size="large"
+                  onClick={handleViewPosts}
                 >
-                  <Descriptions.Item
-                    label={
-                      <Space className="description-label">
-                        <IdcardOutlined />
-                        ID người dùng
-                      </Space>
-                    }
-                  >
-                    <Text code className="user-id">
-                      {userInfo?.id}
-                    </Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <Space className="description-label">
-                        <MailOutlined />
-                        Địa chỉ email
-                      </Space>
-                    }
-                  >
-                    <Text className="contact-info">
-                      {userInfo?.email || "Chưa cập nhật"}
-                    </Text>
-                  </Descriptions.Item>
+                  Bài viết
+                </Button>
 
-                  <Descriptions.Item
-                    label={
-                      <Space className="description-label">
-                        <PhoneOutlined />
-                        Số điện thoại
-                      </Space>
-                    }
-                  >
-                    <Text className="contact-info">
-                      {userInfo?.phone || "Chưa cập nhật"}
-                    </Text>
-                  </Descriptions.Item>
-
-                  <Descriptions.Item
-                    label={
-                      <Space className="description-label">
-                        <CalendarOutlined />
-                        Ngày tham gia
-                      </Space>
-                    }
-                  >
-                    <Text>{formatDate(userInfo?.createdAt)}</Text>
-                  </Descriptions.Item>
-
-                  <Descriptions.Item
-                    label={
-                      <Space className="description-label">
-                        <CalendarOutlined />
-                        Cập nhật gần nhất
-                      </Space>
-                    }
-                  >
-                    <Text>{formatDate(userInfo?.updatedAt)}</Text>
-                  </Descriptions.Item>
-                </Descriptions>
-              </div>
-
-              <Divider className="section-divider" />
-
-              {/* Actions Section */}
-              <div className="actions-section">
-                <Title level={4} className="actions-title">
-                  Hành động
-                </Title>
-                <Space size="middle" wrap className="action-buttons">
-                  <Button
-                    type="primary"
-                    icon={<MessageOutlined />}
-                    size="large"
-                    className="primary-action-btn"
-                  >
-                    Gửi tin nhắn
-                  </Button>
-                  <Button
-                    icon={<FileTextOutlined />}
-                    size="large"
-                    className="posts-action-btn"
-                    onClick={handleViewPosts}
-                  >
-                    Bài viết
-                  </Button>
+                {/* Dynamic button theo trạng thái bạn bè */}
+                {friendshipStatus === "NONE" && (
                   <Button
                     icon={<UserAddOutlined />}
                     size="large"
-                    className="secondary-action-btn"
                     onClick={handleAddFriend}
                   >
-                    Thêm bạn bè
+                    Kết bạn
                   </Button>
-                </Space>
-              </div>
+                )}
+
+                {friendshipStatus === "PENDING_SENT" && (
+                  <Button danger size="large" onClick={handleRejectFriend}>
+                    Hủy lời mời
+                  </Button>
+                )}
+
+                {friendshipStatus === "PENDING_RECEIVED" && (
+                  <>
+                    <Button
+                      type="primary"
+                      size="large"
+                      onClick={handleAcceptFriend}
+                    >
+                      Chấp nhận
+                    </Button>
+                    <Button danger size="large" onClick={handleRejectFriend}>
+                      Từ chối
+                    </Button>
+                  </>
+                )}
+
+                {friendshipStatus === "FRIENDS" && (
+                  <Space size="middle">
+                    <Tag color="blue">Bạn bè</Tag>
+                    <Button danger size="large" onClick={handleRejectFriend}>
+                      Hủy kết bạn
+                    </Button>
+                  </Space>
+                )}
+              </Space>
             </Card>
           </Col>
         </Row>
