@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.service.impl;
 
+import Social.Media.Backend.Application.dto.request.NotificationRequest;
 import Social.Media.Backend.Application.dto.response.NotificationResponse;
 import Social.Media.Backend.Application.entity.Notification;
 import Social.Media.Backend.Application.entity.User;
@@ -13,6 +14,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 
@@ -32,5 +34,14 @@ public class NotificationServiceImpl implements NotificationService {
 
         List<Notification> notifications = notificationRepository.findAllByUserId(user.getId());
         return notifications.stream().map(notification -> modelMapper.map(notification, NotificationResponse.class)).toList();
+    }
+
+    @Override
+    public NotificationResponse createNotification(NotificationRequest request) {
+        Notification notification = modelMapper.map(request, Notification.class);
+        notification.setCreatedAt(Instant.now());
+        notification.setIsRead(false);
+        notificationRepository.save(notification);
+        return modelMapper.map(notification, NotificationResponse.class) ;
     }
 }
