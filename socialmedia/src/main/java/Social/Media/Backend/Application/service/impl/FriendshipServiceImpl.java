@@ -79,4 +79,15 @@ public class FriendshipServiceImpl implements FriendshipService {
         return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
     }
 
+    @Override
+    public FriendshipResponse getFriendshipStatus(Long userId) {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Friendship friendship = friendshipRepository.findByUserIdAndFriendId(user.getId(), userId);
+
+        return modelMapper.map(friendship, FriendshipResponse.class);
+    }
+
 }

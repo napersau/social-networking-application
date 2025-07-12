@@ -51,4 +51,13 @@ public class FriendshipController {
                 .result(friendshipResponseList)
                 .build();
     }
+
+    @GetMapping("/status")
+    ApiResponse<FriendshipResponse> getFriendshipStatus(@RequestParam("userId") Long userId) {
+        FriendshipResponse response = friendshipService.getFriendshipStatus(userId);
+        return ApiResponse.<FriendshipResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
 }

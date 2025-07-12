@@ -11,4 +11,5 @@ public interface FriendshipService {
     FriendshipResponse respondToFriendRequest(FriendshipRequest request);
     List<FriendshipResponse> getFriendshipRequest();
     List<FriendshipResponse> getFriendship();
+    FriendshipResponse getFriendshipStatus(Long userId);
 }
