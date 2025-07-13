@@ -47,6 +47,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationResponse updateNotification(Long id) {
-        return null;
+        Notification notification = notificationRepository.findById(id).orElseThrow(RuntimeException::new);
+        notification.setIsRead(true);
+        notificationRepository.save(notification);
+        return modelMapper.map(notification, NotificationResponse.class);
+    }
+
+    @Override
+    public void deleteNotification(Long id) {
+        notificationRepository.deleteById(id);
     }
 }

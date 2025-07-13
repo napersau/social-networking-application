@@ -44,4 +44,13 @@ public class NotificationController {
                 .build();
     }
 
+    @DeleteMapping("/{id}")
+    ApiResponse<NotificationResponse> deleteNotification(@PathVariable Long id){
+        NotificationResponse response = notificationService.updateNotification(id);
+        return ApiResponse.<NotificationResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
 }
