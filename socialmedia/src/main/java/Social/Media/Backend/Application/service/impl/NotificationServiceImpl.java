@@ -44,4 +44,9 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
         return modelMapper.map(notification, NotificationResponse.class) ;
     }
+
+    @Override
+    public NotificationResponse updateNotification(Long id) {
+        return null;
+    }
 }
