@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import "./styles.css";
 import {
   getFriendsRequests,
   getMyFriends,
   createFriendshipResponse,
 } from "../../services/friendshipService";
+import { createNotification } from "../../services/notificationService"; // ✅ Import thêm
 import { CSSTransition, TransitionGroup } from "react-transition-group";
 
 const Friendship = () => {
@@ -42,9 +44,22 @@ const Friendship = () => {
     try {
       const status = accept ? "ACCEPTED" : "REJECTED";
       await createFriendshipResponse(friendId, userId, status);
+
+      await createNotification({
+        userId: userId,
+        senderId: myId,
+        title: "Phản hồi lời mời kết bạn",
+        content: accept
+          ? "Lời mời kết bạn của bạn đã được chấp nhận."
+          : "Lời mời kết bạn của bạn đã bị từ chối.",
+        actionUrl: `/profile/${myId}`,
+        isRead: false,
+      });
+
       alert(accept ? "Đã chấp nhận lời mời" : "Đã từ chối lời mời");
+
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
-      if (accept) fetchMyFriends(); // cập nhật danh sách bạn bè nếu chấp nhận
+      if (accept) fetchMyFriends();
     } catch (error) {
       alert("Lỗi khi xử lý yêu cầu");
     }
@@ -67,17 +82,22 @@ const Friendship = () => {
           {requests.map((item) => (
             <CSSTransition key={item.id} timeout={300} classNames="fade">
               <li className="friendship-card">
-                <img
-                  src={item.user.avatarUrl || "/default-avatar.png"}
-                  alt={item.user.username}
-                  className="friendship-avatar"
-                />
-                <div className="friendship-info">
-                  <h3>
-                    {item.user.lastName} {item.user.firstName}
-                  </h3>
-                  <p>Người dùng</p>
-                </div>
+                <Link
+                  to={`/profile/${item.user.id}`}
+                  className="friendship-link"
+                >
+                  <img
+                    src={item.user.avatarUrl || "/default-avatar.png"}
+                    alt={item.user.username}
+                    className="friendship-avatar"
+                  />
+                  <div className="friendship-info">
+                    <h3>
+                      {item.user.lastName} {item.user.firstName}
+                    </h3>
+                    <p>Người dùng</p>
+                  </div>
+                </Link>
                 <div className="friendship-actions">
                   <button
                     className="btn accept"
@@ -118,17 +138,19 @@ const Friendship = () => {
             const other = f.user.id === myId ? f.friend : f.user;
             return (
               <li key={other.id} className="friendship-card">
-                <img
-                  src={other.avatarUrl || "/default-avatar.png"}
-                  alt={other.username}
-                  className="friendship-avatar"
-                />
-                <div className="friendship-info">
-                  <h3>
-                    {other.lastName} {other.firstName}
-                  </h3>
-                  <p>Người dùng</p>
-                </div>
+                <Link to={`/profile/${other.id}`} className="friendship-link">
+                  <img
+                    src={other.avatarUrl || "/default-avatar.png"}
+                    alt={other.username}
+                    className="friendship-avatar"
+                  />
+                  <div className="friendship-info">
+                    <h3>
+                      {other.lastName} {other.firstName}
+                    </h3>
+                    <p>Người dùng</p>
+                  </div>
+                </Link>
               </li>
             );
           })}

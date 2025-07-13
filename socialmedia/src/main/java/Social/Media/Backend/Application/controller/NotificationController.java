@@ -27,7 +27,7 @@ public class NotificationController {
     }
 
     @PostMapping
-    ApiResponse<NotificationResponse> createNotification (NotificationRequest request){
+    ApiResponse<NotificationResponse> createNotification(@RequestBody NotificationRequest request){
         NotificationResponse response = notificationService.createNotification(request);
         return ApiResponse.<NotificationResponse>builder()
                 .code(1000)

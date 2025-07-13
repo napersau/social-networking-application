@@ -392,3 +392,24 @@
   backdrop-filter: blur(10px);
   pointer-events: none;
 }
+
+.notification-dropdown {
+  width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+}
+
+.notification-item.unread {
+  background-color: #f6f6f6;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.notification-item.read {
+  background-color: #fff;
+  cursor: pointer;
+}

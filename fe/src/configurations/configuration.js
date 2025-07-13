@@ -38,4 +38,5 @@ export const API = {
   UPDATE_COMMENT: "/comments/update",
 
   FRIENDSHIP: "/friendship",
+  NOTIFICATIONS: "/notifications",
 };

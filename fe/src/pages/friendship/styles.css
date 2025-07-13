@@ -122,3 +122,14 @@
   margin-top: 40px;
   font-size: 20px;
 }
+
+.friendship-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+.friendship-link:hover {
+  opacity: 0.85;
+}
+

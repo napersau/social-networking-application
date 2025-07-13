@@ -1,6 +1,15 @@
-
-import { useState, useEffect } from "react"
-import { Layout, Menu, Button, Drawer, Space, Avatar, Dropdown, Typography, Badge } from "antd"
+import { useState, useEffect } from "react";
+import {
+  Layout,
+  Menu,
+  Button,
+  Drawer,
+  Space,
+  Avatar,
+  Dropdown,
+  Typography,
+  Badge,
+} from "antd";
 import {
   MenuOutlined,
   HomeOutlined,
@@ -8,80 +17,118 @@ import {
   TeamOutlined,
   BellOutlined,
   MessageOutlined,
-  SearchOutlined,
   LogoutOutlined,
   InfoCircleOutlined,
-} from "@ant-design/icons"
-import { useNavigate, useLocation } from "react-router-dom"
-import "./styles.css"
+} from "@ant-design/icons";
+import { useNavigate, useLocation } from "react-router-dom";
+import "./styles.css";
+import {
+  getNotifications,
+  updateNotification,
+  deleteNotification,
+} from "../../services/notificationService";
+import { EllipsisOutlined } from "@ant-design/icons";
+import { Dropdown as AntdDropdown, List, Spin, message } from "antd";
 
-const { Header: AntHeader } = Layout
-const { Text } = Typography
+const { Header: AntHeader } = Layout;
+const { Text } = Typography;
 
 function Header() {
-  const [drawerVisible, setDrawerVisible] = useState(false)
-  const [user, setUser] = useState({ role: "USER" })
-  const [activeKey, setActiveKey] = useState("home")
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [user, setUser] = useState({ role: "USER" });
+  const [activeKey, setActiveKey] = useState("home");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     if (token) {
       try {
-        const payload = JSON.parse(atob(token.split(".")[1]))
-        const role = payload.scope?.name || "USER"
-        setUser({ role })
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const role = payload.scope?.name || "USER";
+        setUser({ role });
       } catch (error) {
-        console.error("Lỗi khi giải mã token:", error)
+        console.error("Lỗi khi giải mã token:", error);
       }
     }
-  }, [])
+  }, []);
 
   // Cập nhật active key dựa trên route hiện tại
   useEffect(() => {
-    const path = location.pathname
+    const path = location.pathname;
     if (path === "/home" || path === "/") {
-      setActiveKey("home")
+      setActiveKey("home");
     } else if (path === "/posts") {
-      setActiveKey("posts")
+      setActiveKey("posts");
     } else if (path === "/friends") {
-      setActiveKey("friends")
+      setActiveKey("friends");
     } else if (path === "/chat") {
-      setActiveKey("messages")
-    } else if (path === "/notifications") {
-      setActiveKey("notifications")
+      setActiveKey("messages");
     }
-  }, [location.pathname])
+  }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    navigate("/login")
-  }
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  const loadNotifications = async () => {
+    try {
+      setLoadingNotifications(true);
+      const res = await getNotifications();
+      setNotifications(res.data.result || []);
+    } catch (error) {
+      message.error("Không thể tải thông báo");
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleNotificationClick = async (id, actionUrl) => {
+    try {
+      await updateNotification(id);
+      loadNotifications(); // refresh lại danh sách
+      if (actionUrl) {
+        navigate(actionUrl); // hoặc window.location.href = actionUrl;
+      }
+    } catch (error) {
+      message.error("Không thể cập nhật trạng thái thông báo");
+    }
+  };
+
+  const handleDeleteNotification = async (id) => {
+    try {
+      await deleteNotification(id);
+      message.success("Đã xoá thông báo");
+      loadNotifications();
+    } catch (error) {
+      message.error("Xoá thông báo thất bại");
+    }
+  };
 
   const handleMenuClick = ({ key }) => {
-    setActiveKey(key)
+    setActiveKey(key);
 
     if (key === "logout") {
-      handleLogout()
+      handleLogout();
     } else if (key === "admin" && user.role === "ADMIN") {
-      navigate("/admin")
+      navigate("/admin");
     } else if (key === "profile") {
-      navigate("/profile")
+      navigate("/profile");
     } else if (key === "messages") {
-      navigate("/chat")
+      navigate("/chat");
     } else if (key === "home") {
-      navigate("/home")
+      navigate("/home");
     } else if (key === "friends") {
-      navigate("/friends")
-    } else if (key === "notifications") {
-      navigate("/notifications")
+      navigate("/friends");
     } else if (key === "posts") {
-      navigate("/posts")
+      navigate("/posts");
     }
-
-    setDrawerVisible(false)
-  }
+    setDrawerVisible(false);
+  };
 
   const userMenuItems = [
     ...(user.role === "ADMIN"
@@ -103,7 +150,7 @@ function Header() {
       icon: <LogoutOutlined />,
       label: "Đăng xuất",
     },
-  ]
+  ];
 
   const menuItems = [
     {
@@ -126,20 +173,15 @@ function Header() {
       icon: <MessageOutlined />,
       label: "Tin nhắn",
     },
-    {
-      key: "notifications",
-      icon: <BellOutlined />,
-      label: "Thông báo",
-    },
-  ]
+  ];
 
   const showDrawer = () => {
-    setDrawerVisible(true)
-  }
+    setDrawerVisible(true);
+  };
 
   const closeDrawer = () => {
-    setDrawerVisible(false)
-  }
+    setDrawerVisible(false);
+  };
 
   return (
     <AntHeader className="custom-header">
@@ -168,10 +210,69 @@ function Header() {
         {/* Actions */}
         <div className="header-actions">
           <Space size="large">
-            <Button type="text" icon={<SearchOutlined />} className="action-button search-button" size="large" />
-            <Badge count={3} size="small" className="notification-badge">
-              <Button type="text" icon={<BellOutlined />} className="action-button notification-button" size="large" />
-            </Badge>
+            <AntdDropdown
+              trigger={["click"]}
+              overlay={
+                <div className="notification-dropdown">
+                  <Spin spinning={loadingNotifications}>
+                    <List
+                      dataSource={notifications}
+                      locale={{ emptyText: "Không có thông báo" }}
+                      renderItem={(item) => (
+                        <List.Item
+                          className={
+                            item.isRead
+                              ? "notification-item read"
+                              : "notification-item unread"
+                          }
+                          onClick={() =>
+                            handleNotificationClick(item.id, item.actionUrl)
+                          }
+                          actions={[
+                            <AntdDropdown
+                              trigger={["click"]}
+                              overlay={{
+                                items: [
+                                  {
+                                    key: "delete",
+                                    label: "Xoá",
+                                    onClick: () =>
+                                      handleDeleteNotification(item.id),
+                                  },
+                                ],
+                              }}
+                            >
+                              <EllipsisOutlined />
+                            </AntdDropdown>,
+                          ]}
+                        >
+                          <List.Item.Meta
+                            title={item.title}
+                            description={item.content}
+                          />
+                          <div style={{ fontSize: "12px", color: "#999" }}>
+                            {new Date(item.createdAt).toLocaleString("vi-VN")}
+                          </div>
+                        </List.Item>
+                      )}
+                    />
+                  </Spin>
+                </div>
+              }
+            >
+              <Badge
+                count={notifications.filter((n) => !n.isRead).length}
+                size="small"
+              >
+                <Button
+                  type="text"
+                  icon={<BellOutlined />}
+                  className="action-button notification-button"
+                  size="large"
+                  onClick={loadNotifications}
+                />
+              </Badge>
+            </AntdDropdown>
 
             {/* Avatar Dropdown */}
             <Dropdown
@@ -181,7 +282,11 @@ function Header() {
               overlayClassName="user-dropdown"
             >
               <div className="avatar-container">
-                <Avatar size="large" icon={<UserOutlined />} className="avatar-icon" />
+                <Avatar
+                  size="large"
+                  icon={<UserOutlined />}
+                  className="avatar-icon"
+                />
                 <div className="user-info">
                   <Text className="user-role">{user.role}</Text>
                 </div>
@@ -231,7 +336,11 @@ function Header() {
 
         <div className="drawer-footer">
           <div className="avatar-container mobile-avatar">
-            <Avatar size="large" icon={<UserOutlined />} className="avatar-icon" />
+            <Avatar
+              size="large"
+              icon={<UserOutlined />}
+              className="avatar-icon"
+            />
             <div className="user-info">
               <Text className="user-role">{user.role}</Text>
             </div>
@@ -239,11 +348,21 @@ function Header() {
 
           <div className="user-actions">
             {user.role === "ADMIN" && (
-              <Button type="text" icon={<InfoCircleOutlined />} onClick={() => handleMenuClick({ key: "admin" })} block>
+              <Button
+                type="text"
+                icon={<InfoCircleOutlined />}
+                onClick={() => handleMenuClick({ key: "admin" })}
+                block
+              >
                 Trang quản trị
               </Button>
             )}
-            <Button type="text" icon={<UserOutlined />} onClick={() => handleMenuClick({ key: "profile" })} block>
+            <Button
+              type="text"
+              icon={<UserOutlined />}
+              onClick={() => handleMenuClick({ key: "profile" })}
+              block
+            >
               Thông tin cá nhân
             </Button>
             <Button
@@ -259,7 +378,7 @@ function Header() {
         </div>
       </Drawer>
     </AntHeader>
-  )
+  );
 }
 
-export default Header
+export default Header;

@@ -9,6 +9,7 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.NotificationRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.NotificationService;
+import com.corundumstudio.socketio.SocketIOServer;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final SocketIOServer socketIOServer;
 
     @Override
     public List<NotificationResponse> getNotifications() {
@@ -38,11 +40,28 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationResponse createNotification(NotificationRequest request) {
-        Notification notification = modelMapper.map(request, Notification.class);
-        notification.setCreatedAt(Instant.now());
-        notification.setIsRead(false);
+        User sender = userRepository.findById(request.getSenderId()).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = userRepository.findById(request.getUserId()).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Notification notification = Notification.builder()
+                .sender(sender)
+                .user(user)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .createdAt(Instant.now())
+                .isRead(false)
+                .build();
         notificationRepository.save(notification);
-        return modelMapper.map(notification, NotificationResponse.class) ;
+
+        NotificationResponse response = modelMapper.map(notification, NotificationResponse.class);
+
+        socketIOServer.getRoomOperations(String.valueOf(user.getId()))
+                .sendEvent("notification", response); // Tên sự kiện: "notification"
+        
+        return response ;
     }
 
     @Override
