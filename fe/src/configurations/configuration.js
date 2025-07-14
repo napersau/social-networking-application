@@ -16,6 +16,8 @@ export const API = {
   GET_USER: (userId) => `/users/${userId}`,
   SEARCH_USER: "/users/search",
   GET_ALL_USERS: "/users",
+  TOGGLE_ACTIVE_USER: "/users/update",
+
   SEARCH_USER_BY_FULLNAME: "/users/search-user",
   MY_CONVERSATIONS: "/chat/conversations/my-conversations",
   CREATE_CONVERSATION: "/chat/conversations/create",

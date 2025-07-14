@@ -21,74 +21,83 @@ public class UserController {
 
     @PostMapping
     ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreateRequest userCreateRequest) {
-        UserResponse user = userService.createUser(userCreateRequest);
+        UserResponse response = userService.createUser(userCreateRequest);
         return ApiResponse.<UserResponse>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @PostMapping("/search")
     ApiResponse<List<UserResponse>> searchUsers(@RequestBody @Valid UserSearch userSearch) {
-        List<UserResponse> user = userService.searchUsers(userSearch.getUsername());
+        List<UserResponse> response = userService.searchUsers(userSearch.getUsername());
         return ApiResponse.<List<UserResponse>>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @PostMapping("/search-user")
     ApiResponse<List<UserResponse>> searchUsersByFullName(@RequestBody @Valid UserSearch userSearch) {
-        List<UserResponse> user = userService.searchUsersByFullName(userSearch.getFullName());
+        List<UserResponse> response = userService.searchUsersByFullName(userSearch.getFullName());
         return ApiResponse.<List<UserResponse>>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @GetMapping
     ApiResponse<List<UserResponse>> getUsers() {
-        List<UserResponse> users = userService.getUsers();
+        List<UserResponse> response = userService.getUsers();
         return ApiResponse.<List<UserResponse>>builder()
                 .code(1000)
-                .result(users)
+                .result(response)
                 .build();
     }
 
 
     @PutMapping("/profile")
     ApiResponse<UserResponse> updateUser(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
-        UserResponse user = userService.updateUser(userUpdateRequest);
+        UserResponse response = userService.updateUser(userUpdateRequest);
         return ApiResponse.<UserResponse>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @PutMapping("/password")
     ApiResponse<UserResponse> changePassword(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
-        UserResponse user = userService.changePassword(userUpdateRequest);
+        UserResponse response = userService.changePassword(userUpdateRequest);
         return ApiResponse.<UserResponse>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @GetMapping("/my-info")
     ApiResponse<UserResponse> getMyInfo() {
-        UserResponse user = userService.getMyInfo();
+        UserResponse response = userService.getMyInfo();
         return ApiResponse.<UserResponse>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
                 .build();
     }
 
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUserById(@PathVariable("userId") Long userId) {
-        UserResponse user = userService.getUserById (userId);
+        UserResponse response = userService.getUserById (userId);
         return ApiResponse.<UserResponse>builder()
                 .code(1000)
-                .result(user)
+                .result(response)
+                .build();
+    }
+
+    @PostMapping("/update/{userId}")
+    ApiResponse<UserResponse> updateActiveUser(@PathVariable Long userId){
+        UserResponse response = userService.updateActiveUser(userId);
+        return ApiResponse.<UserResponse>builder()
+                .code(1000)
+                .result(response)
                 .build();
     }
 }

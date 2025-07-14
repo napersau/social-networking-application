@@ -122,4 +122,12 @@ public class UserServiceImpl implements UserService {
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return modelMapper.map(user, UserResponse.class);
     }
+
+    @Override
+    public UserResponse updateActiveUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setIsActive(!user.getIsActive());
+        return modelMapper.map(user, UserResponse.class);
+    }
 }

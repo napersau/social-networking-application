@@ -75,3 +75,12 @@ export const getAllUsers = async () => {
   });
 };
 
+export const toggleActiveUser = async (userId) => {
+  return await httpClient.post(`${API.TOGGLE_ACTIVE_USER}/${userId}`, null, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};
+

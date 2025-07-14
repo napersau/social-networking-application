@@ -1,0 +1,9 @@
+.admin-home-container {
+  padding: 24px;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.admin-user-table {
+  margin-top: 20px;
+}
