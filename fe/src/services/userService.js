@@ -65,3 +65,13 @@ export const getUserById = async (userId) => {
     }
   );
 };
+
+export const getAllUsers = async () => {
+  return await httpClient.get(API.GET_ALL_USERS, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};
+

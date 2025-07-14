@@ -2,6 +2,7 @@ import Home from "../pages/home";
 import Login from "../pages/login";
 import Layout from "../layout";
 import PrivateRoutes from "../components/PrivateRoutes";
+import PrivateRoutesAdmin from "../components/privateRoutesAdmin"
 import Register from "../pages/register";
 import Profile from "../pages/profile";
 import UpdateProfile from "../pages/updateProfile";
@@ -10,6 +11,7 @@ import Post from "../pages/post";
 import InforUser from "../pages/inforUser";
 import PostUser from "../pages/postUser";
 import Friendship from "../pages/friendship";
+import AdminHome from "../pages/adminHome";
 
 const Routes = [
   {
@@ -39,6 +41,14 @@ const Routes = [
           { path: "posts/:userId", element: <PostUser /> },
           { path: "chat", element: <Chat /> },
           { path: "friends", element: <Friendship /> },
+        ],
+      },
+
+      // Admin-only routes
+      {
+        element: <PrivateRoutesAdmin />,
+        children: [
+          { path: "admin", element: <AdminHome /> },
         ],
       },
     ],
