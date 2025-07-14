@@ -70,6 +70,7 @@ const Friendship = () => {
     fetchMyFriends();
   }, []);
 
+
   return (
     <div className="friendship-container">
       <h2 className="friendship-title">Lời mời kết bạn</h2>
@@ -135,7 +136,7 @@ const Friendship = () => {
       ) : (
         <ul className="friendship-list">
           {friends.map((f) => {
-            const other = f.user.id === myId ? f.friend : f.user;
+            const other = f.user.id == myId ? f.friend : f.user;
             return (
               <li key={other.id} className="friendship-card">
                 <Link to={`/profile/${other.id}`} className="friendship-link">

@@ -9,6 +9,9 @@ import {
   Dropdown,
   Typography,
   Badge,
+  List,
+  Spin,
+  message,
 } from "antd";
 import {
   MenuOutlined,
@@ -19,6 +22,7 @@ import {
   MessageOutlined,
   LogoutOutlined,
   InfoCircleOutlined,
+  EllipsisOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./styles.css";
@@ -27,8 +31,7 @@ import {
   updateNotification,
   deleteNotification,
 } from "../../services/notificationService";
-import { EllipsisOutlined } from "@ant-design/icons";
-import { Dropdown as AntdDropdown, List, Spin, message } from "antd";
+import { io } from "socket.io-client";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -37,49 +40,19 @@ function Header() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [user, setUser] = useState({ role: "USER" });
   const [activeKey, setActiveKey] = useState("home");
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const role = payload.scope?.name || "USER";
-        setUser({ role });
-      } catch (error) {
-        console.error("Lỗi khi giải mã token:", error);
-      }
-    }
-  }, []);
-
-  // Cập nhật active key dựa trên route hiện tại
-  useEffect(() => {
-    const path = location.pathname;
-    if (path === "/home" || path === "/") {
-      setActiveKey("home");
-    } else if (path === "/posts") {
-      setActiveKey("posts");
-    } else if (path === "/friends") {
-      setActiveKey("friends");
-    } else if (path === "/chat") {
-      setActiveKey("messages");
-    }
-  }, [location.pathname]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const loadNotifications = async () => {
     try {
       setLoadingNotifications(true);
       const res = await getNotifications();
       setNotifications(res.data.result || []);
+      setHasNewNotification(false);
     } catch (error) {
       message.error("Không thể tải thông báo");
     } finally {
@@ -87,13 +60,53 @@ function Header() {
     }
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const role = payload.scope?.name || "USER";
+        const userId = payload.sub;
+        setUser({ role });
+
+        const socket = io("http://localhost:9092", {
+          transports: ["websocket"],
+        });
+
+        socket.emit("join", userId);
+
+        socket.on("notification", (newNotification) => {
+          setNotifications((prev) => [newNotification, ...prev]);
+          setHasNewNotification(true);
+        });
+
+        loadNotifications();
+
+        return () => socket.disconnect();
+      } catch (error) {
+        console.error("Lỗi khi giải mã token:", error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === "/home" || path === "/") setActiveKey("home");
+    else if (path === "/posts") setActiveKey("posts");
+    else if (path === "/friends") setActiveKey("friends");
+    else if (path === "/chat") setActiveKey("messages");
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   const handleNotificationClick = async (id, actionUrl) => {
     try {
       await updateNotification(id);
-      loadNotifications(); // refresh lại danh sách
-      if (actionUrl) {
-        navigate(actionUrl); // hoặc window.location.href = actionUrl;
-      }
+      loadNotifications();
+      if (actionUrl) navigate(actionUrl);
     } catch (error) {
       message.error("Không thể cập nhật trạng thái thông báo");
     }
@@ -111,22 +124,13 @@ function Header() {
 
   const handleMenuClick = ({ key }) => {
     setActiveKey(key);
-
-    if (key === "logout") {
-      handleLogout();
-    } else if (key === "admin" && user.role === "ADMIN") {
-      navigate("/admin");
-    } else if (key === "profile") {
-      navigate("/profile");
-    } else if (key === "messages") {
-      navigate("/chat");
-    } else if (key === "home") {
-      navigate("/home");
-    } else if (key === "friends") {
-      navigate("/friends");
-    } else if (key === "posts") {
-      navigate("/posts");
-    }
+    if (key === "logout") handleLogout();
+    else if (key === "admin" && user.role === "ADMIN") navigate("/admin");
+    else if (key === "profile") navigate("/profile");
+    else if (key === "messages") navigate("/chat");
+    else if (key === "home") navigate("/home");
+    else if (key === "friends") navigate("/friends");
+    else if (key === "posts") navigate("/posts");
     setDrawerVisible(false);
   };
 
@@ -175,18 +179,9 @@ function Header() {
     },
   ];
 
-  const showDrawer = () => {
-    setDrawerVisible(true);
-  };
-
-  const closeDrawer = () => {
-    setDrawerVisible(false);
-  };
-
   return (
     <AntHeader className="custom-header">
       <div className="header-content">
-        {/* Logo */}
         <div className="logo">
           <img
             src="https://res.cloudinary.com/dif55ggpc/image/upload/v1751630179/pngtree-sleeping-capybara-clipart-icon-hand-drawn-png-image_16394362_ilfxxz.avif"
@@ -196,7 +191,6 @@ function Header() {
           />
         </div>
 
-        {/* Menu desktop */}
         <div className="desktop-menu">
           <Menu
             mode="horizontal"
@@ -207,12 +201,11 @@ function Header() {
           />
         </div>
 
-        {/* Actions */}
         <div className="header-actions">
           <Space size="large">
-            <AntdDropdown
+            <Dropdown
               trigger={["click"]}
-              overlay={
+              popupRender={() => (
                 <div className="notification-dropdown">
                   <Spin spinning={loadingNotifications}>
                     <List
@@ -229,9 +222,9 @@ function Header() {
                             handleNotificationClick(item.id, item.actionUrl)
                           }
                           actions={[
-                            <AntdDropdown
+                            <Dropdown
                               trigger={["click"]}
-                              overlay={{
+                              menu={{
                                 items: [
                                   {
                                     key: "delete",
@@ -243,11 +236,27 @@ function Header() {
                               }}
                             >
                               <EllipsisOutlined />
-                            </AntdDropdown>,
+                            </Dropdown>,
                           ]}
                         >
                           <List.Item.Meta
-                            title={item.title}
+                            avatar={
+                              <Avatar
+                                style={{ backgroundColor: "#87d068" }}
+                                src={item.sender.avatarUrl}
+                                icon={<UserOutlined />}
+                              />
+                            }
+                            title={
+                              <>
+                                <span style={{ fontWeight: 500 }}>
+                                  {item.sender.firstName && item.sender.lastName
+                                    ? `${item.sender.firstName} ${item.sender.lastName}`
+                                    : item.sender.username}
+                                </span>
+                                <div>{item.title}</div>
+                              </>
+                            }
                             description={item.content}
                           />
                           <div style={{ fontSize: "12px", color: "#999" }}>
@@ -258,7 +267,7 @@ function Header() {
                     />
                   </Spin>
                 </div>
-              }
+              )}
             >
               <Badge
                 count={notifications.filter((n) => !n.isRead).length}
@@ -267,14 +276,15 @@ function Header() {
                 <Button
                   type="text"
                   icon={<BellOutlined />}
-                  className="action-button notification-button"
+                  className={`action-button notification-button ${
+                    hasNewNotification ? "shake" : ""
+                  }`}
                   size="large"
                   onClick={loadNotifications}
                 />
               </Badge>
-            </AntdDropdown>
+            </Dropdown>
 
-            {/* Avatar Dropdown */}
             <Dropdown
               menu={{ items: userMenuItems, onClick: handleMenuClick }}
               placement="bottomRight"
@@ -293,19 +303,17 @@ function Header() {
               </div>
             </Dropdown>
 
-            {/* Mobile menu toggle */}
             <Button
               type="text"
               icon={<MenuOutlined />}
               className="mobile-menu-button"
-              onClick={showDrawer}
+              onClick={() => setDrawerVisible(true)}
               size="large"
             />
           </Space>
         </div>
       </div>
 
-      {/* Drawer mobile */}
       <Drawer
         title={
           <div className="drawer-header">
@@ -321,7 +329,7 @@ function Header() {
           </div>
         }
         placement="right"
-        onClose={closeDrawer}
+        onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
         width={300}
         className="mobile-drawer"

@@ -60,7 +60,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         socketIOServer.getRoomOperations(String.valueOf(user.getId()))
                 .sendEvent("notification", response); // Tên sự kiện: "notification"
-        
+
         return response ;
     }
 

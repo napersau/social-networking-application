@@ -48,9 +48,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.PUT,PUBLIC_ENDPOINTS).permitAll()
 
                                 // User
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/password", "/api/v1/users/profile").hasAnyRole("USER","ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/v1/users/my-info").hasAnyRole("USER","ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/api/v1/users/search").hasAnyRole("USER","ADMIN")
+                                .requestMatchers( "/api/v1/users/**").hasAnyRole("USER","ADMIN")
+                                .requestMatchers(HttpMethod.GET ,"/api/v1/users").hasRole("ADMIN")
                                 // Chat
                                 .requestMatchers( "/api/v1/users/chat/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/ws/**").permitAll()
@@ -69,6 +68,8 @@ public class SecurityConfig {
 
                                 .requestMatchers( "/api/v1/friendship/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/api/v1/notifications/**").hasAnyRole("USER","ADMIN")
+
+
 
                                 .anyRequest().authenticated());
 //                .oauth2Login(oauth2 -> oauth2
