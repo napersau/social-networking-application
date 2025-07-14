@@ -32,12 +32,7 @@ function AppLayout(){
         <Layout style={{ minHeight: "100vh", padding: 0, margin: 0 }}>
             {/* Chỉ hiển thị Sider khi user là ADMIN và đang ở trang admin */}
             {userRole === "ADMIN" && isAdminPage && (
-                <Sider collapsed={collapsed} theme="light" className="sider" width={250}>
-                    <div className="header__collapse" style={{marginTop:30}} onClick={() => setCollapsed(!collapsed)}>
-                        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                    </div>
-                    {/* <MenuSider /> */}
-                </Sider>
+                <div></div>
             )}
             <Layout style={{ padding: 0, margin: 0 }}>
                 {/* Chỉ hiển thị Header khi không phải trang login */}
