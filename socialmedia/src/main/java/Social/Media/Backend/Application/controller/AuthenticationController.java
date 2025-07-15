@@ -2,6 +2,8 @@ package Social.Media.Backend.Application.controller;
 
 import Social.Media.Backend.Application.dto.request.AuthenticationRequest;
 import Social.Media.Backend.Application.dto.request.IntrospectRequest;
+import Social.Media.Backend.Application.dto.request.LogoutRequest;
+import Social.Media.Backend.Application.dto.request.RefreshRequest;
 import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.AuthenticationResponse;
 import Social.Media.Backend.Application.dto.response.IntrospectResponse;
@@ -37,6 +39,50 @@ public class AuthenticationController {
     ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request) throws ParseException, JOSEException {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
+                .code(1000)
+                .result(result)
+                .build();
+    }
+
+//    @PostMapping("/signingoogle")
+//    ApiResponse<AuthenticationResponse> loginSuccess(@AuthenticationPrincipal OAuth2User user) {
+//
+//        String email = user.getAttribute("email");
+//        String name = user.getAttribute("name");
+//
+//        // Kiểm tra xem user đã tồn tại hay chưa
+//        var existingUser = userRepository.findByUsername(email);
+//        if (existingUser.isEmpty()) {
+//            // Nếu chưa có, tạo tài khoản mới
+//            GoogleAccountDTO googleAccountDTO = new GoogleAccountDTO();
+//            googleAccountDTO.setEmail(email);
+//            googleAccountDTO.setName(name);
+//            userService.createByGoogleAccount(googleAccountDTO);
+//        }
+//
+//        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+//        authenticationRequest.setUsername(email);
+//        authenticationRequest.setPassword(email);
+//        authenticationRequest.setLoginMethod("LoginGoogle");
+//        var result = authenticationService.authenticate(authenticationRequest);
+//
+//        return ApiResponse.<AuthenticationResponse>builder()
+//                .code(1000)
+//                .result(result)
+//                .build();
+//
+//    }
+
+    @PostMapping("/logout")
+    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> reFreshToken(@RequestBody RefreshRequest request) throws ParseException, JOSEException {
+        var result = authenticationService.refreshToken(request);
+        return ApiResponse.<AuthenticationResponse>builder()
                 .code(1000)
                 .result(result)
                 .build();

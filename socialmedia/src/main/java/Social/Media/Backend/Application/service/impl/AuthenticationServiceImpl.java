@@ -2,8 +2,11 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.AuthenticationRequest;
 import Social.Media.Backend.Application.dto.request.IntrospectRequest;
+import Social.Media.Backend.Application.dto.request.LogoutRequest;
+import Social.Media.Backend.Application.dto.request.RefreshRequest;
 import Social.Media.Backend.Application.dto.response.AuthenticationResponse;
 import Social.Media.Backend.Application.dto.response.IntrospectResponse;
+import Social.Media.Backend.Application.entity.InvalidatedToken;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
@@ -52,7 +55,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated =  passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword());
-        if(!authenticated) {
+        if(!authenticated || !user.getIsActive()) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 //        if(authenticationRequest.getLoginMethod().equals("LoginNormal") && user.getGoogleAccountId() == 1) {
@@ -83,51 +86,51 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-//    @Override
-//    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-//
-//        var signToken = verifyToken(request.getToken());
-//
-//        String jit = signToken.getJWTClaimsSet().getJWTID();
-//        Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
-//
-//        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-//                .id(jit)
-//                .expiryTime(expiryTime)
-//                .build();
-//
-//        invalidatedTokenRepository.save(invalidatedToken);
-//
-//    }
-//
-//    @Override
-//    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
-//
-//        var signedJWT = verifyToken(request.getToken());
-//
-//        var jit = signedJWT.getJWTClaimsSet().getJWTID();
-//        var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-//
-//        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-//                .id(jit)
-//                .expiryTime(expiryTime)
-//                .build();
-//
-//        invalidatedTokenRepository.save(invalidatedToken);
-//
-//        var username = signedJWT.getJWTClaimsSet().getSubject();
-//
-//        var user = userRepository.findByUsername(username).orElseThrow(
-//                () -> new AppException(ErrorCode.UNAUTHENTICATED)
-//        );
-//
-//        var token = generateToken(user);
-//
-//        return AuthenticationResponse.builder()
-//                .token(token)
-//                .authenticated(true)
-//                .build();
-//    }
+    @Override
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+
+        var signToken = verifyToken(request.getToken());
+
+        String jit = signToken.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jit)
+                .expiryTime(expiryTime)
+                .build();
+
+        invalidatedTokenRepository.save(invalidatedToken);
+
+    }
+
+    @Override
+    public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
+
+        var signedJWT = verifyToken(request.getToken());
+
+        var jit = signedJWT.getJWTClaimsSet().getJWTID();
+        var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jit)
+                .expiryTime(expiryTime)
+                .build();
+
+        invalidatedTokenRepository.save(invalidatedToken);
+
+        var username = signedJWT.getJWTClaimsSet().getSubject();
+
+        var user = userRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.UNAUTHENTICATED)
+        );
+
+        var token = generateToken(user);
+
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
+    }
 
     private String generateToken(User user) {
 
