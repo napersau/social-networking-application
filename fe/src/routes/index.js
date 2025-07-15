@@ -12,6 +12,7 @@ import InforUser from "../pages/inforUser";
 import PostUser from "../pages/postUser";
 import Friendship from "../pages/friendship";
 import AdminHome from "../pages/adminHome";
+import OAuth2RedirectHandler from "../pages/oAuth2RedirectHandler";
 
 const Routes = [
   {
@@ -26,6 +27,10 @@ const Routes = [
       {
         path: "register",
         element: <Register />,
+      },
+      {
+        path: "auth/signingoogle",
+        element: <OAuth2RedirectHandler />,
       },
 
       // Các route yêu cầu đăng nhập
