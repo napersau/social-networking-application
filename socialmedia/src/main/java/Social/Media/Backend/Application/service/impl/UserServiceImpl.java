@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -72,6 +73,7 @@ public class UserServiceImpl implements UserService {
         user.setBirthDate(request.getBirthDate());
         user.setGender(request.getGender());
         user.setCoverUrl(request.getCoverUrl());
+        user.setGoogleAccountId(0L);
         userRepository.save(user);
         return modelMapper.map(user, UserResponse.class);
     }
@@ -149,10 +151,14 @@ public class UserServiceImpl implements UserService {
         user.setUsername(googleAccountDTO.getEmail());
         user.setPassword(passwordEncoder.encode(googleAccountDTO.getEmail()));
         user.setFirstName(googleAccountDTO.getName());
+        user.setEmail(googleAccountDTO.getEmail());
+        user.setAvatarUrl(googleAccountDTO.getPicture());
+        user.setCreatedAt(googleAccountDTO.getExp());
         user.setRole(role);
         user.setIsActive(true);
         user.setGoogleAccountId(1L);
         User savedUser = userRepository.save(user);
+
 
         return modelMapper.map(savedUser, UserResponse.class);
     }
