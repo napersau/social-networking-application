@@ -24,4 +24,5 @@ public class UserResponse {
     private Boolean isVerified;
     private Date lastLogin;
     private Role role;
+    private Long googleAccountId;
 }

@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.service.impl;
 
+import Social.Media.Backend.Application.dto.request.GoogleAccountRequest;
 import Social.Media.Backend.Application.dto.request.UserCreateRequest;
 import Social.Media.Backend.Application.dto.request.UserUpdateRequest;
 import Social.Media.Backend.Application.dto.response.UserResponse;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -129,5 +131,29 @@ public class UserServiceImpl implements UserService {
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         user.setIsActive(!user.getIsActive());
         return modelMapper.map(user, UserResponse.class);
+    }
+
+    @Override
+    public UserResponse createByGoogleAccount(GoogleAccountRequest googleAccountDTO) {
+        Optional<User> existingUser = userRepository.findByUsername(googleAccountDTO.getEmail());
+
+        if (existingUser.isPresent()) {
+            return modelMapper.map(existingUser.get(), UserResponse.class);
+        }
+
+
+
+        Role role = roleRepository.findById(2L).orElseThrow(() -> new RuntimeException("Role Not Found"));
+
+        User user = new User();
+        user.setUsername(googleAccountDTO.getEmail());
+        user.setPassword(passwordEncoder.encode(googleAccountDTO.getEmail()));
+        user.setFirstName(googleAccountDTO.getName());
+        user.setRole(role);
+        user.setIsActive(true);
+        user.setGoogleAccountId(1L);
+        User savedUser = userRepository.save(user);
+
+        return modelMapper.map(savedUser, UserResponse.class);
     }
 }

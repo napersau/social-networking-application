@@ -72,13 +72,13 @@ public class SecurityConfig {
 
 
 
-                                .anyRequest().authenticated());
-//                .oauth2Login(oauth2 -> oauth2
-//                        .successHandler((request, response, authentication) -> {
-//                            response.sendRedirect("http://localhost:3000/auth/signingoogle");
-//                        })
-//
-//                );
+                                .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler((request, response, authentication) -> {
+                            response.sendRedirect("http://localhost:3000/auth/signingoogle");
+                        })
+
+                );
 
 
         httpSecurity.oauth2ResourceServer(oauth2 ->

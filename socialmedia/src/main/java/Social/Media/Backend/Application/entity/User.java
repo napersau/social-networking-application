@@ -70,6 +70,9 @@ public class User {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @Column(name = "google_account_id")
+    private Long googleAccountId;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;

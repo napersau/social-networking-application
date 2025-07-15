@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.service;
 
+import Social.Media.Backend.Application.dto.request.GoogleAccountRequest;
 import Social.Media.Backend.Application.dto.request.UserCreateRequest;
 import Social.Media.Backend.Application.dto.request.UserUpdateRequest;
 import Social.Media.Backend.Application.dto.response.UserResponse;
@@ -16,4 +17,5 @@ public interface UserService {
     List<UserResponse> searchUsersByFullName(String fullName);
     UserResponse getUserById(Long userId);
     UserResponse updateActiveUser(Long userId);
+    UserResponse createByGoogleAccount(GoogleAccountRequest request);
 }
