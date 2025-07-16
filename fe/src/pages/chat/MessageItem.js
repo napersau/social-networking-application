@@ -1,12 +1,17 @@
 import React from "react";
 import { Avatar, Card, Typography } from "antd";
+import "./styles.css"
 
 const { Text } = Typography;
 
 const MessageItem = ({ msg }) => (
   <div className={`message-item ${msg.me ? "own-message" : ""}`}>
     {!msg.me && (
-      <Avatar src={msg.sender?.avatar} size="small" className="message-avatar" />
+      <Avatar
+        src={msg.sender?.avatar}
+        size="small"
+        className="message-avatar"
+      />
     )}
     <Card
       className={`message-card ${msg.me ? "own-message-card" : ""} ${
@@ -23,7 +28,13 @@ const MessageItem = ({ msg }) => (
         </Text>
       </div>
     </Card>
-    {msg.me && <Avatar className="message-avatar own-avatar">You</Avatar>}
+    {msg.me && (
+      <Avatar
+        src={msg.sender?.avatar}
+        size="small"
+        className="message-avatar own-avatar"
+      />
+    )}
   </div>
 );
 

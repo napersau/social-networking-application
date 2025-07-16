@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {Avatar} from "antd";
+import { UserOutlined} from "@ant-design/icons";
 import "./styles.css";
 import {
   getFriendsRequests,
@@ -70,7 +72,6 @@ const Friendship = () => {
     fetchMyFriends();
   }, []);
 
-
   return (
     <div className="friendship-container">
       <h2 className="friendship-title">Lời mời kết bạn</h2>
@@ -87,11 +88,13 @@ const Friendship = () => {
                   to={`/profile/${item.user.id}`}
                   className="friendship-link"
                 >
-                  <img
-                    src={item.user.avatarUrl || "/default-avatar.png"}
-                    alt={item.user.username}
-                    className="friendship-avatar"
-                  />
+                  {
+                    <Avatar
+                      src={item.user.avatarUrl}
+                      icon={<UserOutlined />}
+                      size={48}
+                    />
+                  }
                   <div className="friendship-info">
                     <h3>
                       {item.user.lastName} {item.user.firstName}

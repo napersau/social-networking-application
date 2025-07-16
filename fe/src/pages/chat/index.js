@@ -11,11 +11,7 @@ import {
   Spin,
   Alert,
 } from "antd";
-import {
-  SendOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { SendOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
 import {
   getMyConversations,
   createConversation,
@@ -70,13 +66,20 @@ export default function Chat() {
 
     setMessagesMap((prev) => ({
       ...prev,
-      [selectedConversation.id]: [...(prev[selectedConversation.id] || []), newMsg],
+      [selectedConversation.id]: [
+        ...(prev[selectedConversation.id] || []),
+        newMsg,
+      ],
     }));
 
     setConversations((prev) =>
       prev.map((c) =>
         c.id === selectedConversation.id
-          ? { ...c, lastMessage: message, lastTimestamp: new Date().toLocaleString() }
+          ? {
+              ...c,
+              lastMessage: message,
+              lastTimestamp: new Date().toLocaleString(),
+            }
           : c
       )
     );
@@ -136,17 +139,24 @@ export default function Chat() {
           const sorted = [...res.data.result].sort(
             (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
           );
-          setMessagesMap((prev) => ({ ...prev, [selectedConversation.id]: sorted }));
+          setMessagesMap((prev) => ({
+            ...prev,
+            [selectedConversation.id]: sorted,
+          }));
         })
         .catch(console.error);
     }
 
     setConversations((prev) =>
-      prev.map((c) => (c.id === selectedConversation?.id ? { ...c, unread: 0 } : c))
+      prev.map((c) =>
+        c.id === selectedConversation?.id ? { ...c, unread: 0 } : c
+      )
     );
   }, [selectedConversation, messagesMap]);
 
-  const currentMessages = selectedConversation ? messagesMap[selectedConversation.id] || [] : [];
+  const currentMessages = selectedConversation
+    ? messagesMap[selectedConversation.id] || []
+    : [];
 
   useEffect(() => {
     scrollToBottom();
@@ -157,26 +167,41 @@ export default function Chat() {
     socketRef.current = socket;
 
     socket.on("message", (msg) => {
+      console.log("msg", msg);
       setMessagesMap((prev) => {
         const msgs = prev[msg.conversationId] || [];
-        const index = msg.clientId ? msgs.findIndex((m) => m.id === msg.clientId) : -1;
-        if (index !== -1) msgs[index] = { ...msg, pending: false, failed: false };
+        const index = msg.clientId
+          ? msgs.findIndex((m) => m.id === msg.clientId)
+          : -1;
+        if (index !== -1)
+          msgs[index] = { ...msg, pending: false, failed: false };
         else msgs.push(msg);
         return {
           ...prev,
-          [msg.conversationId]: [...msgs].sort(
-            (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
-          ),
+          [msg.conversationId]: [...msgs].sort((a, b) => {
+            const aTime =
+              typeof a.createdDate === "string" || a.createdDate > 1e12
+                ? new Date(a.createdDate).getTime()
+                : a.createdDate * 1000;
+            const bTime =
+              typeof b.createdDate === "string" || b.createdDate > 1e12
+                ? new Date(b.createdDate).getTime()
+                : b.createdDate * 1000;
+            return aTime - bTime;
+          }),
         };
       });
 
+      console.log("msg", msg);
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversationId
             ? {
                 ...c,
                 lastMessage: msg.message,
-                lastTimestamp: new Date(msg.createdDate).toLocaleString(),
+                lastTimestamp: new Date(
+                  msg.createdDate * 1000
+                ).toLocaleString(),
                 unread:
                   selectedConversationRef.current?.id === c.id
                     ? 0
@@ -236,18 +261,25 @@ export default function Chat() {
                 message={error}
                 type="error"
                 action={
-                  <Button icon={<ReloadOutlined />} onClick={fetchConversations} />
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={fetchConversations}
+                  />
                 }
               />
             ) : conversations.length === 0 ? (
-              <Text type="secondary">No conversations yet. Start a new chat to begin.</Text>
+              <Text type="secondary">
+                No conversations yet. Start a new chat to begin.
+              </Text>
             ) : (
               <List
                 dataSource={conversations}
                 renderItem={(c) => (
                   <List.Item
                     onClick={() => setSelectedConversation(c)}
-                    className={`conversation-item ${selectedConversation?.id === c.id ? "selected" : ""}`}
+                    className={`conversation-item ${
+                      selectedConversation?.id === c.id ? "selected" : ""
+                    }`}
                   >
                     <List.Item.Meta
                       avatar={
@@ -257,11 +289,16 @@ export default function Chat() {
                       }
                       title={
                         <div className="conversation-title">
-                          <Text strong={c.unread > 0} ellipsis={{ tooltip: c.conversationName }}>
+                          <Text
+                            strong={c.unread > 0}
+                            ellipsis={{ tooltip: c.conversationName }}
+                          >
                             {c.conversationName}
                           </Text>
                           <Text type="secondary" className="conversation-time">
-                            {new Date(c.modifiedDate).toLocaleDateString("vi-VN")}
+                            {new Date(c.modifiedDate).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </Text>
                         </div>
                       }

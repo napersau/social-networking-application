@@ -77,6 +77,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         chatMessage = chatMessageRepository.save(chatMessage);
         ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
         chatMessageResponse.setClientId(request.getClientId()); // <-- THÊM DÒNG NÀY
+
         socketIOServer.getRoomOperations(String.valueOf(request.getConversationId()))
                 .sendEvent("message", chatMessageResponse); // Gửi toàn bộ đối tượng response
         return chatMessageResponse;
