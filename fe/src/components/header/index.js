@@ -71,6 +71,9 @@ function Header() {
 
         const socket = io("http://localhost:9092", {
           transports: ["websocket"],
+          query: {
+            token: token, // Hoặc rút gọn thành chỉ "token" nếu ES6
+          },
         });
 
         socket.emit("join", userId);

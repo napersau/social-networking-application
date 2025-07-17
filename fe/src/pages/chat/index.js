@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Layout,
+  Box,
   Card,
-  Input,
+  TextField,
   Typography,
-  Button,
+  Paper,
+  IconButton,
   Avatar,
   List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Divider,
   Badge,
-  Spin,
+  CircularProgress,
   Alert,
-} from "antd";
-import { SendOutlined, PlusOutlined, ReloadOutlined } from "@ant-design/icons";
+  Stack,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+
+import NewChatPopover from "../../components/newChatPopover";
 import {
   getMyConversations,
   createConversation,
@@ -19,337 +29,660 @@ import {
   createMessage,
 } from "../../services/chatService";
 import { io } from "socket.io-client";
-import MessageList from "./MessageList";
-import NewChatPopover from "./NewChatPopover";
-import "./styles.css";
-
-const { Content, Sider } = Layout;
-const { Text, Title } = Typography;
+import { getToken } from "../../services/localStorageService";
 
 export default function Chat() {
   const [message, setMessage] = useState("");
-  const [newChatVisible, setNewChatVisible] = useState(false);
+  const [newChatAnchorEl, setNewChatAnchorEl] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
   const messageContainerRef = useRef(null);
-  const selectedConversationRef = useRef(selectedConversation);
-  const socketRef = useRef(null);
-
-  useEffect(() => {
-    selectedConversationRef.current = selectedConversation;
-  }, [selectedConversation]);
-
+  const socketRef = useRef(null); // Function to scroll to the bottom of the message container
   const scrollToBottom = useCallback(() => {
     if (messageContainerRef.current) {
-      const container = messageContainerRef.current;
-      container.scrollTop = container.scrollHeight;
+      // Immediate scroll attempt
+      messageContainerRef.current.scrollTop =
+        messageContainerRef.current.scrollHeight;
+
+      // Backup attempt with a small timeout to ensure DOM updates are complete
       setTimeout(() => {
-        if (container) container.scrollTop = container.scrollHeight;
+        messageContainerRef.current.scrollTop =
+          messageContainerRef.current.scrollHeight;
+      }, 100);
+
+      // Final attempt with a longer timeout
+      setTimeout(() => {
+        messageContainerRef.current.scrollTop =
+          messageContainerRef.current.scrollHeight;
       }, 300);
     }
   }, []);
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !selectedConversation) return;
+  // New chat popover handlers
+  const handleNewChatClick = (event) => {
+    setNewChatAnchorEl(event.currentTarget);
+  };
 
-    const tempId = `temp-${Date.now()}`;
-    const newMsg = {
-      id: tempId,
-      message,
-      createdDate: new Date().toISOString(),
-      me: true,
-      pending: true,
-    };
+  const handleCloseNewChat = () => {
+    setNewChatAnchorEl(null);
+  };
 
-    setMessagesMap((prev) => ({
-      ...prev,
-      [selectedConversation.id]: [
-        ...(prev[selectedConversation.id] || []),
-        newMsg,
-      ],
-    }));
+  const handleSelectNewChatUser = async (user) => {
+    const response = await createConversation({
+      type: "DIRECT",
+      participantIds: [user.userId],
+    });
 
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedConversation.id
-          ? {
-              ...c,
-              lastMessage: message,
-              lastTimestamp: new Date().toLocaleString(),
-            }
-          : c
-      )
+    const newConversation = response?.data?.result;
+
+    // Check if we already have a conversation with this user
+    const existingConversation = conversations.find(
+      (conv) => conv.id === newConversation.id
     );
 
-    setMessage("");
+    if (existingConversation) {
+      // If conversation exists, just select it
+      setSelectedConversation(existingConversation);
+    } else {
+      // Add to conversations list
+      setConversations((prevConversations) => [
+        newConversation,
+        ...prevConversations,
+      ]);
 
-    try {
-      await createMessage({
-        conversationId: selectedConversation.id,
-        message,
-        clientId: tempId,
-      });
-    } catch (err) {
-      setMessagesMap((prev) => ({
-        ...prev,
-        [selectedConversation.id]: prev[selectedConversation.id].map((msg) =>
-          msg.id === tempId ? { ...msg, failed: true, pending: false } : msg
-        ),
-      }));
+      // Select this new conversation
+      setSelectedConversation(newConversation);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
+  // Fetch conversations from API
   const fetchConversations = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await getMyConversations();
-      setConversations(res?.data?.result || []);
+      const response = await getMyConversations();
+      setConversations(response?.data?.result || []);
     } catch (err) {
-      setError("Failed to load conversations");
+      console.error("Error fetching conversations:", err);
+      setError("Failed to load conversations. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Load conversations when component mounts
   useEffect(() => {
     fetchConversations();
   }, []);
 
+  // Initialize with first conversation selected when available
   useEffect(() => {
-    if (conversations.length && !selectedConversation) {
+    if (conversations.length > 0 && !selectedConversation) {
       setSelectedConversation(conversations[0]);
     }
   }, [conversations, selectedConversation]);
 
+  // Load messages from the conversation history when a conversation is selected
   useEffect(() => {
-    if (selectedConversation?.id && !messagesMap[selectedConversation.id]) {
-      getMessages(selectedConversation.id)
-        .then((res) => {
-          const sorted = [...res.data.result].sort(
-            (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
-          );
-          setMessagesMap((prev) => ({
-            ...prev,
-            [selectedConversation.id]: sorted,
-          }));
-        })
-        .catch(console.error);
+    const fetchMessages = async (conversationId) => {
+      try {
+        // Check if we already have messages for this conversation
+        if (!messagesMap[conversationId]) {
+          const response = await getMessages(conversationId);
+          if (response?.data?.result) {
+            // Sort messages by createdDate to ensure chronological order
+            const sortedMessages = [...response.data.result].sort(
+              (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
+            );
+
+            // Update messages map with the fetched messages
+            setMessagesMap((prev) => ({
+              ...prev,
+              [conversationId]: sortedMessages,
+            }));
+          }
+        }
+
+        // Mark conversation as read when selected
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) =>
+            conv.id === conversationId ? { ...conv, unread: 0 } : conv
+          )
+        );
+      } catch (err) {
+        console.error(
+          `Error fetching messages for conversation ${conversationId}:`,
+          err
+        );
+      }
+    };
+
+    if (selectedConversation?.id) {
+      fetchMessages(selectedConversation.id);
     }
-
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedConversation?.id ? { ...c, unread: 0 } : c
-      )
-    );
   }, [selectedConversation, messagesMap]);
-
   const currentMessages = selectedConversation
     ? messagesMap[selectedConversation.id] || []
     : [];
-
+  // Automatically scroll to the bottom when messages change or after sending a message
   useEffect(() => {
     scrollToBottom();
   }, [currentMessages, scrollToBottom]);
 
+  // Also scroll when the conversation changes
   useEffect(() => {
-    const socket = io("http://localhost:9092");
-    socketRef.current = socket;
+    scrollToBottom();
+  }, [selectedConversation, scrollToBottom]);
 
-    socket.on("message", (msg) => {
-      console.log("msg", msg);
-      setMessagesMap((prev) => {
-        const msgs = prev[msg.conversationId] || [];
-        const index = msg.clientId
-          ? msgs.findIndex((m) => m.id === msg.clientId)
-          : -1;
-        if (index !== -1)
-          msgs[index] = { ...msg, pending: false, failed: false };
-        else msgs.push(msg);
-        return {
-          ...prev,
-          [msg.conversationId]: [...msgs].sort((a, b) => {
-            const aTime =
-              typeof a.createdDate === "string" || a.createdDate > 1e12
-                ? new Date(a.createdDate).getTime()
-                : a.createdDate * 1000;
-            const bTime =
-              typeof b.createdDate === "string" || b.createdDate > 1e12
-                ? new Date(b.createdDate).getTime()
-                : b.createdDate * 1000;
-            return aTime - bTime;
-          }),
-        };
+  useEffect(() => {
+    // Initialize socket connection only once
+    if (!socketRef.current) {
+      console.log("Initializing socket connection...");
+
+      const connectionUrl = "http://localhost:9092?token=" + getToken();
+
+      socketRef.current = new io(connectionUrl);
+
+      socketRef.current.on("connect", () => {
+        console.log("Socket connected");
       });
 
-      console.log("msg", msg);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === msg.conversationId
-            ? {
-                ...c,
-                lastMessage: msg.message,
-                lastTimestamp: new Date(
-                  msg.createdDate * 1000
-                ).toLocaleString(),
-                unread:
-                  selectedConversationRef.current?.id === c.id
-                    ? 0
-                    : (c.unread || 0) + 1,
-              }
-            : c
-        )
-      );
-    });
+      socketRef.current.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
 
-    return () => socket.disconnect();
+      socketRef.current.on("message", (message) => {
+        console.log("New message received:", message);
+
+        const messageObject = JSON.parse(message);
+        console.log("Parsed message object:", messageObject);
+
+        // Update messages in the UI when a new message is received
+        if (messageObject?.conversationId) {
+          handleIncomingMessage(messageObject);
+        }
+      });
+    }
+
+    // Cleanup function - disconnect socket when component unmounts
+    return () => {
+      if (socketRef.current) {
+        console.log("Disconnecting socket...");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
   }, []);
 
+  // Update unread count when conversation is selected
   useEffect(() => {
     if (selectedConversation?.id && socketRef.current) {
-      const socket = socketRef.current;
-      socket.emit("join-conversation", selectedConversation.id);
-      return () => socket.emit("leave-conversation", selectedConversation.id);
+      // Mark the currently selected conversation as read
+      setConversations((prevConversations) =>
+        prevConversations.map((conv) =>
+          conv.id === selectedConversation.id ? { ...conv, unread: 0 } : conv
+        )
+      );
     }
-  }, [selectedConversation?.id]);
+  }, [selectedConversation]);
+
+  const handleConversationSelect = (conversation) => {
+    setSelectedConversation(conversation);
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || !selectedConversation) return;
+
+    // Clear input field
+    setMessage("");
+
+    try {
+      // Send message to API
+      const response = await createMessage({
+        conversationId: selectedConversation.id,
+        message: message,
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
+  };
+
+  // Helper function to handle incoming socket messages
+  const handleIncomingMessage = useCallback(
+    (message) => {
+  
+      // Add the new message to the appropriate conversation
+      setMessagesMap((prev) => {
+        const existingMessages = prev[message.conversationId] || [];
+
+        // Check if message already exists to avoid duplicates
+        const messageExists = existingMessages.some((msg) => {
+          // Primary: Compare by ID if both messages have IDs
+          if (msg.id && message.id) {
+            return msg.id === message.id;
+          }
+          
+          return false;
+        });
+
+        if (!messageExists) {
+          const updatedMessages = [...existingMessages, message].sort(
+            (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
+          );
+
+          return {
+            ...prev,
+            [message.conversationId]: updatedMessages,
+          };
+        }
+
+        console.log("Message already exists, not adding");
+        return prev;
+      });
+
+      // Update the conversation list with the new last message
+      setConversations((prevConversations) => {        
+        const updatedConversations = prevConversations.map((conv) =>
+          conv.id === message.conversationId
+            ? {
+                ...conv,
+                lastMessage: message.message,
+                lastTimestamp: new Date(message.createdDate).toLocaleString(),
+                unread:
+                  selectedConversation?.id === message.conversationId
+                    ? 0
+                    : (conv.unread || 0) + 1,
+                modifiedDate: message.createdDate,
+              }
+            : conv
+        );
+        
+        return updatedConversations;
+      });
+    },
+    [selectedConversation]
+  );
 
   return (
-    <Card className="chat-container chat-card-body">
-      <Layout className="chat-layout">
-        <Sider width={300} className="chat-sidebar">
-          <div className="sidebar-header">
-            <Title level={4}>Chats</Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setNewChatVisible(true)}
-              className="new-chat-button"
-            />
-            <NewChatPopover
-              open={newChatVisible}
-              onClose={() => setNewChatVisible(false)}
-              onSelectUser={async (user) => {
-                const res = await createConversation({
-                  type: "DIRECT",
-                  participantIds: [user.id],
-                });
-                const conv = res?.data?.result;
-                const exists = conversations.find((c) => c.id === conv.id);
-                if (exists) setSelectedConversation(exists);
-                else {
-                  setConversations([conv, ...conversations]);
-                  setSelectedConversation(conv);
-                }
+    <Box sx={{ p: 2, height: "100vh", boxSizing: "border-box" }}>
+      <Card
+        sx={{
+          width: "100%",
+          height: "calc(100vh - 64px)" /* 100vh minus header (64px) */,
+          maxHeight: "100%",
+          display: "flex",
+          flexDirection: "row",
+          mb: "-64px" /* Counteract the parent padding */,
+          overflow: "hidden",
+        }}
+      >
+        {/* Conversations List */}
+        <Box
+          sx={{
+            width: 300,
+            borderRight: 1,
+            borderColor: "divider",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {" "}
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="h6">Chats</Typography>{" "}
+            <IconButton
+              color="primary"
+              size="small"
+              onClick={handleNewChatClick}
+              sx={{
+                bgcolor: "primary.light",
+                color: "white",
+                "&:hover": {
+                  bgcolor: "primary.main",
+                },
               }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>{" "}
+            <NewChatPopover
+              anchorEl={newChatAnchorEl}
+              open={Boolean(newChatAnchorEl)}
+              onClose={handleCloseNewChat}
+              onSelectUser={handleSelectNewChatUser}
             />
-          </div>
-          <div className="conversations-container">
-            {loading ? (
-              <Spin size="large" className="loading-container" />
-            ) : error ? (
-              <Alert
-                message={error}
-                type="error"
-                action={
-                  <Button
-                    icon={<ReloadOutlined />}
-                    onClick={fetchConversations}
-                  />
-                }
-              />
-            ) : conversations.length === 0 ? (
-              <Text type="secondary">
-                No conversations yet. Start a new chat to begin.
-              </Text>
-            ) : (
-              <List
-                dataSource={conversations}
-                renderItem={(c) => (
-                  <List.Item
-                    onClick={() => setSelectedConversation(c)}
-                    className={`conversation-item ${
-                      selectedConversation?.id === c.id ? "selected" : ""
-                    }`}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Badge count={c.unread} offset={[-5, 5]} size="small">
-                          <Avatar src={c.conversationAvatar} />
-                        </Badge>
+          </Box>{" "}
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflowY: "auto",
+            }}
+          >
+            {(() => {
+              if (loading) {
+                return (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                    <CircularProgress size={28} />
+                  </Box>
+                );
+              }
+              if (error) {
+                return (
+                  <Box sx={{ p: 2 }}>
+                    <Alert
+                      severity="error"
+                      sx={{ mb: 2 }}
+                      action={
+                        <IconButton
+                          color="inherit"
+                          size="small"
+                          onClick={fetchConversations}
+                        >
+                          <RefreshIcon fontSize="small" />
+                        </IconButton>
                       }
-                      title={
-                        <div className="conversation-title">
-                          <Text
-                            strong={c.unread > 0}
-                            ellipsis={{ tooltip: c.conversationName }}
+                    >
+                      {error}
+                    </Alert>
+                  </Box>
+                );
+              }
+              if (conversations == null || conversations.length === 0) {
+                return (
+                  <Box sx={{ p: 2, textAlign: "center" }}>
+                    <Typography color="text.secondary">
+                      No conversations yet. Start a new chat to begin.
+                    </Typography>
+                  </Box>
+                );
+              }
+              return (
+                <List sx={{ width: "100%" }}>
+                  {conversations.map((conversation) => (
+                    <React.Fragment key={conversation.id}>
+                      {" "}
+                      <ListItem
+                        alignItems="flex-start"
+                        onClick={() => handleConversationSelect(conversation)}
+                        sx={{
+                          cursor: "pointer",
+                          bgcolor:
+                            selectedConversation?.id === conversation.id
+                              ? "rgba(0, 0, 0, 0.04)"
+                              : "transparent",
+                          "&:hover": {
+                            bgcolor: "rgba(0, 0, 0, 0.08)",
+                          },
+                        }}
+                      >
+                        <ListItemAvatar>
+                          <Badge
+                            color="error"
+                            badgeContent={conversation.unread}
+                            invisible={conversation.unread === 0}
+                            overlap="circular"
                           >
-                            {c.conversationName}
-                          </Text>
-                          <Text type="secondary" className="conversation-time">
-                            {new Date(c.modifiedDate).toLocaleDateString(
-                              "vi-VN"
-                            )}
-                          </Text>
-                        </div>
-                      }
-                      description={
-                        <Text ellipsis={{ tooltip: c.lastMessage }}>
-                          {c.lastMessage || "Start a conversation"}
-                        </Text>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            )}
-          </div>
-        </Sider>
-        <Content className="chat-content">
+                            <Avatar
+                              src={conversation.conversationAvatar || ""}
+                            />
+                          </Badge>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Stack
+                              direction="row"
+                              display={"flex"}
+                              justifyContent="space-between"
+                              alignItems="center"
+                            >
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                                noWrap
+                                sx={{ display: "inline" }}
+                              >
+                                {conversation.conversationName}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ display: "inline", fontSize: "0.7rem" }}
+                              >
+                                {new Date(
+                                  conversation.modifiedDate
+                                ).toLocaleString("vi-VN", {
+                                  year: "numeric",
+                                  month: "numeric",
+                                  day: "numeric",
+                                })}
+                              </Typography>
+                            </Stack>
+                          }
+                          secondary={
+                            <Typography
+                              sx={{ display: "inline" }}
+                              component="span"
+                              variant="body2"
+                              color="text.primary"
+                              noWrap
+                            >
+                              {conversation.lastMessage ||
+                                "Start a conversation"}
+                            </Typography>
+                          }
+                          primaryTypographyProps={{
+                            fontWeight:
+                              conversation.unread > 0 ? "bold" : "normal",
+                          }}
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            pr: 1,
+                          }}
+                        />
+                      </ListItem>
+                      <Divider variant="inset" component="li" />
+                    </React.Fragment>
+                  ))}
+                </List>
+              );
+            })()}
+          </Box>
+        </Box>
+
+        {/* Chat Area */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {selectedConversation ? (
             <>
-              <div className="chat-header">
-                <Avatar src={selectedConversation.conversationAvatar} />
-                <Title level={5} className="chat-title">
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Avatar
+                  src={selectedConversation.conversationAvatar}
+                  sx={{ mr: 2 }}
+                />
+                <Typography variant="h6">
                   {selectedConversation.conversationName}
-                </Title>
-              </div>
-              <div className="messages-container" ref={messageContainerRef}>
-                <MessageList messages={currentMessages} />
-              </div>
-              <div className="message-input-container">
-                <Input
+                </Typography>
+              </Box>{" "}
+              <Box
+                id="messageContainer"
+                ref={messageContainerRef}
+                sx={{
+                  flexGrow: 1,
+                  p: 2,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                }}
+              >
+                {" "}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "100%",
+                    margin:
+                      "auto 0 0 0" /* Push to bottom, but allow scrolling */,
+                  }}
+                >
+                  {currentMessages.map((msg) => {
+                    // Extract background color logic to avoid nested ternary
+                    let backgroundColor = "#f5f5f5"; // default for others
+                    if (msg.me) {
+                      backgroundColor = msg.failed ? "#ffebee" : "#e3f2fd";
+                    }
+
+                    return (
+                      <Box
+                        key={msg.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: msg.me ? "flex-end" : "flex-start",
+                          mb: 2,
+                        }}
+                      >
+                        {!msg.me && (
+                          <Avatar
+                            src={msg.sender?.avatar}
+                            sx={{
+                              mr: 1,
+                              alignSelf: "flex-end",
+                              width: 32,
+                              height: 32,
+                            }}
+                          />
+                        )}
+                        <Paper
+                          elevation={1}
+                          sx={{
+                            p: 2,
+                            maxWidth: "70%",
+                            backgroundColor,
+                            borderRadius: 2,
+                            opacity: msg.pending ? 0.7 : 1,
+                          }}
+                        >
+                          <Typography variant="body1">{msg.message}</Typography>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            justifyContent="flex-end"
+                            sx={{ mt: 1 }}
+                          >
+                            {msg.failed && (
+                              <Typography variant="caption" color="error">
+                                Failed to send
+                              </Typography>
+                            )}
+                            {msg.pending && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                Sending...
+                              </Typography>
+                            )}
+                            <Typography
+                              variant="caption"
+                              sx={{ display: "block", textAlign: "right" }}
+                            >
+                              {new Date(msg.createdDate).toLocaleString()}
+                            </Typography>
+                          </Stack>{" "}
+                        </Paper>
+                        {msg.me && (
+                          <Avatar
+                            sx={{
+                              ml: 1,
+                              alignSelf: "flex-end",
+                              width: 32,
+                              height: 32,
+                              bgcolor: "#1976d2",
+                            }}
+                          >
+                            You
+                          </Avatar>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+              <Box
+                component="form"
+                sx={{
+                  p: 2,
+                  borderTop: 1,
+                  borderColor: "divider",
+                  display: "flex",
+                }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendMessage();
+                }}
+              >
+                <TextField
+                  fullWidth
                   placeholder="Type a message"
+                  variant="outlined"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="message-input"
+                  size="small"
                 />
-                <Button
-                  type="primary"
-                  icon={<SendOutlined />}
+                <IconButton
+                  color="primary"
+                  sx={{ ml: 1 }}
                   onClick={handleSendMessage}
                   disabled={!message.trim()}
-                  className="send-button"
-                />
-              </div>
+                >
+                  <SendIcon />
+                </IconButton>
+              </Box>
             </>
           ) : (
-            <Title level={4} type="secondary">
-              Select a conversation to start chatting
-            </Title>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+              }}
+            >
+              <Typography variant="h6" color="text.secondary">
+                Select a conversation to start chatting
+              </Typography>
+            </Box>
           )}
-        </Content>
-      </Layout>
-    </Card>
+        </Box>
+      </Card>
+    </Box>
   );
 }

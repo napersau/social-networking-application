@@ -31,6 +31,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -72,16 +73,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     // Check hạn Token
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
-        var token = request.getToken();
+        String token = request.getToken();
+
+        if (token == null || token.isBlank()) {
+            return IntrospectResponse.builder()
+                    .valid(false)
+                    .userId(null)
+                    .build();
+        }
+
         boolean isValid = true;
+        SignedJWT jwt = null;
 
         try {
-            verifyToken(token);
+            jwt = verifyToken(token);
         } catch (AppException e) {
             isValid = false;
         }
 
         return IntrospectResponse.builder()
+                .userId(jwt != null ? jwt.getJWTClaimsSet().getLongClaim("userId") : null)
                 .valid(isValid)
                 .build();
     }
