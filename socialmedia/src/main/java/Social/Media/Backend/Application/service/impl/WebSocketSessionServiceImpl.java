@@ -3,11 +3,13 @@ package Social.Media.Backend.Application.service.impl;
 import Social.Media.Backend.Application.entity.WebSocketSession;
 import Social.Media.Backend.Application.repository.WebSocketSessionRepository;
 import Social.Media.Backend.Application.service.WebSocketSessionService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class WebSocketSessionServiceImpl implements WebSocketSessionService {
 
     private final WebSocketSessionRepository webSocketSessionRepository;

@@ -131,7 +131,7 @@ public class ConversationServiceImpl implements ConversationService {
         conversation.getParticipants().stream()
                 .filter(participantInfo -> !participantInfo.getUserId().equals(user.getId()))
                 .findFirst().ifPresent(participantInfo -> {
-                    conversationResponse.setConversationName(participantInfo.getUsername());
+                    conversationResponse.setConversationName(participantInfo.getLastName() + " " + participantInfo.getFirstName());
                     conversationResponse.setConversationAvatar(participantInfo.getAvatar());
                 });
 

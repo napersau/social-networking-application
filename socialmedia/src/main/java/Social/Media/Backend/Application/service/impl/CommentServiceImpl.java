@@ -11,6 +11,7 @@ import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.CommentService;
+import jakarta.transaction.Transactional;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -21,6 +22,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentServiceImpl implements CommentService {
 
     private final ModelMapper modelMapper;
@@ -47,5 +49,10 @@ public class CommentServiceImpl implements CommentService {
                 .build();
         commentRepository.save(comment);
         return modelMapper.map(comment, CommentResponse.class);
+    }
+
+    @Override
+    public void deleteComment(Long id) {
+        commentRepository.deleteById(id);
     }
 }

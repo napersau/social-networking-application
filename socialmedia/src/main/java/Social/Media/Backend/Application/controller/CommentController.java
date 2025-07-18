@@ -6,10 +6,7 @@ import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.CommentResponse;
 import Social.Media.Backend.Application.service.CommentService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/comments")
@@ -30,5 +27,14 @@ public class CommentController {
     @PostMapping("/update")
     public void updateComment() {
 
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<String> deleteComment(@PathVariable Long id) {
+        commentService.deleteComment(id);
+        return ApiResponse.<String>builder()
+                .code(1000)
+                .result("Xóa bình luận thành công")
+                .build();
     }
 }

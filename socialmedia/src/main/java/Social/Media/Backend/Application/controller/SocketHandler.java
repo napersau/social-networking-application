@@ -63,20 +63,7 @@ public class SocketHandler {
         webSocketSessionService.deleteSession(client.getSessionId().toString());
     }
 
-    @OnEvent("join-conversation")
-    public void onJoinConversation(SocketIOClient client, Long conversationId) {
-        // Tham gia client vào một phòng có tên là conversationId
-        client.joinRoom(String.valueOf(conversationId));
-        log.info("Client {} joined room {}", client.getSessionId(), conversationId);
-    }
 
-    // --- THÊM LISTENER CHO SỰ KIỆN "leave-conversation" ---
-    @OnEvent("leave-conversation")
-    public void onLeaveConversation(SocketIOClient client, Long conversationId) {
-        // Rời client khỏi phòng có tên là conversationId
-        client.leaveRoom(String.valueOf(conversationId));
-        log.info("Client {} left room {}", client.getSessionId(), conversationId);
-    }
 
     @PostConstruct
     public void startServer() {
