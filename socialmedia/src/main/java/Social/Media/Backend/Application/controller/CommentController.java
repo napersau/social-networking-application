@@ -24,8 +24,14 @@ public class CommentController {
                 .build();
     }
 
-    @PostMapping("/update")
-    public void updateComment() {
+    @PostMapping("/update/{id}")
+    ApiResponse<CommentResponse> updateComment(@RequestBody CommentRequest request, @PathVariable Long id) {
+        CommentResponse response = commentService.updateComment(request, id);
+
+        return ApiResponse.<CommentResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
 
     }
 

@@ -268,8 +268,52 @@ const PostPage = () => {
     const isCommenting = commentingPosts.has(post.id);
     const comments = post.comments || [];
     const commentCount = post.commentCount || comments.length;
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editedContent, setEditedContent] = useState("");
     const currentUserId = parseInt(localStorage.getItem("userId"));
-    console.log("currentUserId",currentUserId)
+
+    const handleUpdateComment = async (commentId, postId) => {
+      if (!editedContent.trim()) {
+        message.warning("Nội dung không được để trống!");
+        return;
+      }
+
+      try {
+        const response = await commentService.updateComment(
+          commentId,
+          editedContent.trim()
+        );
+
+        if (response.data && response.data.code === 1000) {
+          const updatedComment = response.data.result;
+
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => {
+              if (post.id === postId) {
+                const updatedComments = post.comments.map((c) =>
+                  c.id === commentId
+                    ? { ...c, content: updatedComment.content }
+                    : c
+                );
+                return {
+                  ...post,
+                  comments: updatedComments,
+                };
+              }
+              return post;
+            })
+          );
+
+          message.success("Đã cập nhật bình luận!");
+          setEditingCommentId(null);
+        } else {
+          message.error("Không thể cập nhật bình luận!");
+        }
+      } catch (error) {
+        console.error("Lỗi cập nhật bình luận:", error);
+        message.error("Đã xảy ra lỗi khi cập nhật bình luận!");
+      }
+    };
 
     const confirmDeleteComment = (commentId, postId) => {
       Modal.confirm({
@@ -370,10 +414,22 @@ const PostPage = () => {
                     post.user.id === currentUserId ||
                     comment.user?.id === currentUserId
                       ? [
+                          comment.user?.id === currentUserId && (
+                            <Button
+                              type="link"
+                              size="small"
+                              onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditedContent(comment.content);
+                              }}
+                            >
+                              Sửa
+                            </Button>
+                          ),
                           <Button
-                            type="text"
-                            danger
+                            type="link"
                             size="small"
+                            danger
                             onClick={() =>
                               confirmDeleteComment(comment.id, post.id)
                             }
@@ -404,9 +460,37 @@ const PostPage = () => {
                             : "Vừa xong"}
                         </Text>
                       </div>
-                      <Paragraph className="comment-text">
-                        {comment.content}
-                      </Paragraph>
+                      {editingCommentId === comment.id ? (
+                        <div>
+                          <TextArea
+                            rows={2}
+                            value={editedContent}
+                            onChange={(e) => setEditedContent(e.target.value)}
+                            style={{ marginBottom: 8 }}
+                          />
+                          <Space>
+                            <Button
+                              type="primary"
+                              size="small"
+                              onClick={() =>
+                                handleUpdateComment(comment.id, post.id)
+                              }
+                            >
+                              Lưu
+                            </Button>
+                            <Button
+                              size="small"
+                              onClick={() => setEditingCommentId(null)}
+                            >
+                              Hủy
+                            </Button>
+                          </Space>
+                        </div>
+                      ) : (
+                        <Paragraph className="comment-text">
+                          {comment.content}
+                        </Paragraph>
+                      )}
                     </div>
                   </div>
                 </List.Item>

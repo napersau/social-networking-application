@@ -25,16 +25,10 @@ export const commentService = {
     );
   },
 
-  /**
-   * Cập nhật comment (nếu bạn muốn dùng sau này)
-   */
-  updateComment: async (commentId, newContent) => {
+  updateComment: async (commentId, content) => {
     return await httpClient.post(
-      API.UPDATE_COMMENT || "/api/v1/comments/update",
-      {
-        commentId,
-        content: newContent,
-      },
+      `/comments/update/${commentId}`,
+      { content }, // gửi content
       {
         headers: {
           Authorization: `Bearer ${getToken()}`,

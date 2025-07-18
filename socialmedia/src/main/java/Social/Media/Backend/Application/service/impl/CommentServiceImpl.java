@@ -52,6 +52,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public CommentResponse updateComment(CommentRequest request, Long id) {
+
+        Comment comment = commentRepository.findById(id).orElseThrow(() ->
+                new RuntimeException("Comment not found"));
+        comment.setUpdatedAt(Instant.now());
+        comment.setContent(request.getContent());
+        commentRepository.save(comment);
+
+        return modelMapper.map(comment, CommentResponse.class);
+    }
+
+    @Override
     public void deleteComment(Long id) {
         commentRepository.deleteById(id);
     }
