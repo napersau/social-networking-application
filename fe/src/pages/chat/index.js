@@ -71,12 +71,15 @@ export default function Chat() {
   };
 
   const handleSelectNewChatUser = async (user) => {
+    console.log("user",user)
     const response = await createConversation({
       type: "DIRECT",
-      participantIds: [user.userId],
+      participantIds: [user.id],
     });
 
     const newConversation = response?.data?.result;
+
+    
 
     // Check if we already have a conversation with this user
     const existingConversation = conversations.find(
@@ -305,6 +308,8 @@ export default function Chat() {
     },
     [selectedConversation]
   );
+
+  console.log("selectedConversation",selectedConversation)
 
   return (
     <Box sx={{ p: 2, height: "100vh", boxSizing: "border-box" }}>

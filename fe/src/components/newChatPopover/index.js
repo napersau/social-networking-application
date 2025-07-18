@@ -21,8 +21,6 @@ const NewChatPopover = ({ open, onClose, onSelectUser }) => {
     return () => clearTimeout(timeout);
   }, [searchKeyword]);
 
-  console.log(users)
-
   const content = (
     <div className="new-chat-popover">
       <Input

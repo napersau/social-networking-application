@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -150,21 +149,21 @@ const PostPage = () => {
     if (likingPosts.has(postId)) {
       return;
     }
-    setLikingPosts(prev => new Set(prev).add(postId));
+    setLikingPosts((prev) => new Set(prev).add(postId));
     try {
-      const reactionType = "Like"
+      const reactionType = "Like";
       // Sử dụng toggleLike nếu backend xử lý toggle, hoặc likePost nếu backend xử lý riêng
       const response = await likeService.likePost(postId, reactionType);
       if (response.data && response.data.code === 1000) {
         // Update the specific post in the list
-        setPosts(prevPosts => 
-          prevPosts.map(post => {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
             if (post.id === postId) {
               const wasLiked = post.isLiked;
               return {
                 ...post,
                 isLiked: !wasLiked,
-                likes: wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1
+                likes: wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1,
               };
             }
             return post;
@@ -172,7 +171,7 @@ const PostPage = () => {
         );
 
         // Show appropriate message
-        const currentPost = posts.find(p => p.id === postId);
+        const currentPost = posts.find((p) => p.id === postId);
         if (currentPost?.isLiked) {
           message.success("Đã bỏ thích bài viết!");
         } else {
@@ -186,7 +185,7 @@ const PostPage = () => {
       message.error("Đã xảy ra lỗi khi thực hiện hành động!");
     } finally {
       // Remove from loading set
-      setLikingPosts(prev => {
+      setLikingPosts((prev) => {
         const newSet = new Set(prev);
         newSet.delete(postId);
         return newSet;
@@ -195,7 +194,7 @@ const PostPage = () => {
   };
 
   const handleComment = (postId) => {
-    setExpandedComments(prev => {
+    setExpandedComments((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) {
         newSet.delete(postId);
@@ -216,21 +215,24 @@ const PostPage = () => {
       return;
     }
 
-    setCommentingPosts(prev => new Set(prev).add(postId));
-    
+    setCommentingPosts((prev) => new Set(prev).add(postId));
+
     try {
-      const response = await commentService.createComment(postId, content.trim());
-      
+      const response = await commentService.createComment(
+        postId,
+        content.trim()
+      );
+
       if (response.data && response.data.code === 1000) {
         // Update the specific post with new comment
-        setPosts(prevPosts => 
-          prevPosts.map(post => {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
             if (post.id === postId) {
               const newComment = response.data.result;
               return {
                 ...post,
                 comments: [...(post.comments || []), newComment],
-                commentCount: (post.commentCount || 0) + 1
+                commentCount: (post.commentCount || 0) + 1,
               };
             }
             return post;
@@ -239,7 +241,7 @@ const PostPage = () => {
 
         // Reset comment form for this post
         commentForms.setFieldsValue({
-          [`comment_${postId}`]: ""
+          [`comment_${postId}`]: "",
         });
 
         message.success("Đã gửi bình luận!");
@@ -250,7 +252,7 @@ const PostPage = () => {
       console.error("Error submitting comment:", error);
       message.error("Đã xảy ra lỗi khi gửi bình luận!");
     } finally {
-      setCommentingPosts(prev => {
+      setCommentingPosts((prev) => {
         const newSet = new Set(prev);
         newSet.delete(postId);
         return newSet;
@@ -262,26 +264,74 @@ const PostPage = () => {
     message.info("Tính năng chia sẻ đang phát triển");
   };
 
-
   const CommentSection = ({ post }) => {
     const isCommenting = commentingPosts.has(post.id);
     const comments = post.comments || [];
     const commentCount = post.commentCount || comments.length;
+    const currentUserId = parseInt(localStorage.getItem("userId"));
+    console.log("currentUserId",currentUserId)
 
-    console.log("post",post)
+    const confirmDeleteComment = (commentId, postId) => {
+      Modal.confirm({
+        title: "Xác nhận xóa bình luận",
+        content: "Bạn có chắc muốn xóa bình luận này không?",
+        okText: "Xóa",
+        okType: "danger",
+        cancelText: "Hủy",
+        onOk: () => handleDeleteComment(commentId, postId),
+      });
+    };
+
+    const handleDeleteComment = async (commentId, postId) => {
+      try {
+        const response = await commentService.deleteComment(commentId);
+        if (response.data && response.data.code === 1000) {
+          // Cập nhật lại danh sách comment trong bài viết
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => {
+              if (post.id === postId) {
+                const updatedComments = post.comments?.filter(
+                  (c) => c.id !== commentId
+                );
+                return {
+                  ...post,
+                  comments: updatedComments,
+                  commentCount: Math.max((post.commentCount || 1) - 1, 0),
+                };
+              }
+              return post;
+            })
+          );
+          message.success("Đã xóa bình luận!");
+        } else {
+          message.error("Không thể xóa bình luận!");
+        }
+      } catch (err) {
+        console.error("Lỗi khi xóa bình luận:", err);
+        message.error("Đã xảy ra lỗi khi xóa bình luận!");
+      }
+    };
+
+    console.log("post", post);
 
     return (
       <div className="comment-section">
         <Divider className="comment-divider" />
-        
+
         {/* Comment Input Form */}
         <Form
           form={commentForms}
-          onFinish={(values) => handleSubmitComment(post.id, values[`comment_${post.id}`])}
+          onFinish={(values) =>
+            handleSubmitComment(post.id, values[`comment_${post.id}`])
+          }
         >
           <Form.Item name={`comment_${post.id}`} style={{ marginBottom: 8 }}>
             <div className="comment-input-container">
-              <Avatar src={post.user.avatarUrl} size={32} icon={<UserOutlined />} />
+              <Avatar
+                src={post.user.avatarUrl}
+                size={32}
+                icon={<UserOutlined />}
+              />
               <TextArea
                 placeholder="Viết bình luận..."
                 autoSize={{ minRows: 1, maxRows: 3 }}
@@ -313,21 +363,44 @@ const PostPage = () => {
             <List
               dataSource={comments}
               renderItem={(comment) => (
-                <List.Item key={comment.id} className="comment-item">
+                <List.Item
+                  key={comment.id}
+                  className="comment-item"
+                  actions={
+                    post.user.id === currentUserId ||
+                    comment.user?.id === currentUserId
+                      ? [
+                          <Button
+                            type="text"
+                            danger
+                            size="small"
+                            onClick={() =>
+                              confirmDeleteComment(comment.id, post.id)
+                            }
+                          >
+                            Xóa
+                          </Button>,
+                        ]
+                      : []
+                  }
+                >
                   <div className="comment-content">
-                    <Avatar 
-                      size={32} 
-                      src={comment.user?.avatarUrl} 
-                      icon={<UserOutlined />} 
+                    <Avatar
+                      size={32}
+                      src={comment.user?.avatarUrl}
+                      icon={<UserOutlined />}
                     />
                     <div className="comment-bubble">
                       <div className="comment-header">
                         <Text strong>
-                          {comment.user?.firstName || "Anonymous"} {comment.user?.lastName || ""}
+                          {comment.user?.firstName || "Anonymous"}{" "}
+                          {comment.user?.lastName || ""}
                         </Text>
                         <Text type="secondary" className="comment-time">
                           {comment.createdAt
-                            ? new Date(comment.createdAt).toLocaleString("vi-VN")
+                            ? new Date(comment.createdAt).toLocaleString(
+                                "vi-VN"
+                              )
                             : "Vừa xong"}
                         </Text>
                       </div>
@@ -392,19 +465,19 @@ const PostPage = () => {
             icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
             onClick={() => handleLike(post.id)}
             loading={isLiking}
-            className={`action-button ${isLiked ? 'liked' : ''}`}
+            className={`action-button ${isLiked ? "liked" : ""}`}
             style={{
-              color: isLiked ? '#ff4d4f' : undefined,
+              color: isLiked ? "#ff4d4f" : undefined,
             }}
           >
-            {isLiked ? 'Đã thích' : 'Thích'} {likeCount > 0 && `(${likeCount})`}
+            {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
           </Button>
 
           <Button
             type="text"
             icon={<CommentOutlined />}
             onClick={() => handleComment(post.id)}
-            className={`action-button ${isCommentsExpanded ? 'active' : ''}`}
+            className={`action-button ${isCommentsExpanded ? "active" : ""}`}
           >
             Bình luận {commentCount > 0 && `(${commentCount})`}
           </Button>
@@ -415,7 +488,7 @@ const PostPage = () => {
             onClick={() => handleShare(post.id)}
             className="action-button"
           >
-            Chia sẻ {post.shares ? `(${post.shares})` : ''}
+            Chia sẻ {post.shares ? `(${post.shares})` : ""}
           </Button>
         </div>
 
@@ -433,7 +506,11 @@ const PostPage = () => {
             {/* Create Post Section */}
             <Card className="create-post-card">
               <div className="create-post-header">
-                <Avatar size={40} src={posts[0]?.user?.avatarUrl} icon={<UserOutlined />} />
+                <Avatar
+                  size={40}
+                  src={posts[0]?.user?.avatarUrl}
+                  icon={<UserOutlined />}
+                />
                 <Button
                   type="primary"
                   size="large"

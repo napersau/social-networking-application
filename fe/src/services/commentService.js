@@ -10,29 +10,48 @@ export const commentService = {
    * @returns {Promise} - Kết quả từ API
    */
   createComment: async (postId, content) => {
-    return await httpClient.post(API.CREATE_COMMENT || "/api/v1/comments/create", {
-      postId,
-      content,
-    }, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-        "Content-Type": "application/json",
+    return await httpClient.post(
+      API.CREATE_COMMENT || "/api/v1/comments/create",
+      {
+        postId,
+        content,
       },
-    });
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   },
 
   /**
    * Cập nhật comment (nếu bạn muốn dùng sau này)
    */
   updateComment: async (commentId, newContent) => {
-    return await httpClient.post(API.UPDATE_COMMENT || "/api/v1/comments/update", {
-      commentId,
-      content: newContent,
-    }, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-        "Content-Type": "application/json",
+    return await httpClient.post(
+      API.UPDATE_COMMENT || "/api/v1/comments/update",
+      {
+        commentId,
+        content: newContent,
       },
-    });
-  }
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  },
+
+  deleteComment: async (id) => {
+    return await httpClient.delete(
+      `${API.DELETE_COMMENT(id) || `/api/v1/comments/${id}`}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      }
+    );
+  },
 };
