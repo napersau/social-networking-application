@@ -14,5 +14,5 @@ public class PostShareResponse {
     private String sharedContent;
     private Instant createdAt;
     private User user;
-    private Post post;
+    private PostResponse post;
 }

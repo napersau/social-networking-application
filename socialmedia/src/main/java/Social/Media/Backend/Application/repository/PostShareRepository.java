@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface PostShareRepository extends JpaRepository<PostShare, Long> {
     List<PostShare> findAllByUserId(Long userId);
+    boolean existsByPostIdAndUserId(Long postId, Long userId);
 }

@@ -52,6 +52,10 @@ public class PostShareServiceImpl implements PostShareService {
         Post post = postRepository.findById(request.getPostId()).orElseThrow(() ->
                 new AppException(ErrorCode.POST_NOT_EXISTED)) ;
 
+        if(postShareRepository.existsByPostIdAndUserId(request.getPostId(), user.getId())) {
+            throw new RuntimeException("Post Share Exists");
+        }
+
         PostShare postShare = PostShare.builder()
                 .user(user)
                 .post(post)

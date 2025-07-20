@@ -32,6 +32,7 @@ import {
   deleteNotification,
 } from "../../services/notificationService";
 import { io } from "socket.io-client";
+import { getMyInfo } from "../../services/userService";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -43,6 +44,7 @@ function Header() {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
+  const [info, setInfo] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +70,14 @@ function Header() {
         const role = payload.scope?.name || "USER";
         const userId = payload.sub;
         setUser({ role });
+
+        getMyInfo()
+          .then((res) => {
+            setInfo(res.data.result); // Lưu thông tin vào state
+          })
+          .catch(() => {
+            message.error("Không thể lấy thông tin người dùng");
+          });
 
         const socket = io("http://localhost:9092", {
           transports: ["websocket"],
@@ -297,11 +307,12 @@ function Header() {
               <div className="avatar-container">
                 <Avatar
                   size="large"
+                  src={info?.avatarUrl}
                   icon={<UserOutlined />}
                   className="avatar-icon"
                 />
                 <div className="user-info">
-                  <Text className="user-role">{user.role}</Text>
+                  <Text className="user-role">{info?.firstName || "Người dùng"}</Text>
                 </div>
               </div>
             </Dropdown>
@@ -353,7 +364,7 @@ function Header() {
               className="avatar-icon"
             />
             <div className="user-info">
-              <Text className="user-role">{user.role}</Text>
+              <Text className="user-role">kk{user.firstName}</Text>
             </div>
           </div>
 

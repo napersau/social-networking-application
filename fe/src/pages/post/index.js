@@ -17,12 +17,12 @@ import {
   Upload,
   Image,
   Collapse,
-  Badge,
+  Dropdown,
+  Menu,
 } from "antd";
 import {
-  LikeOutlined,
   MessageOutlined,
-  ShareAltOutlined,
+  MoreOutlined,
   PlusOutlined,
   UserOutlined,
   PictureOutlined,
@@ -31,19 +31,14 @@ import {
   HeartFilled,
   CommentOutlined,
   RetweetOutlined,
-  CameraOutlined,
-  DownOutlined,
-  UpOutlined,
 } from "@ant-design/icons";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
 import { commentService } from "../../services/commentService";
 import "./styles.css";
 import axios from "axios";
-
 const { TextArea } = Input;
 const { Title, Text, Paragraph } = Typography;
-const { Panel } = Collapse;
 
 const PostPage = () => {
   const [posts, setPosts] = useState([]);
@@ -96,8 +91,6 @@ const PostPage = () => {
 
       if (response.data.code === 1000) {
         const imageUrl = response.data.result.url;
-
-        // ❗ Chỉ set 1 ảnh duy nhất
         setUploadedImageUrl(imageUrl);
         setFileList([
           {
@@ -152,10 +145,8 @@ const PostPage = () => {
     setLikingPosts((prev) => new Set(prev).add(postId));
     try {
       const reactionType = "Like";
-      // Sử dụng toggleLike nếu backend xử lý toggle, hoặc likePost nếu backend xử lý riêng
       const response = await likeService.likePost(postId, reactionType);
       if (response.data && response.data.code === 1000) {
-        // Update the specific post in the list
         setPosts((prevPosts) =>
           prevPosts.map((post) => {
             if (post.id === postId) {
@@ -170,7 +161,6 @@ const PostPage = () => {
           })
         );
 
-        // Show appropriate message
         const currentPost = posts.find((p) => p.id === postId);
         if (currentPost?.isLiked) {
           message.success("Đã bỏ thích bài viết!");
@@ -411,31 +401,38 @@ const PostPage = () => {
                   key={comment.id}
                   className="comment-item"
                   actions={
-                    post.user.id === currentUserId ||
-                    comment.user?.id === currentUserId
+                    currentUserId === comment.user?.id ||
+                    currentUserId === post.user.id
                       ? [
-                          comment.user?.id === currentUserId && (
-                            <Button
-                              type="link"
-                              size="small"
-                              onClick={() => {
-                                setEditingCommentId(comment.id);
-                                setEditedContent(comment.content);
-                              }}
-                            >
-                              Sửa
-                            </Button>
-                          ),
-                          <Button
-                            type="link"
-                            size="small"
-                            danger
-                            onClick={() =>
-                              confirmDeleteComment(comment.id, post.id)
+                          <Dropdown
+                            overlay={
+                              <Menu>
+                                {currentUserId === comment.user?.id && (
+                                  <Menu.Item
+                                    key="edit"
+                                    onClick={() => {
+                                      setEditingCommentId(comment.id);
+                                      setEditedContent(comment.content);
+                                    }}
+                                  >
+                                    Sửa
+                                  </Menu.Item>
+                                )}
+                                <Menu.Item
+                                  key="delete"
+                                  danger
+                                  onClick={() =>
+                                    confirmDeleteComment(comment.id, post.id)
+                                  }
+                                >
+                                  Xóa
+                                </Menu.Item>
+                              </Menu>
                             }
+                            trigger={["click"]}
                           >
-                            Xóa
-                          </Button>,
+                            <Button type="text" icon={<MoreOutlined />} />
+                          </Dropdown>,
                         ]
                       : []
                   }

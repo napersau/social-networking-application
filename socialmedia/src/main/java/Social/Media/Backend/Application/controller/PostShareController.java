@@ -6,10 +6,7 @@ import Social.Media.Backend.Application.dto.response.ApiResponse;
 import Social.Media.Backend.Application.dto.response.PostShareResponse;
 import Social.Media.Backend.Application.service.PostShareService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,7 +27,7 @@ public class PostShareController {
     }
 
     @PostMapping
-    ApiResponse<PostShareResponse> createPostShare(PostShareRequest request) {
+    ApiResponse<PostShareResponse> createPostShare(@RequestBody PostShareRequest request) {
         PostShareResponse response = postShareService.createPostShare(request);
         return ApiResponse.<PostShareResponse>builder()
                 .code(1000)

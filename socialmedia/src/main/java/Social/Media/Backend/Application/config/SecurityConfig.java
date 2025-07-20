@@ -69,7 +69,7 @@ public class SecurityConfig {
 
                                 .requestMatchers( "/api/v1/friendship/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/api/v1/notifications/**").hasAnyRole("USER","ADMIN")
-
+                                .requestMatchers( "/api/v1/post-share/**").hasAnyRole("USER","ADMIN")
 
 
                                 .anyRequest().authenticated())

@@ -8,7 +8,7 @@ export const CONFIG = {
 
 export const API = {
   LOGIN: "/identity/auth/token",
-  MY_INFO: "/profile/users/my-profile",
+  MY_INFO: "/users/my-info",
   MY_POST: "/post/my-posts",
   CREATE_POST: "/post/create",
   UPDATE_PROFILE: "/profile/users/my-profile",
@@ -17,6 +17,7 @@ export const API = {
   SEARCH_USER: "/users/search",
   GET_ALL_USERS: "/users",
   TOGGLE_ACTIVE_USER: "/users/update",
+  POST_SHARE: "/post-share",
 
   SEARCH_USER_BY_FULLNAME: "/users/search-user",
   MY_CONVERSATIONS: "/chat/conversations/my-conversations",
