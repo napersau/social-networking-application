@@ -23,6 +23,11 @@ public class Comment {
     private Post post;
 
     @ManyToOne
+    @JoinColumn(name = "post_share_id")
+    private PostShare postShare;
+
+
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

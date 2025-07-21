@@ -9,5 +9,6 @@ public class LikeResponse {
     private User user;
     private String reactionType;
     private Long postId;
+    private Long postShareId;
     private Long commentId;
 }

@@ -13,6 +13,7 @@ public class CommentResponse {
     private Long id;
     private String content;
     private Long postId;
+    private Long postShareId;
     private Long parentCommentId;
     private String imageUrl;
     private User user;
