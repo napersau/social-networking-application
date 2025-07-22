@@ -44,4 +44,8 @@ export const API = {
 
   FRIENDSHIP: "/friendship",
   NOTIFICATIONS: "/notifications",
+
+  FORGOT_PASSWORD: "/email/forgot-password",
+  VERIFY_OTP: "/email/verify-otp",
+  RESET_PASSWORD: "/email/reset-password",
 };

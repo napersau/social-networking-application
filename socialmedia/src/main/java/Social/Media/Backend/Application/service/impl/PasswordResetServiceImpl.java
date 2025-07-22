@@ -113,6 +113,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenRepository.markTokensAsUsed(request.getEmail());
 
         log.info("Password reset successfully for email: {}", request.getEmail());
+        log.info("Password: {}", user.getPassword());
+        log.info("Password: {}", request.getNewPassword());
+        log.info("username: {}", user.getUsername());
     }
 
     private String generateOtp() {

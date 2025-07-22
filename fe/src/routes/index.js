@@ -13,6 +13,7 @@ import PostUser from "../pages/postUser";
 import Friendship from "../pages/friendship";
 import AdminHome from "../pages/adminHome";
 import OAuth2RedirectHandler from "../pages/oAuth2RedirectHandler";
+import ForgotPassword from "../pages/forgotPassword";
 
 const Routes = [
   {
@@ -23,6 +24,10 @@ const Routes = [
       {
         path: "login",
         element: <Login />,
+      },
+      {
+        path: "/forgot-password",
+        element: <ForgotPassword />,
       },
       {
         path: "register",
