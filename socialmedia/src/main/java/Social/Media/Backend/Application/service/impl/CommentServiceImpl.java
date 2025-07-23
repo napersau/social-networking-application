@@ -12,6 +12,7 @@ import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.CommentService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -28,17 +29,15 @@ import java.util.List;
 public class CommentServiceImpl implements CommentService {
 
     private final ModelMapper modelMapper;
-    private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
+    private final SecurityUtil securityUtil;
 
     @Override
     public CommentResponse createComment(CommentRequest request) {
 
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         Post post = postRepository.findById(request.getPostId()).orElseThrow(()
                 -> new AppException(ErrorCode.POST_NOT_EXISTED));
@@ -73,9 +72,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponse replyComment(CommentRequest request) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
 
         Post post = postRepository.findById(request.getPostId()).orElseThrow(()
                 -> new AppException(ErrorCode.POST_NOT_EXISTED));

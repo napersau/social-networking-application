@@ -26,7 +26,6 @@ public class Comment {
     @JoinColumn(name = "post_share_id")
     private PostShare postShare;
 
-
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -55,4 +54,7 @@ public class Comment {
 
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<Comment> replies;
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL)
+    private List<Like> likes;
 }
