@@ -48,4 +48,22 @@ export const commentService = {
       }
     );
   },
+
+  replyComment: async (postId, commentId, content, imageUrl = null) => {
+  return await httpClient.post(
+    API.REPLY_COMMENT || "/api/v1/comments/reply",
+    {
+      postId,
+      commentId,     // ID của comment cha (reply vào comment này)
+      content,
+      imageUrl,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+},
 };

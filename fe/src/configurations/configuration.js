@@ -41,6 +41,7 @@ export const API = {
   CREATE_COMMENT: "/comments/create",
   UPDATE_COMMENT: "/comments/update",
   DELETE_COMMENT: (id) => `/comments/${id}`,
+   REPLY_COMMENT: "/comments/reply",
 
   FRIENDSHIP: "/friendship",
   NOTIFICATIONS: "/notifications",
