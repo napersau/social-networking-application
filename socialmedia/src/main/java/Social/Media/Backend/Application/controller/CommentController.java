@@ -8,6 +8,8 @@ import Social.Media.Backend.Application.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/comments")
 @RequiredArgsConstructor
@@ -43,4 +45,23 @@ public class CommentController {
                 .result("Xóa bình luận thành công")
                 .build();
     }
+
+    @PostMapping("/reply")
+    ApiResponse<CommentResponse> replyComment(@RequestBody CommentRequest request) {
+        CommentResponse response = commentService.replyComment(request);
+        return ApiResponse.<CommentResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/{postId}")
+    ApiResponse<List<CommentResponse>> getCommentsByPostId(@PathVariable Long postId) {
+        List<CommentResponse> response = commentService.getCommentsByPostId(postId);
+        return ApiResponse.<List<CommentResponse>>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
 }

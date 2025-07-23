@@ -7,6 +7,7 @@ import Social.Media.Backend.Application.entity.Post;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
+import Social.Media.Backend.Application.mapper.CommentMapper;
 import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
 
     @Override
     public CommentResponse createComment(CommentRequest request) {
@@ -66,5 +69,35 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void deleteComment(Long id) {
         commentRepository.deleteById(id);
+    }
+
+    @Override
+    public CommentResponse replyComment(CommentRequest request) {
+        var context = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(context).orElseThrow(()
+                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Post post = postRepository.findById(request.getPostId()).orElseThrow(()
+                -> new AppException(ErrorCode.POST_NOT_EXISTED));
+
+        Comment tmp = commentRepository.findById(request.getCommentId()).orElseThrow(() ->
+                new RuntimeException("Comment not found"));
+
+        Comment comment = Comment.builder()
+                .content(request.getContent())
+                .user(user)
+                .imageUrl(request.getImageUrl())
+                .post(post)
+                .createdAt(Instant.now())
+                .parentComment(tmp)
+                .build();
+        commentRepository.save(comment);
+        return modelMapper.map(comment, CommentResponse.class);
+    }
+
+    @Override
+    public List<CommentResponse> getCommentsByPostId(Long postId) {
+        List<Comment> comments = commentRepository.findAllByPostId(postId);
+        return comments.stream().map(commentMapper::toCommentResponse).toList();
     }
 }

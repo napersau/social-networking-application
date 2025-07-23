@@ -6,6 +6,7 @@ import Social.Media.Backend.Application.entity.Post;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
+import Social.Media.Backend.Application.mapper.PostMapper;
 import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
@@ -26,6 +27,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
     private final LikeRepository likeRepository;
+    private final PostMapper postMapper;
 
     @Override
     public PostResponse createPost(PostRequest request) {
@@ -38,7 +40,6 @@ public class PostServiceImpl implements PostService {
         post.setUser(user);
         post.setCreatedAt(Instant.now());
         postRepository.save(post);
-
         return modelMapper.map(post, PostResponse.class);
     }
 
@@ -54,14 +55,9 @@ public class PostServiceImpl implements PostService {
         User user = userRepository.findByUsername(context).orElseThrow(()
                 -> new AppException(ErrorCode.USER_NOT_EXISTED));
         List<Post> posts = postRepository.findAllByUserId(user.getId());
-        List<PostResponse> result =  posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
+        List<PostResponse> result =  posts.stream().map(postMapper::toPostResponse).toList();
         for(PostResponse postResponse : result){
-            if(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent()){
-                postResponse.setIsLiked(true);
-            }
-            else{
-                postResponse.setIsLiked(false);
-            }
+            postResponse.setIsLiked(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent());
         }
         return result;
     }
@@ -74,12 +70,7 @@ public class PostServiceImpl implements PostService {
         List<Post> posts = postRepository.findAllByUserId(userId);
         List<PostResponse> result =  posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
         for(PostResponse postResponse : result){
-            if(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent()){
-                postResponse.setIsLiked(true);
-            }
-            else{
-                postResponse.setIsLiked(false);
-            }
+            postResponse.setIsLiked(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent());
         }
         return result;
     }

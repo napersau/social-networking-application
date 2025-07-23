@@ -17,10 +17,9 @@ public class CommentResponse {
     private Long parentCommentId;
     private String imageUrl;
     private User user;
-    private Comment parentComment;
     private Integer likesCount;
     private Boolean isActive;
-    private List<Comment> replies;
+    private List<CommentResponse> replies;
     private Instant createdAt;
     private Instant updatedAt;
 }
