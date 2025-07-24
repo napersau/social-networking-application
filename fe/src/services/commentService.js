@@ -50,20 +50,34 @@ export const commentService = {
   },
 
   replyComment: async (postId, commentId, content, imageUrl = null) => {
-  return await httpClient.post(
-    API.REPLY_COMMENT || "/api/v1/comments/reply",
-    {
-      postId,
-      commentId,     // ID của comment cha (reply vào comment này)
-      content,
-      imageUrl,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-        "Content-Type": "application/json",
+    return await httpClient.post(
+      API.REPLY_COMMENT || "/api/v1/comments/reply",
+      {
+        postId,
+        commentId, // ID của comment cha (reply vào comment này)
+        content,
+        imageUrl,
       },
-    }
-  );
-},
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  },
+
+  getCommentsByPostId: async (postId) => {
+    return await httpClient.get(
+      `${
+        API.GET_COMMENTS_BY_POST_ID?.replace(":postId", postId) ||
+        `/comments/${postId}`
+      }`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      }
+    );
+  },
 };

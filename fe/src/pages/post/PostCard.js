@@ -15,26 +15,54 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import CommentSection from "./CommentSection";
+import { commentService } from "../../services/commentService"; // thêm import
 
 const { Text, Paragraph } = Typography;
 
-const PostCard = ({ 
-  post, 
-  likingPosts, 
+const PostCard = ({
+  post,
+  likingPosts,
   expandedComments,
+  setExpandedComments,
   commentingPosts,
   setCommentingPosts,
   setPosts,
   commentForms,
   onLike,
-  onComment,
-  onShare
+  onShare,
 }) => {
   const isLiking = likingPosts.has(post.id);
   const isLiked = post.isLiked || false;
   const likeCount = post.likes?.length || 0;
   const commentCount = post.commentCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+
+  const handleToggleComments = async () => {
+    if (isCommentsExpanded) {
+      setExpandedComments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(post.id);
+        return newSet;
+      });
+    } else {
+      try {
+        const response = await commentService.getCommentsByPostId(post.id);
+        if (response.data?.code === 1000) {
+          const fetchedComments = response.data.result;
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === post.id ? { ...p, comments: fetchedComments } : p
+            )
+          );
+          setExpandedComments((prev) => new Set(prev).add(post.id));
+        } else {
+          console.error("Không thể tải bình luận");
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải bình luận:", err);
+      }
+    }
+  };
 
   return (
     <Card className="post-card" hoverable>
@@ -70,9 +98,7 @@ const PostCard = ({
           onClick={() => onLike(post.id)}
           loading={isLiking}
           className={`action-button ${isLiked ? "liked" : ""}`}
-          style={{
-            color: isLiked ? "#ff4d4f" : undefined,
-          }}
+          style={{ color: isLiked ? "#ff4d4f" : undefined }}
         >
           {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
         </Button>
@@ -80,7 +106,7 @@ const PostCard = ({
         <Button
           type="text"
           icon={<CommentOutlined />}
-          onClick={() => onComment(post.id)}
+          onClick={handleToggleComments}
           className={`action-button ${isCommentsExpanded ? "active" : ""}`}
         >
           Bình luận {commentCount > 0 && `(${commentCount})`}
@@ -96,9 +122,8 @@ const PostCard = ({
         </Button>
       </div>
 
-      {/* Comment Section - Only show when expanded */}
       {isCommentsExpanded && (
-        <CommentSection 
+        <CommentSection
           post={post}
           commentingPosts={commentingPosts}
           setCommentingPosts={setCommentingPosts}

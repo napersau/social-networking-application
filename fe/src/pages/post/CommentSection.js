@@ -3,7 +3,6 @@ import {
   Form,
   Input,
   Button,
-  List,
   Avatar,
   Space,
   Typography,
@@ -21,7 +20,7 @@ import {
   UpOutlined,
 } from "@ant-design/icons";
 import { commentService } from "../../services/commentService";
-
+import { likeService } from "../../services/likeService";
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
 
@@ -41,6 +40,7 @@ const CommentSection = ({
   const [replyContent, setReplyContent] = useState("");
   const [expandedReplies, setExpandedReplies] = useState(new Set()); // Quản lý trạng thái mở rộng replies
   const currentUserId = parseInt(localStorage.getItem("userId"));
+  const [likedCommentIds, setLikedCommentIds] = useState(new Set());
 
   // Xây dựng cây comment từ danh sách phẳng
   const buildCommentTree = (flatComments) => {
@@ -70,7 +70,7 @@ const CommentSection = ({
 
   // Toggle mở rộng replies
   const toggleExpandReplies = (commentId) => {
-    setExpandedReplies(prev => {
+    setExpandedReplies((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(commentId)) {
         newSet.delete(commentId);
@@ -94,7 +94,10 @@ const CommentSection = ({
     setCommentingPosts((prev) => new Set(prev).add(postId));
 
     try {
-      const response = await commentService.createComment(postId, content.trim());
+      const response = await commentService.createComment(
+        postId,
+        content.trim()
+      );
 
       if (response.data && response.data.code === 1000) {
         setPosts((prevPosts) =>
@@ -135,7 +138,11 @@ const CommentSection = ({
     }
 
     try {
-      const response = await commentService.replyComment(postId, commentId, content.trim());
+      const response = await commentService.replyComment(
+        postId,
+        commentId,
+        content.trim()
+      );
 
       if (response.data && response.data.code === 1000) {
         const newReply = response.data.result;
@@ -154,7 +161,7 @@ const CommentSection = ({
         );
 
         // Tự động mở rộng replies khi có reply mới
-        setExpandedReplies(prev => new Set(prev).add(commentId));
+        setExpandedReplies((prev) => new Set(prev).add(commentId));
         setReplyingCommentId(null);
         setReplyContent("");
         message.success("Đã trả lời bình luận!");
@@ -250,17 +257,74 @@ const CommentSection = ({
     }
   };
 
+  const handleToggleLikeComment = async (commentId) => {
+    try {
+      const response = await likeService.toggleLikeComment({
+        cmtId: commentId,
+        reactionType: "Like",
+      });
+
+      if (response.data && response.data.code === 1000) {
+
+        const result = response.data.result;
+        console.log("result", result)
+        setPosts((prevPosts) =>
+          prevPosts.map((postItem) => {
+            if (postItem.id === post.id) {
+              const updatedComments = postItem.comments.map((c) => {
+                console.log("cmt",c)
+                if (c.id === commentId) {
+                  if (result) {
+                    return {
+                      ...c,
+                      isLiked: true,
+                      likeCount: result.likeCount,
+                    };
+                  } else {
+                    return {
+                      ...c,
+                      isLiked: false,
+                      likeCount: Math.max((c.likes?.length || 1000) - 1, 0),
+                    };
+                  }
+                }
+                return c;
+              });
+              return { ...postItem, comments: updatedComments };
+            }
+            return postItem;
+          })
+        );
+
+        // Cập nhật state local
+        setLikedCommentIds((prev) => {
+          const newSet = new Set(prev);
+          result ? newSet.add(commentId) : newSet.delete(commentId);
+          return newSet;
+        });
+      } else {
+        message.error("Không thể like bình luận!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi like bình luận:", error);
+      message.error("Đã xảy ra lỗi khi like bình luận!");
+    }
+  };
+
   const renderComment = (comment, level = 0) => {
     const hasReplies = comment.replies && comment.replies.length > 0;
     const isExpanded = expandedReplies.has(comment.id);
 
     return (
-      <div key={comment.id} className={`comment-wrapper ${level === 0 ? 'comment-root' : ''}`}>
-        <div 
-          className="comment-item" 
-          style={{ 
-            marginLeft: level * 32, 
-            position: 'relative'
+      <div
+        key={comment.id}
+        className={`comment-wrapper ${level === 0 ? "comment-root" : ""}`}
+      >
+        <div
+          className="comment-item"
+          style={{
+            marginLeft: level * 32,
+            position: "relative",
           }}
         >
           <div className="comment-content">
@@ -311,8 +375,17 @@ const CommentSection = ({
                   <Paragraph className="comment-text">
                     {comment.content}
                   </Paragraph>
-                  
+
                   <div className="comment-actions">
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={() => handleToggleLikeComment(comment.id)}
+                    >
+                      {comment.isLiked ? "Bỏ thích" : "Thích"} (
+                      {comment.likes?.length || 0})
+                    </Button>
+
                     <Button
                       type="link"
                       size="small"
@@ -334,10 +407,9 @@ const CommentSection = ({
                         icon={isExpanded ? <UpOutlined /> : <DownOutlined />}
                         style={{ marginLeft: 8 }}
                       >
-                        {isExpanded 
-                          ? "Ẩn phản hồi" 
-                          : `Xem ${comment.replies.length} phản hồi`
-                        }
+                        {isExpanded
+                          ? "Ẩn phản hồi"
+                          : `Xem ${comment.replies.length} phản hồi`}
                       </Button>
                     )}
                   </div>
@@ -385,9 +457,7 @@ const CommentSection = ({
                     <Menu.Item
                       key="delete"
                       danger
-                      onClick={() =>
-                        confirmDeleteComment(comment.id, post.id)
-                      }
+                      onClick={() => confirmDeleteComment(comment.id, post.id)}
                     >
                       Xóa
                     </Menu.Item>
@@ -454,7 +524,7 @@ const CommentSection = ({
 
       {/* Comments List */}
       {nestedComments.length > 0 ? (
-        <div className="comments-list" style={{ position: 'relative' }}>
+        <div className="comments-list" style={{ position: "relative" }}>
           {nestedComments.map((comment) => renderComment(comment))}
         </div>
       ) : (

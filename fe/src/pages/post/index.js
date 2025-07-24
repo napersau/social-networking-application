@@ -150,6 +150,7 @@ const PostPage = () => {
                       post={item}
                       likingPosts={likingPosts}
                       expandedComments={expandedComments}
+                      setExpandedComments={setExpandedComments} 
                       commentingPosts={commentingPosts}
                       setCommentingPosts={setCommentingPosts}
                       setPosts={setPosts}

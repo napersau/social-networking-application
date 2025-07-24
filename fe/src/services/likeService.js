@@ -27,18 +27,17 @@ export const likeService = {
     });
   },
 
-  // Bỏ like (unlike)
-  unlikePost: async (postId) => {
-    return await httpClient.delete(
-      API.UNLIKE_POST || `/api/v1/likes/${postId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  // Toggle like/unlike comment (nếu backend xử lý chung 1 endpoint)
+  toggleLikeComment: async (likeData) => {
+    return await httpClient.post(API.TOGGLE_LIKE_COMMENT || "/api/v1/like/commnet", likeData, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    });
   },
+
+
 
   // Lấy danh sách người đã like một bài viết
   getPostLikes: async (postId, page = 0, size = 10) => {
@@ -50,14 +49,6 @@ export const likeService = {
     });
   },
 
-  // Lấy số lượng like của bài viết
-  getPostLikeCount: async (postId) => {
-    return await httpClient.get(API.GET_LIKE_COUNT || `/api/v1/posts/${postId}/likes/count`, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    });
-  },
 
   // Kiểm tra user hiện tại đã like bài viết chưa
   checkLikeStatus: async (postId) => {
@@ -85,6 +76,8 @@ export const likeService = {
       },
     });
   },
+
+
 };
 
 // Export default

@@ -20,6 +20,7 @@ public class CommentResponse {
     private Boolean isActive;
     private List<CommentResponse> replies;
     private List<LikeResponse> likes;
+    private Boolean isLiked;
     private Instant createdAt;
     private Instant updatedAt;
 }
