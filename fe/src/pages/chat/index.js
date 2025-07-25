@@ -1,34 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Box,
-  Card,
-  TextField,
-  Typography,
-  Paper,
-  IconButton,
-  Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
-  Badge,
-  CircularProgress,
-  Alert,
-  Stack,
-} from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
-import AddIcon from "@mui/icons-material/Add";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { Box, Card } from "@mui/material";
+import { io } from "socket.io-client";
+import "./styles.css";
 
+// Import components
+import ConversationList from "./ConversationList";
+import ChatArea from "./ChatArea";
 import NewChatPopover from "../../components/newChatPopover";
+
+// Import services
 import {
   getMyConversations,
   createConversation,
   getMessages,
   createMessage,
 } from "../../services/chatService";
-import { io } from "socket.io-client";
 import { getToken } from "../../services/localStorageService";
 
 export default function Chat() {
@@ -40,24 +26,16 @@ export default function Chat() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
   const messageContainerRef = useRef(null);
-  const socketRef = useRef(null); // Function to scroll to the bottom of the message container
+  const socketRef = useRef(null);
+
+  // Function to scroll to the bottom of the message container instantly
   const scrollToBottom = useCallback(() => {
     if (messageContainerRef.current) {
-      // Immediate scroll attempt
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
-
-      // Backup attempt with a small timeout to ensure DOM updates are complete
-      setTimeout(() => {
-        messageContainerRef.current.scrollTop =
-          messageContainerRef.current.scrollHeight;
-      }, 100);
-
-      // Final attempt with a longer timeout
-      setTimeout(() => {
-        messageContainerRef.current.scrollTop =
-          messageContainerRef.current.scrollHeight;
-      }, 300);
+      const container = messageContainerRef.current;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'auto' // Changed from 'smooth' to 'auto' for instant scrolling
+      });
     }
   }, []);
 
@@ -71,15 +49,13 @@ export default function Chat() {
   };
 
   const handleSelectNewChatUser = async (user) => {
-    console.log("user",user)
+    console.log("user", user);
     const response = await createConversation({
       type: "DIRECT",
       participantIds: [user.id],
     });
 
     const newConversation = response?.data?.result;
-
-    
 
     // Check if we already have a conversation with this user
     const existingConversation = conversations.find(
@@ -99,6 +75,8 @@ export default function Chat() {
       // Select this new conversation
       setSelectedConversation(newConversation);
     }
+
+    handleCloseNewChat();
   };
 
   // Fetch conversations from API
@@ -130,7 +108,7 @@ export default function Chat() {
 
   // Load messages from the conversation history when a conversation is selected
   useEffect(() => {
-    const fetchMessages = async (conversationId) => {
+    const fetchMessagesForConversation = async (conversationId) => {
       try {
         // Check if we already have messages for this conversation
         if (!messagesMap[conversationId]) {
@@ -164,29 +142,41 @@ export default function Chat() {
     };
 
     if (selectedConversation?.id) {
-      fetchMessages(selectedConversation.id);
+      fetchMessagesForConversation(selectedConversation.id);
     }
   }, [selectedConversation, messagesMap]);
+
   const currentMessages = selectedConversation
     ? messagesMap[selectedConversation.id] || []
     : [];
-  // Automatically scroll to the bottom when messages change or after sending a message
+
+  // Auto-scroll to bottom only when new messages arrive or conversation changes
   useEffect(() => {
-    scrollToBottom();
+    // Only auto-scroll if user is near the bottom (within 100px)
+    if (messageContainerRef.current) {
+      const container = messageContainerRef.current;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      
+      if (isNearBottom) {
+        scrollToBottom(); // Removed setTimeout for instant scrolling
+      }
+    }
   }, [currentMessages, scrollToBottom]);
 
-  // Also scroll when the conversation changes
+  // Scroll to bottom instantly when conversation changes
   useEffect(() => {
-    scrollToBottom();
+    if (selectedConversation) {
+      scrollToBottom(); // Removed setTimeout for instant scrolling
+    }
   }, [selectedConversation, scrollToBottom]);
 
+  // Socket connection setup
   useEffect(() => {
     // Initialize socket connection only once
     if (!socketRef.current) {
       console.log("Initializing socket connection...");
 
       const connectionUrl = "http://localhost:9092?token=" + getToken();
-
       socketRef.current = new io(connectionUrl);
 
       socketRef.current.on("connect", () => {
@@ -239,24 +229,31 @@ export default function Chat() {
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedConversation) return;
 
-    // Clear input field
+    // Store the message content
+    const messageContent = message;
+    
+    // Clear input field immediately for better UX
     setMessage("");
 
     try {
       // Send message to API
       const response = await createMessage({
         conversationId: selectedConversation.id,
-        message: message,
+        message: messageContent,
       });
+      
+      // Auto-scroll after sending message
+      scrollToBottom(); // Removed setTimeout for instant scrolling
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Restore message in input if failed
+      setMessage(messageContent);
     }
   };
 
   // Helper function to handle incoming socket messages
   const handleIncomingMessage = useCallback(
     (message) => {
-  
       // Add the new message to the appropriate conversation
       setMessagesMap((prev) => {
         const existingMessages = prev[message.conversationId] || [];
@@ -267,7 +264,7 @@ export default function Chat() {
           if (msg.id && message.id) {
             return msg.id === message.id;
           }
-          
+
           return false;
         });
 
@@ -287,7 +284,7 @@ export default function Chat() {
       });
 
       // Update the conversation list with the new last message
-      setConversations((prevConversations) => {        
+      setConversations((prevConversations) => {
         const updatedConversations = prevConversations.map((conv) =>
           conv.id === message.conversationId
             ? {
@@ -302,391 +299,39 @@ export default function Chat() {
               }
             : conv
         );
-        
+
         return updatedConversations;
       });
     },
     [selectedConversation]
   );
 
-  console.log("selectedConversation",selectedConversation)
-
   return (
-    <Box sx={{ p: 2, height: "100vh", boxSizing: "border-box" }}>
-      <Card
-        sx={{
-          width: "100%",
-          height: "calc(100vh - 64px)" /* 100vh minus header (64px) */,
-          maxHeight: "100%",
-          display: "flex",
-          flexDirection: "row",
-          mb: "-64px" /* Counteract the parent padding */,
-          overflow: "hidden",
-        }}
-      >
-        {/* Conversations List */}
-        <Box
-          sx={{
-            width: 300,
-            borderRight: 1,
-            borderColor: "divider",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {" "}
-          <Box
-            sx={{
-              p: 2,
-              borderBottom: 1,
-              borderColor: "divider",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Typography variant="h6">Chats</Typography>{" "}
-            <IconButton
-              color="primary"
-              size="small"
-              onClick={handleNewChatClick}
-              sx={{
-                bgcolor: "primary.light",
-                color: "white",
-                "&:hover": {
-                  bgcolor: "primary.main",
-                },
-              }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>{" "}
-            <NewChatPopover
-              anchorEl={newChatAnchorEl}
-              open={Boolean(newChatAnchorEl)}
-              onClose={handleCloseNewChat}
-              onSelectUser={handleSelectNewChatUser}
-            />
-          </Box>{" "}
-          <Box
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-            }}
-          >
-            {(() => {
-              if (loading) {
-                return (
-                  <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                    <CircularProgress size={28} />
-                  </Box>
-                );
-              }
-              if (error) {
-                return (
-                  <Box sx={{ p: 2 }}>
-                    <Alert
-                      severity="error"
-                      sx={{ mb: 2 }}
-                      action={
-                        <IconButton
-                          color="inherit"
-                          size="small"
-                          onClick={fetchConversations}
-                        >
-                          <RefreshIcon fontSize="small" />
-                        </IconButton>
-                      }
-                    >
-                      {error}
-                    </Alert>
-                  </Box>
-                );
-              }
-              if (conversations == null || conversations.length === 0) {
-                return (
-                  <Box sx={{ p: 2, textAlign: "center" }}>
-                    <Typography color="text.secondary">
-                      No conversations yet. Start a new chat to begin.
-                    </Typography>
-                  </Box>
-                );
-              }
-              return (
-                <List sx={{ width: "100%" }}>
-                  {conversations.map((conversation) => (
-                    <React.Fragment key={conversation.id}>
-                      {" "}
-                      <ListItem
-                        alignItems="flex-start"
-                        onClick={() => handleConversationSelect(conversation)}
-                        sx={{
-                          cursor: "pointer",
-                          bgcolor:
-                            selectedConversation?.id === conversation.id
-                              ? "rgba(0, 0, 0, 0.04)"
-                              : "transparent",
-                          "&:hover": {
-                            bgcolor: "rgba(0, 0, 0, 0.08)",
-                          },
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <Badge
-                            color="error"
-                            badgeContent={conversation.unread}
-                            invisible={conversation.unread === 0}
-                            overlap="circular"
-                          >
-                            <Avatar
-                              src={conversation.conversationAvatar || ""}
-                            />
-                          </Badge>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Stack
-                              direction="row"
-                              display={"flex"}
-                              justifyContent="space-between"
-                              alignItems="center"
-                            >
-                              <Typography
-                                component="span"
-                                variant="body2"
-                                color="text.primary"
-                                noWrap
-                                sx={{ display: "inline" }}
-                              >
-                                {conversation.conversationName}
-                              </Typography>
-                              <Typography
-                                component="span"
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ display: "inline", fontSize: "0.7rem" }}
-                              >
-                                {new Date(
-                                  conversation.modifiedDate
-                                ).toLocaleString("vi-VN", {
-                                  year: "numeric",
-                                  month: "numeric",
-                                  day: "numeric",
-                                })}
-                              </Typography>
-                            </Stack>
-                          }
-                          secondary={
-                            <Typography
-                              sx={{ display: "inline" }}
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                              noWrap
-                            >
-                              {conversation.lastMessage ||
-                                "Start a conversation"}
-                            </Typography>
-                          }
-                          primaryTypographyProps={{
-                            fontWeight:
-                              conversation.unread > 0 ? "bold" : "normal",
-                          }}
-                          sx={{
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            pr: 1,
-                          }}
-                        />
-                      </ListItem>
-                      <Divider variant="inset" component="li" />
-                    </React.Fragment>
-                  ))}
-                </List>
-              );
-            })()}
-          </Box>
-        </Box>
-
-        {/* Chat Area */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {selectedConversation ? (
-            <>
-              <Box
-                sx={{
-                  p: 2,
-                  borderBottom: 1,
-                  borderColor: "divider",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <Avatar
-                  src={selectedConversation.conversationAvatar}
-                  sx={{ mr: 2 }}
-                />
-                <Typography variant="h6">
-                  {selectedConversation.conversationName}
-                </Typography>
-              </Box>{" "}
-              <Box
-                id="messageContainer"
-                ref={messageContainerRef}
-                sx={{
-                  flexGrow: 1,
-                  p: 2,
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  position: "relative",
-                }}
-              >
-                {" "}
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    width: "100%",
-                    margin:
-                      "auto 0 0 0" /* Push to bottom, but allow scrolling */,
-                  }}
-                >
-                  {currentMessages.map((msg) => {
-                    // Extract background color logic to avoid nested ternary
-                    let backgroundColor = "#f5f5f5"; // default for others
-                    if (msg.me) {
-                      backgroundColor = msg.failed ? "#ffebee" : "#e3f2fd";
-                    }
-
-                    return (
-                      <Box
-                        key={msg.id}
-                        sx={{
-                          display: "flex",
-                          justifyContent: msg.me ? "flex-end" : "flex-start",
-                          mb: 2,
-                        }}
-                      >
-                        {!msg.me && (
-                          <Avatar
-                            src={msg.sender?.avatar}
-                            sx={{
-                              mr: 1,
-                              alignSelf: "flex-end",
-                              width: 32,
-                              height: 32,
-                            }}
-                          />
-                        )}
-                        <Paper
-                          elevation={1}
-                          sx={{
-                            p: 2,
-                            maxWidth: "70%",
-                            backgroundColor,
-                            borderRadius: 2,
-                            opacity: msg.pending ? 0.7 : 1,
-                          }}
-                        >
-                          <Typography variant="body1">{msg.message}</Typography>
-                          <Stack
-                            direction="row"
-                            spacing={1}
-                            alignItems="center"
-                            justifyContent="flex-end"
-                            sx={{ mt: 1 }}
-                          >
-                            {msg.failed && (
-                              <Typography variant="caption" color="error">
-                                Failed to send
-                              </Typography>
-                            )}
-                            {msg.pending && (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                Sending...
-                              </Typography>
-                            )}
-                            <Typography
-                              variant="caption"
-                              sx={{ display: "block", textAlign: "right" }}
-                            >
-                              {new Date(msg.createdDate).toLocaleString()}
-                            </Typography>
-                          </Stack>{" "}
-                        </Paper>
-                        {msg.me && (
-                          <Avatar
-                            sx={{
-                              ml: 1,
-                              alignSelf: "flex-end",
-                              width: 32,
-                              height: 32,
-                              bgcolor: "#1976d2",
-                            }}
-                          >
-                            You
-                          </Avatar>
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </Box>
-              <Box
-                component="form"
-                sx={{
-                  p: 2,
-                  borderTop: 1,
-                  borderColor: "divider",
-                  display: "flex",
-                }}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                }}
-              >
-                <TextField
-                  fullWidth
-                  placeholder="Type a message"
-                  variant="outlined"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  size="small"
-                />
-                <IconButton
-                  color="primary"
-                  sx={{ ml: 1 }}
-                  onClick={handleSendMessage}
-                  disabled={!message.trim()}
-                >
-                  <SendIcon />
-                </IconButton>
-              </Box>
-            </>
-          ) : (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                Select a conversation to start chatting
-              </Typography>
-            </Box>
-          )}
-        </Box>
+    <Box className="chat-container">
+      <Card className="chat-card">
+        <ConversationList
+          conversations={conversations}
+          loading={loading}
+          error={error}
+          selectedConversation={selectedConversation}
+          onConversationSelect={handleConversationSelect}
+          onNewChatClick={handleNewChatClick}
+          onRefresh={fetchConversations}
+        />
+        <ChatArea
+          selectedConversation={selectedConversation}
+          currentMessages={currentMessages}
+          message={message}
+          onMessageChange={setMessage}
+          onSendMessage={handleSendMessage}
+          messageContainerRef={messageContainerRef}
+        />
+        <NewChatPopover
+          anchorEl={newChatAnchorEl}
+          open={Boolean(newChatAnchorEl)}
+          onClose={handleCloseNewChat}
+          onSelectUser={handleSelectNewChatUser}
+        />
       </Card>
     </Box>
   );
