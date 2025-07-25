@@ -51,4 +51,12 @@ public class PostController {
                 .build();
     }
 
+    @DeleteMapping("/{postId}")
+    ApiResponse<Void> deletePost(@PathVariable Long postId){
+        postService.deletePost(postId);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .build();
+    }
+
 }

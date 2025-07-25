@@ -10,4 +10,5 @@ public interface PostService {
     List<PostResponse> getPosts();
     List<PostResponse> getPostsByUser();
     List<PostResponse> getPostsByUserId(Long userId);
+    void deletePost(Long id);
 }
