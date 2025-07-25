@@ -42,29 +42,6 @@ const PostCard = ({
   const commentCount = post.commentCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
 
-  const handleDeletePost = (postId) => {
-    Modal.confirm({
-      title: "Xác nhận xoá bài viết",
-      content: "Bạn có chắc muốn xoá bài viết này không?",
-      okText: "Xoá",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk: async () => {
-        try {
-          const response = await postService.deletePost(postId);
-          if (response.data?.code === 1000) {
-            setPosts((prev) => prev.filter((p) => p.id !== postId));
-            message.success("Đã xoá bài viết thành công");
-          } else {
-            console.error("Xoá thất bại");
-          }
-        } catch (error) {
-          console.error("Lỗi khi xoá bài viết:", error);
-        }
-      },
-    });
-  };
-
   const handleToggleComments = async () => {
     if (isCommentsExpanded) {
       setExpandedComments((prev) => {
@@ -105,23 +82,6 @@ const PostCard = ({
               ? new Date(post.createdAt).toLocaleString("vi-VN")
               : "Vừa xong"}
           </Text>
-        </div>
-        <div style={{ marginLeft: "auto" }}>
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "delete",
-                  danger: true,
-                  label: "Xoá bài viết",
-                  onClick: () => handleDeletePost(post.id),
-                },
-              ],
-            }}
-            trigger={["click"]}
-          >
-            <Button icon={<MoreOutlined />} />
-          </Dropdown>
         </div>
       </div>
 

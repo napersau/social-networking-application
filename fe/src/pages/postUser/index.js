@@ -1,41 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import {
-  Card,
-  Modal,
-  Dropdown,
-  Menu,
-  Form,
-  Input,
-  Button,
-  List,
-  Avatar,
-  Typography,
-  message,
-  Spin,
-  Row,
-  Col,
-  Divider,
-  Image,
-} from "antd";
-import {
-  UserOutlined,
-  MoreOutlined,
-  SendOutlined,
-  HeartOutlined,
-  HeartFilled,
-  CommentOutlined,
-  RetweetOutlined,
-  MessageOutlined,
-} from "@ant-design/icons";
+import { Form, List, message, Spin, Row, Col } from "antd";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
 import { commentService } from "../../services/commentService";
-import { createNotification } from "../../services/notificationService"; // ✅ THÊM DÒNG NÀY
-import "./styles.css";
+import { createNotification } from "../../services/notificationService";
 import { createPostShare } from "../../services/postShareService";
-const { TextArea } = Input;
-const { Title, Text, Paragraph } = Typography;
+import UserInfoCard from "./UserInfoCard";
+import PostCard from "./PostCard";
+import ShareModal from "./ShareModal";
+import EmptyPosts from "./EmptyPosts";
+import "./styles.css";
 
 const PostUser = () => {
   const { userId } = useParams();
@@ -46,6 +21,8 @@ const PostUser = () => {
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [commentForms] = Form.useForm();
   const [userInfo, setUserInfo] = useState(null);
+
+  // Share modal states
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [shareContent, setShareContent] = useState("");
   const [sharingPostId, setSharingPostId] = useState(null);
@@ -200,7 +177,7 @@ const PostUser = () => {
 
   const handleShare = (post) => {
     setSharingPostId(post.id);
-    setSelectedPost(post); // ✅ giờ post được truyền vào
+    setSelectedPost(post);
     setShareModalVisible(true);
   };
 
@@ -215,12 +192,10 @@ const PostUser = () => {
         postId: sharingPostId,
         sharedContent: shareContent.trim(),
       });
-      console.log("réponse",response)
       if (response.data && response.data.code === 1000) {
         message.success("Đã chia sẻ bài viết!");
-        setShareModalVisible(false);
-        setShareContent("");
-        fetchUserPosts(); // Cập nhật lại bài viết nếu cần
+        handleShareModalClose();
+        fetchUserPosts();
       } else {
         message.error("Chia sẻ thất bại!");
       }
@@ -232,253 +207,11 @@ const PostUser = () => {
     }
   };
 
-  const CommentSection = ({ post }) => {
-    const isCommenting = commentingPosts.has(post.id);
-    const comments = post.comments || [];
-    const commentCount = post.commentCount || comments.length;
-
-    const [editingCommentId, setEditingCommentId] = useState(null);
-    const [editedContent, setEditedContent] = useState("");
-
-    const handleUpdateComment = async (commentId) => {
-      if (!editedContent.trim()) return;
-      try {
-        await commentService.updateComment(
-          { content: editedContent },
-          commentId
-        );
-        setEditingCommentId(null);
-        setEditedContent("");
-        fetchUserPosts();
-      } catch (err) {
-        message.error("Cập nhật bình luận thất bại.");
-      }
-    };
-
-    const confirmDeleteComment = async (commentId, postId) => {
-      try {
-        await commentService.deleteComment({ id: commentId, postId });
-        message.success("Đã xóa bình luận.");
-        fetchUserPosts();
-      } catch (err) {
-        message.error("Xóa bình luận thất bại.");
-      }
-    };
-
-    return (
-      <div className="comment-section">
-        <Divider />
-        <Form
-          form={commentForms}
-          onFinish={(values) =>
-            handleSubmitComment(post.id, values[`comment_${post.id}`])
-          }
-        >
-          <Form.Item name={`comment_${post.id}`}>
-            <div className="comment-input-container">
-              <Avatar size={32} icon={<UserOutlined />} />
-              <TextArea
-                placeholder="Viết bình luận..."
-                autoSize={{ minRows: 1, maxRows: 3 }}
-                className="comment-input"
-                onPressEnter={(e) => {
-                  if (e.shiftKey) return;
-                  e.preventDefault();
-                  const content = e.target.value;
-                  handleSubmitComment(post.id, content);
-                }}
-              />
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isCommenting}
-                icon={<SendOutlined />}
-                size="small"
-              >
-                Gửi
-              </Button>
-            </div>
-          </Form.Item>
-        </Form>
-
-        {comments.length > 0 ? (
-          <List
-            dataSource={comments}
-            renderItem={(comment) => {
-              const isOwner = String(myId) === String(comment.user?.id);
-              const isPostOwner = String(myId) === String(post.user?.id);
-              return (
-                <List.Item
-                  key={comment.id}
-                  className="comment-item"
-                  actions={
-                    (isOwner || isPostOwner) && [
-                      <Dropdown
-                        overlay={
-                          <Menu>
-                            {isOwner && (
-                              <Menu.Item
-                                key="edit"
-                                onClick={() => {
-                                  setEditingCommentId(comment.id);
-                                  setEditedContent(comment.content);
-                                }}
-                              >
-                                Sửa
-                              </Menu.Item>
-                            )}
-                            <Menu.Item
-                              key="delete"
-                              danger
-                              onClick={() =>
-                                confirmDeleteComment(comment.id, post.id)
-                              }
-                            >
-                              Xóa
-                            </Menu.Item>
-                          </Menu>
-                        }
-                        trigger={["click"]}
-                      >
-                        <Button
-                          type="text"
-                          icon={<MoreOutlined />}
-                          size="small"
-                        />
-                      </Dropdown>,
-                    ]
-                  }
-                >
-                  <div className="comment-content">
-                    <Avatar
-                      size={32}
-                      src={comment.user?.avatarUrl}
-                      icon={<UserOutlined />}
-                    />
-                    <div className="comment-bubble">
-                      <div className="comment-header">
-                        <Text strong>
-                          {comment.user?.firstName || "Anonymous"}{" "}
-                          {comment.user?.lastName || ""}
-                        </Text>
-                        <Text type="secondary" className="comment-time">
-                          {comment.createdAt
-                            ? new Date(comment.createdAt).toLocaleString(
-                                "vi-VN"
-                              )
-                            : "Vừa xong"}
-                        </Text>
-                      </div>
-                      {editingCommentId === comment.id ? (
-                        <>
-                          <TextArea
-                            rows={2}
-                            value={editedContent}
-                            onChange={(e) => setEditedContent(e.target.value)}
-                            style={{ marginTop: 8 }}
-                          />
-                          <div style={{ marginTop: 4 }}>
-                            <Button
-                              type="primary"
-                              size="small"
-                              onClick={() => handleUpdateComment(comment.id)}
-                            >
-                              Lưu
-                            </Button>
-                            <Button
-                              size="small"
-                              style={{ marginLeft: 8 }}
-                              onClick={() => setEditingCommentId(null)}
-                            >
-                              Hủy
-                            </Button>
-                          </div>
-                        </>
-                      ) : (
-                        <Paragraph style={{ marginBottom: 0 }}>
-                          {comment.content}
-                        </Paragraph>
-                      )}
-                    </div>
-                  </div>
-                </List.Item>
-              );
-            }}
-            split={false}
-          />
-        ) : (
-          <div className="no-comments">
-            <Text type="secondary">Chưa có bình luận nào</Text>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const PostCard = ({ post }) => {
-    const isLiking = likingPosts.has(post.id);
-    const isLiked = post.isLiked || false;
-    const likeCount = post.likes?.length || 0;
-    const commentCount = post.commentCount || post.comments?.length || 0;
-    const isCommentsExpanded = expandedComments.has(post.id);
-
-    return (
-      <Card className="post-card" hoverable>
-        <div className="post-header">
-          <Avatar size={40} src={userInfo?.avatarUrl} icon={<UserOutlined />} />
-          <div className="post-user-info">
-            <Text strong>
-              {post.user.firstName || "Anonymous"} {post.user.lastName}
-            </Text>
-            <Text type="secondary" className="post-time">
-              {post.createdAt
-                ? new Date(post.createdAt).toLocaleString("vi-VN")
-                : "Vừa xong"}
-            </Text>
-          </div>
-        </div>
-        <div className="post-content">
-          <Paragraph>{post.content}</Paragraph>
-          {post.imageUrl && (
-            <div className="post-images">
-              <Image src={post.imageUrl} className="post-image" />
-            </div>
-          )}
-        </div>
-        <Divider />
-        <div className="post-actions">
-          <Button
-            type="text"
-            icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
-            onClick={() => handleLike(post.id)}
-            loading={isLiking}
-            className={`action-button ${isLiked ? "liked" : ""}`}
-            style={{ color: isLiked ? "#ff4d4f" : undefined }}
-          >
-            {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
-          </Button>
-
-          <Button
-            type="text"
-            icon={<CommentOutlined />}
-            onClick={() => handleComment(post.id)}
-            className={`action-button ${isCommentsExpanded ? "active" : ""}`}
-          >
-            Bình luận {commentCount > 0 && `(${commentCount})`}
-          </Button>
-
-          <Button
-            type="text"
-            icon={<RetweetOutlined />}
-            onClick={() => handleShare(post)}
-          >
-            Chia sẻ {post.shares ? `(${post.shares})` : ""}
-          </Button>
-        </div>
-
-        {isCommentsExpanded && <CommentSection post={post} />}
-      </Card>
-    );
+  const handleShareModalClose = () => {
+    setShareModalVisible(false);
+    setShareContent("");
+    setSelectedPost(null);
+    setSharingPostId(null);
   };
 
   return (
@@ -486,42 +219,32 @@ const PostUser = () => {
       <div className="post-container">
         <Row gutter={[16, 16]} justify="center">
           <Col span={16}>
-            {userInfo && (
-              <Card className="user-info-card">
-                <div className="user-info-header">
-                  <Avatar
-                    size={60}
-                    src={userInfo.avatarUrl}
-                    icon={<UserOutlined />}
-                  />
-                  <div className="user-info-content">
-                    <Title level={3}>
-                      {userInfo.firstName} {userInfo.lastName}
-                    </Title>
-                    <Text type="secondary">{posts.length} bài viết</Text>
-                  </div>
-                </div>
-              </Card>
-            )}
+            <UserInfoCard userInfo={userInfo} postsCount={posts.length} />
 
             <div className="posts-list">
               <Spin spinning={loading}>
                 {posts.length === 0 && !loading ? (
-                  <Card className="empty-posts">
-                    <div className="empty-content">
-                      <MessageOutlined className="empty-icon" />
-                      <Title level={4}>Người dùng chưa có bài viết nào</Title>
-                      <Text type="secondary">
-                        Chưa có bài viết nào được đăng bởi người dùng này.
-                      </Text>
-                    </div>
-                  </Card>
+                  <EmptyPosts />
                 ) : (
                   <List
                     dataSource={posts}
                     renderItem={(post) => (
                       <List.Item key={post.id} className="post-list-item">
-                        <PostCard post={post} />
+                        <PostCard
+                          post={post}
+                          userInfo={userInfo}
+                          likingPosts={likingPosts}
+                          expandedComments={expandedComments}
+                          setExpandedComments={setExpandedComments}
+                          commentingPosts={commentingPosts}
+                          commentForms={commentForms}
+                          handleLike={handleLike}
+                          onLike={handleLike}
+                          onComment={handleComment}
+                          onShare={handleShare}
+                          fetchUserPosts={fetchUserPosts}
+                          setPosts={setPosts}
+                        />
                       </List.Item>
                     )}
                     split={false}
@@ -532,63 +255,16 @@ const PostUser = () => {
           </Col>
         </Row>
       </div>
-      {/* ✅ Modal chia sẻ bài viết */}
-      <Modal
-        title="Chia sẻ bài viết"
-        open={shareModalVisible}
-        onCancel={() => {
-          setShareModalVisible(false);
-          setShareContent("");
-          setSelectedPost(null);
-        }}
+
+      <ShareModal
+        visible={shareModalVisible}
+        onCancel={handleShareModalClose}
         onOk={handleShareSubmit}
-        okText="Chia sẻ"
-        confirmLoading={sharing}
-      >
-        <TextArea
-          rows={4}
-          placeholder="Viết nội dung chia sẻ..."
-          value={shareContent}
-          onChange={(e) => setShareContent(e.target.value)}
-          style={{ marginBottom: 16 }}
-        />
-
-        {selectedPost && (
-          <Card size="small" bordered className="shared-post-preview">
-            <div className="post-header">
-              <Avatar
-                size={32}
-                src={selectedPost.user?.avatarUrl}
-                icon={<UserOutlined />}
-              />
-              <div className="post-user-info" style={{ marginLeft: 8 }}>
-                <Text strong>
-                  {selectedPost.user?.firstName} {selectedPost.user?.lastName}
-                </Text>
-                <div>
-                  <Text type="secondary" className="post-time">
-                    {selectedPost.createdAt
-                      ? new Date(selectedPost.createdAt).toLocaleString("vi-VN")
-                      : "Vừa xong"}
-                  </Text>
-                </div>
-              </div>
-            </div>
-
-            <Paragraph style={{ marginTop: 12 }}>
-              {selectedPost.content}
-            </Paragraph>
-
-            {selectedPost.imageUrl && (
-              <Image
-                src={selectedPost.imageUrl}
-                width="100%"
-                style={{ borderRadius: 8, marginTop: 8 }}
-              />
-            )}
-          </Card>
-        )}
-      </Modal>
+        loading={sharing}
+        shareContent={shareContent}
+        setShareContent={setShareContent}
+        selectedPost={selectedPost}
+      />
     </div>
   );
 };

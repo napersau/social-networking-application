@@ -51,7 +51,7 @@ export const postService = {
 
   // Xóa bài viết
   deletePost: async (postId) => {
-    return await httpClient.delete(API.DELETE_POST || `/api/v1/posts/${postId}`, {
+    return await httpClient.delete(API.DELETE_POST(postId) || `/api/v1/posts/${postId}`, {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },

@@ -494,3 +494,11 @@
   }
 
 }
+
+.comment-bubble {
+  background-color: #f0f2f5;
+  padding: 8px 12px;
+  border-radius: 16px;
+  max-width: 600px;
+  word-wrap: break-word;
+}
