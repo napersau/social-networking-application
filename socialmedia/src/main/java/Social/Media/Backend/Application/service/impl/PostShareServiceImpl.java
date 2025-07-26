@@ -66,4 +66,9 @@ public class PostShareServiceImpl implements PostShareService {
 
         return modelMapper.map(postShare, PostShareResponse.class);
     }
+
+    @Override
+    public void deletePostShare(Long id) {
+        postShareRepository.deleteById(id);
+    }
 }

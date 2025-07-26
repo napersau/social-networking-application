@@ -8,4 +8,5 @@ import java.util.List;
 public interface PostShareService {
     List<PostShareResponse> getPostShares();
     PostShareResponse createPostShare(PostShareRequest request);
+    void deletePostShare(Long id);
 }

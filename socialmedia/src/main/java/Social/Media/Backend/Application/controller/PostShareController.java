@@ -34,4 +34,13 @@ public class PostShareController {
                 .result(response)
                 .build();
     }
+
+    @DeleteMapping("/{postId}")
+    ApiResponse<Void> deletePostShare(@PathVariable Long postId){
+        postShareService.deletePostShare(postId);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .build();
+    }
+
 }
