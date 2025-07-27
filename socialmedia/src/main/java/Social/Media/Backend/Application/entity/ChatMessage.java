@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Data
@@ -31,4 +32,5 @@ public class ChatMessage {
 
     @Column(name = "created_date")
     Instant createdDate;
+
 }
