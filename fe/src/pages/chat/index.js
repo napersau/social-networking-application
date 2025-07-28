@@ -2,13 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Card } from "@mui/material";
 import { io } from "socket.io-client";
 import "./styles.css";
-
-// Import components
 import ConversationList from "./ConversationList";
 import ChatArea from "./ChatArea";
 import NewChatPopover from "../../components/newChatPopover";
-
-// Import services
 import {
   getMyConversations,
   createConversation,
@@ -34,7 +30,7 @@ export default function Chat() {
       const container = messageContainerRef.current;
       container.scrollTo({
         top: container.scrollHeight,
-        behavior: 'auto' // Changed from 'smooth' to 'auto' for instant scrolling
+        behavior: "auto", // Changed from 'smooth' to 'auto' for instant scrolling
       });
     }
   }, []);
@@ -49,7 +45,6 @@ export default function Chat() {
   };
 
   const handleSelectNewChatUser = async (user) => {
-    console.log("user", user);
     const response = await createConversation({
       type: "DIRECT",
       participantIds: [user.id],
@@ -118,15 +113,12 @@ export default function Chat() {
             const sortedMessages = [...response.data.result].sort(
               (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
             );
-
-            // Update messages map with the fetched messages
             setMessagesMap((prev) => ({
               ...prev,
               [conversationId]: sortedMessages,
             }));
           }
         }
-
         // Mark conversation as read when selected
         setConversations((prevConversations) =>
           prevConversations.map((conv) =>
@@ -155,8 +147,10 @@ export default function Chat() {
     // Only auto-scroll if user is near the bottom (within 100px)
     if (messageContainerRef.current) {
       const container = messageContainerRef.current;
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        100;
+
       if (isNearBottom) {
         scrollToBottom(); // Removed setTimeout for instant scrolling
       }
@@ -226,29 +220,22 @@ export default function Chat() {
     setSelectedConversation(conversation);
   };
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !selectedConversation) return;
-
-    // Store the message content
-    const messageContent = message;
-    
-    // Clear input field immediately for better UX
+  const handleSendMessage = async ({ message: text, mediaUrls }) => {
+    if ((!text?.trim() && mediaUrls.length === 0) || !selectedConversation)
+      return;
     setMessage("");
-
     try {
-      // Send message to API
-      const response = await createMessage({
-        conversationId: selectedConversation.id,
-        message: messageContent,
-      });
-      
-      // Auto-scroll after sending message
-      scrollToBottom(); // Removed setTimeout for instant scrolling
-    } catch (error) {
-      console.error("Failed to send message:", error);
-      // Restore message in input if failed
-      setMessage(messageContent);
-    }
+    const response = await createMessage({
+      conversationId: selectedConversation.id,
+      message: text,
+      mediaUrls: mediaUrls, 
+    });
+
+    scrollToBottom();
+  } catch (error) {
+    console.error("Failed to send message:", error);
+    setMessage(text);
+  }
   };
 
   // Helper function to handle incoming socket messages
@@ -327,7 +314,6 @@ export default function Chat() {
           messageContainerRef={messageContainerRef}
         />
         <NewChatPopover
-          anchorEl={newChatAnchorEl}
           open={Boolean(newChatAnchorEl)}
           onClose={handleCloseNewChat}
           onSelectUser={handleSelectNewChatUser}
