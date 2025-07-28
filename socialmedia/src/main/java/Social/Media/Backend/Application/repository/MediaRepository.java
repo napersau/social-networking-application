@@ -10,6 +10,5 @@ import java.util.List;
 
 @Repository
 public interface MediaRepository extends JpaRepository<Media, Long> {
-    @Query("SELECT m FROM Media m WHERE m.sourceType = :type AND m.sourceId = :id")
-    List<Media> findBySource(@Param("type") String type, @Param("id") Long id);
+    List<Media> findBySourceTypeAndSourceId(String sourceType, Long sourceId);
 }

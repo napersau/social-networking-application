@@ -2,16 +2,11 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.ChatMessageRequest;
 import Social.Media.Backend.Application.dto.response.ChatMessageResponse;
-import Social.Media.Backend.Application.entity.ChatMessage;
-import Social.Media.Backend.Application.entity.ParticipantInfo;
-import Social.Media.Backend.Application.entity.User;
-import Social.Media.Backend.Application.entity.WebSocketSession;
+import Social.Media.Backend.Application.dto.response.MediaResponse;
+import Social.Media.Backend.Application.entity.*;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
-import Social.Media.Backend.Application.repository.ChatMessageRepository;
-import Social.Media.Backend.Application.repository.ConversationRepository;
-import Social.Media.Backend.Application.repository.UserRepository;
-import Social.Media.Backend.Application.repository.WebSocketSessionRepository;
+import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.ChatMessageService;
 import com.corundumstudio.socketio.BroadcastOperations;
 import com.corundumstudio.socketio.SocketIOClient;
@@ -26,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +40,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final UserRepository userRepository;
     private final SocketIOServer socketIOServer;
     private final ObjectMapper objectMapper;
+    private final MediaRepository mediaRepository;
 
 
     public List<ChatMessageResponse> getMessages(Long conversationId) {
@@ -87,16 +84,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         chatMessage = chatMessageRepository.save(chatMessage);
 
-//        ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
-//        chatMessageResponse.setClientId(request.getClientId()); // <-- THÊM DÒNG NÀY
-//
-//        socketIOServer.getRoomOperations(String.valueOf(request.getConversationId()))
-//                .sendEvent("message", chatMessageResponse); // Gửi toàn bộ đối tượng response
-//        return chatMessageResponse;
+        List<MediaResponse> mediaList = new ArrayList<>();
+        for(String mediaUrl : request.getMediaUrls()) {
+            Media media = Media.builder()
+                    .url(mediaUrl)
+                    .sourceId(chatMessage.getId())
+                    .sourceType("message")
+                    .type("image")
+                    .createdDate(Instant.now())
+                    .build();
+            mediaRepository.save(media);
+            mediaList.add(modelMapper.map(media, MediaResponse.class));
+        }
 
+        ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
 
-        // Publish socket event to clients is conversation
-        // Get participants userIds;
         List<Long> userIds = conversation.getParticipants().stream()
                 .map(ParticipantInfo::getUserId).toList();
 
@@ -107,7 +109,6 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                                 WebSocketSession::getSocketSessionId,
                                 Function.identity()));
 
-        ChatMessageResponse chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
         socketIOServer.getAllClients().forEach(client -> {
             var webSocketSession = webSocketSessions.get(client.getSessionId().toString());
 
@@ -123,9 +124,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             }
         });
 
-        // convert to Response
-        return toChatMessageResponse(chatMessage);
-
+        return chatMessageResponse;
     }
 
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
@@ -137,6 +136,12 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         var chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
 
         chatMessageResponse.setMe(user.getId().equals(chatMessage.getSender().getUserId()));
+
+        List<Media> mediaList = mediaRepository.findBySourceTypeAndSourceId("message", chatMessage.getId());
+        List<MediaResponse> mediaResponses = mediaList.stream()
+                .map(media -> modelMapper.map(media, MediaResponse.class))
+                .toList();
+        chatMessageResponse.setMediaList(mediaResponses);
 
         return chatMessageResponse;
     }
