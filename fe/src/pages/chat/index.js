@@ -225,17 +225,17 @@ export default function Chat() {
       return;
     setMessage("");
     try {
-    const response = await createMessage({
-      conversationId: selectedConversation.id,
-      message: text,
-      mediaUrls: mediaUrls, 
-    });
+      const response = await createMessage({
+        conversationId: selectedConversation.id,
+        message: text,
+        mediaUrls: mediaUrls,
+      });
 
-    scrollToBottom();
-  } catch (error) {
-    console.error("Failed to send message:", error);
-    setMessage(text);
-  }
+      scrollToBottom();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setMessage(text);
+    }
   };
 
   // Helper function to handle incoming socket messages
@@ -308,6 +308,14 @@ export default function Chat() {
         <ChatArea
           selectedConversation={selectedConversation}
           currentMessages={currentMessages}
+          setCurrentMessages={(updatedMessages) => {
+            if (selectedConversation?.id) {
+              setMessagesMap((prev) => ({
+                ...prev,
+                [selectedConversation.id]: updatedMessages,
+              }));
+            }
+          }}
           message={message}
           onMessageChange={setMessage}
           onSendMessage={handleSendMessage}

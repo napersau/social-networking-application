@@ -8,4 +8,5 @@ import java.util.List;
 public interface ChatMessageService {
     List<ChatMessageResponse> getMessages(Long conversationId);
     ChatMessageResponse create(ChatMessageRequest request);
+    ChatMessageResponse recalledMessage(Long messageId);
 }

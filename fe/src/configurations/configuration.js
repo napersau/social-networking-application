@@ -20,8 +20,12 @@ export const API = {
   SEARCH_USER_BY_FULLNAME: "/users/search-user",
   MY_CONVERSATIONS: "/chat/conversations/my-conversations",
   CREATE_CONVERSATION: "/chat/conversations/create",
+
+
   CREATE_MESSAGE: "/chat/messages/create",
-  GET_CONVERSATION_MESSAGES: "/chat/messages",
+  MESSAGES: "/chat/messages",
+
+
   CREATE_POST: "/posts",
   GET_POSTS: "/posts/user",
   GET_POSTS_BY_USERID: (userId) => `/posts/${userId}`,

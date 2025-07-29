@@ -48,9 +48,22 @@ export const createMessage = async (data) => {
 };
 
 export const getMessages = async (conversationId) => {
-  return await httpClient.get(`${API.GET_CONVERSATION_MESSAGES}?conversationId=${conversationId}`, {
+  return await httpClient.get(`${API.MESSAGES}?conversationId=${conversationId}`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
   });
+};
+
+export const recallMessage = async (messageId) => {
+  return await httpClient.post(
+    `${API.MESSAGES}/${messageId}`,
+    {}, // nếu không có body, truyền object rỗng
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };

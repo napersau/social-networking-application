@@ -27,10 +27,16 @@ public class ChatMessage {
     String message;
 
     @ManyToOne
-    @JoinColumn(name = "sender_id") // tên cột trong bảng chat_message
+    @JoinColumn(name = "sender_id")
     ParticipantInfo sender;
 
     @Column(name = "created_date")
     Instant createdDate;
+
+    @Column(name = "is_read")
+    Boolean isRead = false;
+
+    @Column(name = "is_recalled")
+    Boolean isRecalled = false;
 
 }

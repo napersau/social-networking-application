@@ -7,6 +7,7 @@ import MessageInput from "./MessageInput";
 const ChatArea = ({
   selectedConversation,
   currentMessages,
+  setCurrentMessages,
   message,
   onMessageChange,
   onSendMessage,
@@ -44,6 +45,7 @@ const ChatArea = ({
       <MessageList
         ref={messageContainerRef}
         messages={currentMessages}
+        setMessages={setCurrentMessages}
       />
       <MessageInput
         message={message}

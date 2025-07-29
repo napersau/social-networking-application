@@ -277,3 +277,121 @@ footer {
 .ant-popover-placement-bottomLeft {
   transform-origin: top left !important;
 }
+
+
+/* Message */
+.message-list-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px;
+}
+
+.message-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-list-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.message-list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.messages-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: min-content;
+  padding-bottom: 8px;
+}
+
+.empty-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--mui-palette-text-secondary);
+}
+
+.message-row {
+  display: flex;
+  width: 100%;
+}
+
+.message-row.me {
+  justify-content: flex-end;
+}
+
+.message-row.other {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  padding: 16px;
+  max-width: 70%;
+  min-width: 100px;
+  border-radius: 16px;
+  opacity: 1;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.message-bubble.pending {
+  opacity: 0.7;
+}
+
+.message-bubble.me {
+  border-radius: 16px 16px 4px 16px;
+}
+
+.message-bubble.other {
+  border-radius: 16px 16px 16px 4px;
+}
+
+.image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.message-image {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.message-image:hover {
+  transform: scale(1.02);
+}
+
+.timestamp-stack {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.timestamp-text {
+  display: block;
+  text-align: right;
+  color: var(--mui-palette-text-secondary);
+  font-size: 0.7rem;
+}

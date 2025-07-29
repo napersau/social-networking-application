@@ -1,102 +1,71 @@
 import React, { forwardRef, useState } from "react";
 import { Box, Paper, Typography, Avatar, Stack, Dialog } from "@mui/material";
+import { recallMessage } from "../../services/chatService"; // 👈 Thêm import
 
-const MessageList = forwardRef(({ messages }, ref) => {
+const MessageList = forwardRef(({ messages, setMessages }, ref) => {
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleRecall = async (messageId) => {
+    try {
+      const response = await recallMessage(messageId);
+      const isRecalled = response.data.result;
+
+      const updatedMessages = messages.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              message: "[Tin nhắn đã thu hồi]",
+              mediaList: [],
+              isRecalled: true,
+            }
+          : msg
+      );
+      setMessages(updatedMessages); // 👈 cập nhật tin nhắn
+    } catch (error) {
+      console.error("Thu hồi tin nhắn thất bại:", error);
+    }
+  };
 
   return (
     <>
-      <Box
-        ref={ref}
-        sx={{
-          flexGrow: 1,
-          overflowY: "auto",
-          overflowX: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0, // Important for flex scrolling
-          padding: 2,
-          // Custom scrollbar styling
-          "&::-webkit-scrollbar": {
-            width: "6px",
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "transparent",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: "rgba(0,0,0,0.2)",
-            borderRadius: "3px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            background: "rgba(0,0,0,0.3)",
-          },
-        }}
-      >
-        {/* Messages container */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-            minHeight: "min-content",
-            paddingBottom: 1,
-          }}
-        >
+      <Box ref={ref} className="message-list-container">
+        <Box className="messages-wrapper">
           {messages.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: "200px",
-                color: "text.secondary",
-              }}
-            >
+            <Box className="empty-message">
               <Typography variant="body2">
                 No messages yet. Start the conversation!
               </Typography>
             </Box>
           ) : (
             messages.map((msg) => {
-              // Extract background color logic
-              let backgroundColor = "#f5f5f5"; // default for others
-              if (msg.me) {
-                backgroundColor = msg.failed ? "#ffebee" : "#e3f2fd";
-              }
+              let backgroundColor = "#f5f5f5";
+              if (msg.me) backgroundColor = msg.failed ? "#ffebee" : "#e3f2fd";
 
               return (
                 <Box
                   key={msg.id || `${msg.createdDate}-${msg.message}`}
-                  sx={{
-                    display: "flex",
-                    justifyContent: msg.me ? "flex-end" : "flex-start",
-                    width: "100%",
-                  }}
+                  className={`message-row ${msg.me ? "me" : "other"}`}
                 >
                   {!msg.me && (
                     <Avatar
                       src={msg.sender?.avatar}
-                      sx={{
-                        mr: 1,
-                        alignSelf: "flex-end",
-                        width: 32,
-                        height: 32,
-                      }}
+                      sx={{ mr: 1, alignSelf: "flex-end", width: 32, height: 32 }}
                     />
                   )}
+
                   <Paper
                     elevation={1}
-                    sx={{
-                      p: 2,
-                      maxWidth: "70%",
-                      minWidth: "100px",
-                      backgroundColor,
-                      borderRadius: msg.me
-                        ? "16px 16px 4px 16px"
-                        : "16px 16px 16px 4px",
-                      opacity: msg.pending ? 0.7 : 1,
-                      wordWrap: "break-word",
-                      wordBreak: "break-word",
+                    className={`message-bubble ${msg.me ? "me" : "other"} ${
+                      msg.pending ? "pending" : ""
+                    }`}
+                    style={{ backgroundColor }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (msg.me && !msg.failed && !msg.isRecalled) {
+                        if (window.confirm("Bạn có chắc muốn thu hồi tin nhắn này?")) {
+                          handleRecall(msg.id);
+                        }
+                      }
                     }}
                   >
                     <Typography
@@ -104,21 +73,15 @@ const MessageList = forwardRef(({ messages }, ref) => {
                       sx={{
                         whiteSpace: "pre-wrap",
                         lineHeight: 1.4,
+                        fontStyle: msg.isRecalled ? "italic" : "normal",
+                        color: msg.isRecalled ? "gray" : "inherit",
                       }}
                     >
-                      {msg.message}
+                      {msg.isRecalled ? "[Tin nhắn đã thu hồi]" : msg.message}
                     </Typography>
 
-                    {msg.mediaList?.length > 0 && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 1,
-                          mt: 1,
-                          maxWidth: "100%",
-                        }}
-                      >
+                    {!msg.isRecalled && msg.mediaList?.length > 0 && (
+                      <Box className="image-gallery">
                         {msg.mediaList.map((media, index) =>
                           media.type.startsWith("image") ? (
                             <Box
@@ -127,31 +90,14 @@ const MessageList = forwardRef(({ messages }, ref) => {
                               src={media.url}
                               alt={`media-${index}`}
                               onClick={() => setSelectedImage(media.url)}
-                              sx={{
-                                maxWidth: "120px",
-                                maxHeight: "120px",
-                                borderRadius: 1,
-                                objectFit: "cover",
-                                border: "1px solid #ccc",
-                                cursor: "pointer",
-                                transition: "transform 0.2s",
-                                "&:hover": {
-                                  transform: "scale(1.02)",
-                                },
-                              }}
+                              className="message-image"
                             />
                           ) : null
                         )}
                       </Box>
                     )}
 
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      justifyContent="flex-end"
-                      sx={{ mt: 1 }}
-                    >
+                    <Stack className="timestamp-stack">
                       {msg.failed && (
                         <Typography variant="caption" color="error">
                           Failed to send
@@ -162,15 +108,7 @@ const MessageList = forwardRef(({ messages }, ref) => {
                           Sending...
                         </Typography>
                       )}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          display: "block",
-                          textAlign: "right",
-                          color: "text.secondary",
-                          fontSize: "0.7rem",
-                        }}
-                      >
+                      <Typography variant="caption" className="timestamp-text">
                         {new Date(msg.createdDate).toLocaleString("vi-VN", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -178,8 +116,21 @@ const MessageList = forwardRef(({ messages }, ref) => {
                           month: "2-digit",
                         })}
                       </Typography>
+
+                      {/* Nút thu hồi (click được nếu chưa bị recall) */}
+                      {msg.me && !msg.isRecalled && !msg.failed && (
+                        <Typography
+                          variant="caption"
+                          className="recall-text"
+                          onClick={() => handleRecall(msg.id)}
+                          sx={{ cursor: "pointer", color: "#f44336", mt: 0.5 }}
+                        >
+                          Thu hồi
+                        </Typography>
+                      )}
                     </Stack>
                   </Paper>
+
                   {msg.me && (
                     <Avatar
                       sx={{
@@ -201,7 +152,6 @@ const MessageList = forwardRef(({ messages }, ref) => {
         </Box>
       </Box>
 
-      {/* Image Preview Dialog */}
       <Dialog
         open={Boolean(selectedImage)}
         onClose={() => setSelectedImage(null)}
@@ -224,5 +174,4 @@ const MessageList = forwardRef(({ messages }, ref) => {
 });
 
 MessageList.displayName = "MessageList";
-
 export default MessageList;

@@ -31,9 +31,17 @@ public class ChatMessageController {
     @GetMapping
     ApiResponse<List<ChatMessageResponse>> getMessages(
             @RequestParam("conversationId") Long conversationId) {
-        List<ChatMessageResponse> chatMessageResponseList = chatMessageService.getMessages(conversationId);
+        List<ChatMessageResponse> response = chatMessageService.getMessages(conversationId);
         return ApiResponse.<List<ChatMessageResponse>>builder()
-                .result(chatMessageResponseList)
+                .result(response)
+                .build();
+    }
+
+    @PostMapping("/{messageId}")
+    ApiResponse<ChatMessageResponse> recalledMessage(@PathVariable Long messageId){
+        ChatMessageResponse response = chatMessageService.recalledMessage(messageId);
+        return ApiResponse.<ChatMessageResponse>builder()
+                .result(response)
                 .build();
     }
 }

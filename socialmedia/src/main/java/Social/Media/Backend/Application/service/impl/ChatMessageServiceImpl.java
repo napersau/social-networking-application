@@ -127,6 +127,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         return chatMessageResponse;
     }
 
+    @Override
+    public ChatMessageResponse recalledMessage(Long messageId) {
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId).orElseThrow(RuntimeException::new);
+        chatMessage.setIsRecalled(true);
+        return toChatMessageResponse(chatMessageRepository.save(chatMessage));
+    }
+
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
 
         var context = SecurityContextHolder.getContext().getAuthentication().getName();
