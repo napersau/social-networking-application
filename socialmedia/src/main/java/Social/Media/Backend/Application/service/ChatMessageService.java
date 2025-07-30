@@ -10,4 +10,5 @@ public interface ChatMessageService {
     ChatMessageResponse create(ChatMessageRequest request);
     ChatMessageResponse recalledMessage(Long messageId);
     List<ChatMessageResponse> markMessagesAsRead(Long conversationId);
+    ChatMessageResponse reactToMessage(ChatMessageRequest request);
 }

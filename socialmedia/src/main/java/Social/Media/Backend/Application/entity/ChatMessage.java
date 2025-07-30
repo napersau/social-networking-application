@@ -39,4 +39,7 @@ public class ChatMessage {
     @Column(name = "is_recalled")
     Boolean isRecalled = false;
 
+    @Column(name = "reaction_type")
+    String reactionType;
+
 }

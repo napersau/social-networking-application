@@ -146,6 +146,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         return messages.stream().map(this::toChatMessageResponse).toList();
     }
 
+    @Override
+    public ChatMessageResponse reactToMessage(ChatMessageRequest request) {
+        ChatMessage chatMessage = chatMessageRepository.findById(request.getId()).orElseThrow(RuntimeException::new);
+        chatMessage.setReactionType(request.getReactionType());
+        chatMessageRepository.save(chatMessage);
+        return toChatMessageResponse(chatMessage);
+    }
+
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
 
         User user = securityUtil.getCurrentUser();

@@ -52,4 +52,12 @@ public class ChatMessageController {
                 .result(response)
                 .build();
     }
+
+    @PutMapping("/react")
+    ApiResponse<ChatMessageResponse> reactToMessage(@RequestBody ChatMessageRequest request){
+        ChatMessageResponse response = chatMessageService.reactToMessage(request);
+        return ApiResponse.<ChatMessageResponse>builder()
+                .result(response)
+                .build();
+    }
 }
