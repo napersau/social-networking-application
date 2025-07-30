@@ -8,6 +8,7 @@ import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.ChatMessageService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import com.corundumstudio.socketio.BroadcastOperations;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
@@ -37,17 +38,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ConversationRepository conversationRepository;
     private final WebSocketSessionRepository webSocketSessionRepository;
     private final ModelMapper modelMapper;
-    private final UserRepository userRepository;
     private final SocketIOServer socketIOServer;
     private final ObjectMapper objectMapper;
     private final MediaRepository mediaRepository;
+    private final SecurityUtil securityUtil;
 
 
     public List<ChatMessageResponse> getMessages(Long conversationId) {
-        // Validate conversationId
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
 
         conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND))
@@ -63,9 +62,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     public ChatMessageResponse create(ChatMessageRequest request) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
         // Validate conversationId
         var conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
@@ -80,6 +78,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .sender(sender)
                 .createdDate(Instant.now())
                 .conversation(conversation)
+                .isRead(false)
                 .build();
 
         chatMessage = chatMessageRepository.save(chatMessage);
@@ -134,11 +133,22 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         return toChatMessageResponse(chatMessageRepository.save(chatMessage));
     }
 
+    @Override
+    public List<ChatMessageResponse> markMessagesAsRead(Long conversationId) {
+        User user = securityUtil.getCurrentUser();
+
+        List<ChatMessage> messages = chatMessageRepository
+                .findAllByConversationIdAndSenderIdNotAndIsReadFalse(conversationId, user.getId());
+        for (ChatMessage message : messages) {
+            message.setIsRead(true);
+        }
+        chatMessageRepository.saveAll(messages);
+        return messages.stream().map(this::toChatMessageResponse).toList();
+    }
+
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
 
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         var chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
 

@@ -9,7 +9,7 @@ import {
   getMyConversations,
   createConversation,
   getMessages,
-  createMessage,
+  createMessage, markMessagesAsRead
 } from "../../services/chatService";
 import { getToken } from "../../services/localStorageService";
 
@@ -206,14 +206,24 @@ export default function Chat() {
 
   // Update unread count when conversation is selected
   useEffect(() => {
-    if (selectedConversation?.id && socketRef.current) {
-      // Mark the currently selected conversation as read
-      setConversations((prevConversations) =>
-        prevConversations.map((conv) =>
-          conv.id === selectedConversation.id ? { ...conv, unread: 0 } : conv
-        )
-      );
-    }
+    const markAsRead = async () => {
+      if (selectedConversation?.id) {
+        try {
+          await markMessagesAsRead(selectedConversation.id);
+          setConversations((prevConversations) =>
+            prevConversations.map((conv) =>
+              conv.id === selectedConversation.id
+                ? { ...conv, unread: 0 }
+                : conv
+            )
+          );
+        } catch (error) {
+          console.error("Lỗi khi đánh dấu đã đọc:", error);
+        }
+      }
+    };
+
+    markAsRead();
   }, [selectedConversation]);
 
   const handleConversationSelect = (conversation) => {
@@ -269,7 +279,6 @@ export default function Chat() {
         console.log("Message already exists, not adding");
         return prev;
       });
-
       // Update the conversation list with the new last message
       setConversations((prevConversations) => {
         const updatedConversations = prevConversations.map((conv) =>
@@ -278,15 +287,10 @@ export default function Chat() {
                 ...conv,
                 lastMessage: message.message,
                 lastTimestamp: new Date(message.createdDate).toLocaleString(),
-                unread:
-                  selectedConversation?.id === message.conversationId
-                    ? 0
-                    : (conv.unread || 0) + 1,
                 modifiedDate: message.createdDate,
               }
             : conv
         );
-
         return updatedConversations;
       });
     },

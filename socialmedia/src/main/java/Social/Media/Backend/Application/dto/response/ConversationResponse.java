@@ -23,4 +23,5 @@ public class ConversationResponse {
     List<ParticipantInfo> participants;
     Instant createdDate;
     Instant modifiedDate;
+    Integer unread;
 }

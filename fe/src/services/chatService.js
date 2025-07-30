@@ -67,3 +67,16 @@ export const recallMessage = async (messageId) => {
     }
   );
 };
+
+export const markMessagesAsRead = async (conversationId) => {
+  return await httpClient.put(
+    `${API.MARK_MESSAGES_AS_READ}?conversationId=${conversationId}`,
+    {}, // Không cần body
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};

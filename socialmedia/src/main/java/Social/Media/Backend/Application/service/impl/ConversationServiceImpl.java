@@ -7,10 +7,13 @@ import Social.Media.Backend.Application.entity.ParticipantInfo;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
+import Social.Media.Backend.Application.repository.ChatMessageRepository;
 import Social.Media.Backend.Application.repository.ConversationRepository;
 import Social.Media.Backend.Application.repository.ParticipantInfoRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
+import Social.Media.Backend.Application.service.ChatMessageService;
 import Social.Media.Backend.Application.service.ConversationService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -36,14 +39,16 @@ import java.util.stream.Collectors;
 public class ConversationServiceImpl implements ConversationService {
     ConversationRepository conversationRepository;
     UserRepository userRepository;
+    ChatMessageRepository chatMessageRepository;
     ModelMapper modelMapper;
     ParticipantInfoRepository participantInfoRepository;
+    SecurityUtil securityUtil;
 
     @Override
     public List<ConversationResponse> myConversations() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
+
         List<Conversation> conversations = conversationRepository.findAllByParticipantIdsContains(user.getId());
 
         return conversations.stream().map(this::toConversationResponse).toList();
@@ -51,10 +56,8 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public ConversationResponse create(ConversationRequest request) {
-        // Fetch user infos
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
 
         Long userId = user.getId();
         User userInfo = userRepository.findById(userId).get();
@@ -115,16 +118,13 @@ public class ConversationServiceImpl implements ConversationService {
     private String generateParticipantHash(List<String> ids) {
         StringJoiner stringJoiner = new StringJoiner("_");
         ids.forEach(stringJoiner::add);
-
         // SHA 256
-
         return stringJoiner.toString();
     }
 
     private ConversationResponse toConversationResponse(Conversation conversation) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
 
         ConversationResponse conversationResponse = modelMapper.map(conversation, ConversationResponse.class);
 
@@ -135,6 +135,8 @@ public class ConversationServiceImpl implements ConversationService {
                     conversationResponse.setConversationAvatar(participantInfo.getAvatar());
                 });
 
+        int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());
+        conversationResponse.setUnread(unreadCount);
         return conversationResponse;
     }
 }

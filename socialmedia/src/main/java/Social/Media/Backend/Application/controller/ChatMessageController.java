@@ -44,4 +44,12 @@ public class ChatMessageController {
                 .result(response)
                 .build();
     }
+
+    @PutMapping("/read")
+    ApiResponse<List<ChatMessageResponse>> markMessagesAsRead(@RequestParam Long conversationId){
+        List<ChatMessageResponse> response = chatMessageService.markMessagesAsRead(conversationId);
+        return ApiResponse.<List<ChatMessageResponse>>builder()
+                .result(response)
+                .build();
+    }
 }
