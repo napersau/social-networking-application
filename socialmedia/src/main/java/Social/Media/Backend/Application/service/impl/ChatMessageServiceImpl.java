@@ -1,5 +1,6 @@
 package Social.Media.Backend.Application.service.impl;
 
+import Social.Media.Backend.Application.dto.ReactionNotification;
 import Social.Media.Backend.Application.dto.request.ChatMessageRequest;
 import Social.Media.Backend.Application.dto.response.ChatMessageResponse;
 import Social.Media.Backend.Application.dto.response.MediaResponse;
@@ -42,6 +43,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final ObjectMapper objectMapper;
     private final MediaRepository mediaRepository;
     private final SecurityUtil securityUtil;
+    private final MessageReactionRepository messageReactionRepository;
 
 
     public List<ChatMessageResponse> getMessages(Long conversationId) {
@@ -148,9 +150,26 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     @Override
     public ChatMessageResponse reactToMessage(ChatMessageRequest request) {
-        ChatMessage chatMessage = chatMessageRepository.findById(request.getId()).orElseThrow(RuntimeException::new);
-        chatMessage.setReactionType(request.getReactionType());
-        chatMessageRepository.save(chatMessage);
+        User user = securityUtil.getCurrentUser();
+
+        ChatMessage chatMessage = chatMessageRepository.findById(request.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
+        MessageReaction messageReaction = messageReactionRepository
+                .findByUserIdAndMessageId(user.getId(), chatMessage.getId())
+                .orElseGet(() -> MessageReaction.builder()
+                        .message(chatMessage)
+                        .user(user)
+                        .createdAt(Instant.now())
+                        .build()
+                );
+
+        messageReaction.setReactionType(request.getReactionType());
+        messageReactionRepository.save(messageReaction);
+
+        // Gửi socket event cho các client
+        notifyReaction(chatMessage, messageReaction);
+
         return toChatMessageResponse(chatMessage);
     }
 
@@ -169,5 +188,35 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         chatMessageResponse.setMediaList(mediaResponses);
 
         return chatMessageResponse;
+    }
+
+    private void notifyReaction(ChatMessage chatMessage, MessageReaction messageReaction) {
+        ReactionNotification notification = ReactionNotification.builder()
+                .messageId(chatMessage.getId())
+                .userId(messageReaction.getUser().getId())
+                .reactionType(messageReaction.getReactionType())
+                .build();
+
+        List<Long> userIds = chatMessage.getConversation().getParticipants()
+                .stream().map(ParticipantInfo::getUserId).toList();
+
+        Map<String, WebSocketSession> webSocketSessions =
+                webSocketSessionRepository.findAllByUserIdIn(userIds)
+                        .stream().collect(Collectors.toMap(
+                                WebSocketSession::getSocketSessionId,
+                                Function.identity()
+                        ));
+
+        socketIOServer.getAllClients().forEach(client -> {
+            var session = webSocketSessions.get(client.getSessionId().toString());
+            if (session != null) {
+                try {
+                    String message = objectMapper.writeValueAsString(notification);
+                    client.sendEvent("reaction", message);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 }

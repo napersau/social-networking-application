@@ -16,7 +16,8 @@ public enum ErrorCode {
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     PRODUCT_EXISTED(1008, "Product existed", HttpStatus.BAD_REQUEST),
     CONVERSATION_NOT_FOUND(1009, "Chat conversation not found", HttpStatus.NOT_FOUND),
-    POST_NOT_EXISTED(1010, "Post not existed", HttpStatus.NOT_FOUND)
+    POST_NOT_EXISTED(1010, "Post not existed", HttpStatus.NOT_FOUND),
+    MESSAGE_NOT_FOUND(1011, "Message not existed", HttpStatus.NOT_FOUND)
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

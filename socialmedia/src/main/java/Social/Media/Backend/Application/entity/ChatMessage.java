@@ -39,7 +39,6 @@ public class ChatMessage {
     @Column(name = "is_recalled")
     Boolean isRecalled = false;
 
-    @Column(name = "reaction_type")
-    String reactionType;
-
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<MessageReaction> reactions;
 }

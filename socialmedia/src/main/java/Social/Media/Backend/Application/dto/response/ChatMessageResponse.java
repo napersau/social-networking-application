@@ -1,5 +1,7 @@
 package Social.Media.Backend.Application.dto.response;
 
+import Social.Media.Backend.Application.dto.ReactionNotification;
+import Social.Media.Backend.Application.entity.MessageReaction;
 import Social.Media.Backend.Application.entity.ParticipantInfo;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -23,4 +25,5 @@ public class ChatMessageResponse {
     List<MediaResponse> mediaList;
     Boolean isRead;
     Boolean isRecalled;
+    List<MessageReaction> reactions;
 }
