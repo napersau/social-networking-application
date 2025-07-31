@@ -25,6 +25,7 @@ export const API = {
   CREATE_MESSAGE: "/chat/messages/create",
   MESSAGES: "/chat/messages",
   MARK_MESSAGES_AS_READ: "/chat/messages/read",
+  REACT_TO_MESSAGE: "/chat/messages/react",
 
 
   CREATE_POST: "/posts",

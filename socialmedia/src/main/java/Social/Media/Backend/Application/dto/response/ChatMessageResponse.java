@@ -25,5 +25,5 @@ public class ChatMessageResponse {
     List<MediaResponse> mediaList;
     Boolean isRead;
     Boolean isRecalled;
-    List<MessageReaction> reactions;
+    List<MessageReactionResponse> reactions;
 }

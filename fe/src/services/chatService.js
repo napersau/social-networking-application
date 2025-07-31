@@ -80,3 +80,20 @@ export const markMessagesAsRead = async (conversationId) => {
     }
   );
 };
+
+export const reactToMessage = async ({ id, conversationId, reactionType }) => {
+  return await httpClient.put(
+    API.REACT_TO_MESSAGE, // 👈 đảm bảo trong configuration có dòng này
+    {
+      id,
+      conversationId,
+      reactionType,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
