@@ -9,7 +9,8 @@ import {
   getMyConversations,
   createConversation,
   getMessages,
-  createMessage, markMessagesAsRead
+  createMessage,
+  markMessagesAsRead,
 } from "../../services/chatService";
 import { getToken } from "../../services/localStorageService";
 
@@ -192,6 +193,25 @@ export default function Chat() {
           handleIncomingMessage(messageObject);
         }
       });
+
+      // 🔧 Handle incoming reactions
+      socketRef.current.on("reaction", (data) => {
+        const { messageId, reactions } = JSON.parse(data);
+
+        setMessagesMap((prev) => {
+          const updatedMap = { ...prev };
+
+          for (const convId in updatedMap) {
+            updatedMap[convId] = updatedMap[convId].map((msg) =>
+              msg.id === messageId ? { ...msg, reactions } : msg
+            );
+          }
+
+          return updatedMap;
+        });
+      });
+
+      
     }
 
     // Cleanup function - disconnect socket when component unmounts

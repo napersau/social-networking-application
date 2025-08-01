@@ -26,7 +26,6 @@ const ConversationList = ({
   onNewChatClick,
   onRefresh,
 }) => {
-  console.log("conversations",conversations)
   return (
     <Box
       sx={{

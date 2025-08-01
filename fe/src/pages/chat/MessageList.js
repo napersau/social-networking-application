@@ -82,10 +82,10 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
         conversationId,
         reactionType: reaction,
       });
-      const { id, reactionType: newReaction } = response.data.result;
+      const { id, reactions: newReaction } = response.data.result;
 
       const updatedMessages = messages.map((msg) =>
-        msg.id === id ? { ...msg, reactionType: newReaction } : msg
+        msg.id === id ? { ...msg, reactions: newReaction } : msg
       );
       setMessages(updatedMessages);
       message.success("Thả cảm xúc thành công");
