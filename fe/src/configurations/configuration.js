@@ -32,7 +32,7 @@ export const API = {
   GET_POSTS: "/posts/user",
   GET_POSTS_BY_USERID: (userId) => `/posts/${userId}`,
   GET_POST_BY_ID: (postId) => `/posts/${postId}`,
-  DELETE_POST: (postId) => `/posts/${postId}`,
+  ID_POST: (postId) => `/posts/${postId}`,
 
   LIKE_POST: "/like", // POST - like a post
   UNLIKE_POST: "/{postId}/like", // DELETE - unlike a post
