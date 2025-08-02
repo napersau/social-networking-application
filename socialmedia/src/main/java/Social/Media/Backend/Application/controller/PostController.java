@@ -59,4 +59,13 @@ public class PostController {
                 .build();
     }
 
+    @PutMapping("/{postId}")
+    ApiResponse<PostResponse> updatePost(@RequestBody PostRequest request, @PathVariable Long postId){
+        PostResponse response = postService.updatePost(request, postId);
+        return ApiResponse.<PostResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
 }

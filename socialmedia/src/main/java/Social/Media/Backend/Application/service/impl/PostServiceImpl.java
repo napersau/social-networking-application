@@ -79,4 +79,14 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long id) {
         postRepository.deleteById(id);
     }
+
+    @Override
+    public PostResponse updatePost(PostRequest request, Long id) {
+
+        Post post = postRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        post.setContent(request.getContent());
+        post.setUpdatedAt(Instant.now());
+        postRepository.save(post);
+        return modelMapper.map(post, PostResponse.class);
+    }
 }
