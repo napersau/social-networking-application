@@ -173,6 +173,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         return toChatMessageResponse(chatMessage);
     }
 
+    @Override
+    public ChatMessageResponse updateMessage(ChatMessageRequest request, Long messageId) {
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId).orElseThrow(RuntimeException::new);
+        chatMessage.setMessage(request.getMessage());
+        chatMessageRepository.save(chatMessage);
+        return toChatMessageResponse(chatMessage);
+    }
+
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
 
         User user = securityUtil.getCurrentUser();

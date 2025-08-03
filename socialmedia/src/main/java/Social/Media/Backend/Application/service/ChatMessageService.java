@@ -11,4 +11,5 @@ public interface ChatMessageService {
     ChatMessageResponse recalledMessage(Long messageId);
     List<ChatMessageResponse> markMessagesAsRead(Long conversationId);
     ChatMessageResponse reactToMessage(ChatMessageRequest request);
+    ChatMessageResponse updateMessage(ChatMessageRequest request, Long messageId);
 }

@@ -25,6 +25,7 @@ public class ChatMessageController {
         ChatMessageResponse response = chatMessageService.create(request);
         return ApiResponse.<ChatMessageResponse>builder()
                 .result(response)
+                .code(1000)
                 .build();
     }
 
@@ -34,6 +35,7 @@ public class ChatMessageController {
         List<ChatMessageResponse> response = chatMessageService.getMessages(conversationId);
         return ApiResponse.<List<ChatMessageResponse>>builder()
                 .result(response)
+                .code(1000)
                 .build();
     }
 
@@ -42,6 +44,7 @@ public class ChatMessageController {
         ChatMessageResponse response = chatMessageService.recalledMessage(messageId);
         return ApiResponse.<ChatMessageResponse>builder()
                 .result(response)
+                .code(1000)
                 .build();
     }
 
@@ -50,6 +53,7 @@ public class ChatMessageController {
         List<ChatMessageResponse> response = chatMessageService.markMessagesAsRead(conversationId);
         return ApiResponse.<List<ChatMessageResponse>>builder()
                 .result(response)
+                .code(1000)
                 .build();
     }
 
@@ -58,6 +62,16 @@ public class ChatMessageController {
         ChatMessageResponse response = chatMessageService.reactToMessage(request);
         return ApiResponse.<ChatMessageResponse>builder()
                 .result(response)
+                .code(1000)
+                .build();
+    }
+
+    @PutMapping("/{messageId}")
+    ApiResponse<ChatMessageResponse> updateMessage(@RequestBody ChatMessageRequest request, @PathVariable Long messageId){
+        ChatMessageResponse response = chatMessageService.updateMessage(request, messageId);
+        return ApiResponse.<ChatMessageResponse>builder()
+                .result(response)
+                .code(1000)
                 .build();
     }
 }
