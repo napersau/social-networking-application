@@ -24,4 +24,5 @@ public class ConversationResponse {
     Instant createdDate;
     Instant modifiedDate;
     Integer unread;
+    String lastMessage;
 }

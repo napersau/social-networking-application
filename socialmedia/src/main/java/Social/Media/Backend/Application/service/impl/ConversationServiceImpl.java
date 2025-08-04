@@ -2,6 +2,7 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.ConversationRequest;
 import Social.Media.Backend.Application.dto.response.ConversationResponse;
+import Social.Media.Backend.Application.entity.ChatMessage;
 import Social.Media.Backend.Application.entity.Conversation;
 import Social.Media.Backend.Application.entity.ParticipantInfo;
 import Social.Media.Backend.Application.entity.User;
@@ -41,7 +42,6 @@ public class ConversationServiceImpl implements ConversationService {
     UserRepository userRepository;
     ChatMessageRepository chatMessageRepository;
     ModelMapper modelMapper;
-    ParticipantInfoRepository participantInfoRepository;
     SecurityUtil securityUtil;
 
     @Override
@@ -67,7 +67,6 @@ public class ConversationServiceImpl implements ConversationService {
         if (Objects.isNull(userInfo) || Objects.isNull(participantInfo)) {
             throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
-
 
         List<Long> userIds = new ArrayList<>();
         userIds.add(userId);
@@ -108,8 +107,7 @@ public class ConversationServiceImpl implements ConversationService {
                     );
 
                     newConversation.setParticipants(participantInfos);
-                    Conversation conversationSaved = conversationRepository.save(newConversation);
-                    return conversationSaved;
+                    return conversationRepository.save(newConversation);
                 });
 
         return toConversationResponse(conversation);
@@ -135,8 +133,10 @@ public class ConversationServiceImpl implements ConversationService {
                     conversationResponse.setConversationAvatar(participantInfo.getAvatar());
                 });
 
+        ChatMessage lastMsg = chatMessageRepository.findTopByConversation_IdOrderByCreatedDateDesc(conversation.getId());
         int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());
         conversationResponse.setUnread(unreadCount);
+        conversationResponse.setLastMessage(lastMsg != null ? lastMsg.getMessage() : null);
         return conversationResponse;
     }
 }

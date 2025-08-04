@@ -20,4 +20,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
                             @Param("userId") Long userId);
 
     List<ChatMessage> findAllByConversationIdAndSenderIdNotAndIsReadFalse(Long conversationId, Long userId);
+    ChatMessage findTopByConversation_IdOrderByCreatedDateDesc(Long conversationId);
+
 }
