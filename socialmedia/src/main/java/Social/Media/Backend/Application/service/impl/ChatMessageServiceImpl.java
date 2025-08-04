@@ -75,6 +75,8 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
+        conversation.setModifiedDate(Instant.now());
+
         ChatMessage chatMessage = ChatMessage.builder()
                 .message(request.getMessage())
                 .sender(sender)

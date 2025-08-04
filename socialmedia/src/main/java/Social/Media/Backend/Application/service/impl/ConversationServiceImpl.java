@@ -49,7 +49,7 @@ public class ConversationServiceImpl implements ConversationService {
 
         User user = securityUtil.getCurrentUser();
 
-        List<Conversation> conversations = conversationRepository.findAllByParticipantIdsContains(user.getId());
+        List<Conversation> conversations = conversationRepository.findAllByUserIdOrderByModifiedDateDesc(user.getId());
 
         return conversations.stream().map(this::toConversationResponse).toList();
     }
