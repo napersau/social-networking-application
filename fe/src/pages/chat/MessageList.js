@@ -9,7 +9,11 @@ import {
   message,
 } from "antd";
 import { MoreOutlined, SmileOutlined } from "@ant-design/icons";
-import { recallMessage, reactToMessage } from "../../services/chatService";
+import {
+  recallMessage,
+  reactToMessage,
+  updateMessage,
+} from "../../services/chatService";
 import "./styles.css";
 
 const { Text } = Typography;
@@ -42,6 +46,41 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
         } catch (error) {
           console.error("Thu hồi tin nhắn thất bại:", error);
           message.error("Thu hồi tin nhắn thất bại");
+        }
+      },
+    });
+  };
+
+  const handleEditMessage = (msg) => {
+    let editedText = msg.message;
+    Modal.confirm({
+      title: "Sửa tin nhắn",
+      content: (
+        <input
+          type="text"
+          defaultValue={msg.message}
+          onChange={(e) => {
+            editedText = e.target.value;
+          }}
+          style={{ width: "100%" }}
+        />
+      ),
+      onOk: async () => {
+        try {
+          const res = await updateMessage(msg.id, {
+            message: editedText,
+            conversationId: msg.conversationId,
+          });
+          const updated = res.data.result;
+
+          const updatedMessages = messages.map((m) =>
+            m.id === msg.id ? { ...m, message: updated.message } : m
+          );
+          setMessages(updatedMessages);
+          message.success("Sửa tin nhắn thành công");
+        } catch (err) {
+          console.error("Lỗi khi sửa tin nhắn:", err);
+          message.error("Sửa tin nhắn thất bại");
         }
       },
     });
@@ -95,11 +134,16 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
     }
   };
 
-  const getMenuItems = (messageId) => [
+  const getMenuItems = (msg) => [
+    {
+      key: "edit",
+      label: "Sửa tin nhắn",
+      onClick: () => handleEditMessage(msg),
+    },
     {
       key: "recall",
       label: "Thu hồi tin nhắn",
-      onClick: () => handleRecall(messageId),
+      onClick: () => handleRecall(msg.id),
     },
   ];
 
@@ -223,7 +267,7 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
 
                       {isMe && !msg.failed && (
                         <Dropdown
-                          menu={{ items: getMenuItems(msg.id) }}
+                          menu={{ items: getMenuItems(msg) }}
                           trigger={["click"]}
                           placement="bottomRight"
                         >

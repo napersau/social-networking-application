@@ -10,6 +10,14 @@ export const getMyConversations = async () => {
   });
 };
 
+export const updateMessage = (messageId, data) => {
+  return httpClient.put(`${API.MESSAGES}/${messageId}`, data, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+};
+
 export const createConversation = async (data) => {
   console.log(data)
   return await httpClient.post(
