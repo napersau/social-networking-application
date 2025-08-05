@@ -11,6 +11,7 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.RoleRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.UserService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ import java.util.Optional;
 @Transactional
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
+    private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
@@ -60,9 +61,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateUser(UserUpdateRequest request) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
+
         user.setBio(request.getBio());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
@@ -80,9 +81,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse changePassword(UserUpdateRequest request) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
+
         boolean authenticated =  passwordEncoder.matches(request.getOldPassword(), user.getPassword());
         if(!authenticated) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -96,10 +96,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getMyInfo() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+        User user = securityUtil.getCurrentUser();
 
         return modelMapper.map(user, UserResponse.class);
     }
@@ -143,8 +140,6 @@ public class UserServiceImpl implements UserService {
             return modelMapper.map(existingUser.get(), UserResponse.class);
         }
 
-
-
         Role role = roleRepository.findById(2L).orElseThrow(() -> new RuntimeException("Role Not Found"));
 
         User user = new User();
@@ -158,7 +153,6 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(true);
         user.setGoogleAccountId(1L);
         User savedUser = userRepository.save(user);
-
 
         return modelMapper.map(savedUser, UserResponse.class);
     }

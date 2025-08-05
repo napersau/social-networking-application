@@ -11,6 +11,7 @@ import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.PostShareRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.PostShareService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -25,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class PostShareServiceImpl implements PostShareService {
-
+    private final SecurityUtil securityUtil;
     private final PostShareRepository postShareRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
@@ -34,9 +35,7 @@ public class PostShareServiceImpl implements PostShareService {
     @Override
     public List<PostShareResponse> getPostShares() {
 
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         List<PostShare> postShareResponses = postShareRepository.findAllByUserId(user.getId());
         return postShareResponses.stream().map(postShare -> modelMapper.map(postShare, PostShareResponse.class)).toList();
@@ -45,9 +44,7 @@ public class PostShareServiceImpl implements PostShareService {
     @Override
     public PostShareResponse createPostShare(PostShareRequest request) {
 
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         Post post = postRepository.findById(request.getPostId()).orElseThrow(() ->
                 new AppException(ErrorCode.POST_NOT_EXISTED)) ;

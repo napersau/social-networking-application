@@ -9,6 +9,7 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.NotificationRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.NotificationService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import com.corundumstudio.socketio.SocketIOServer;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -22,7 +23,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
-
+    private final SecurityUtil securityUtil;
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
@@ -30,9 +31,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public List<NotificationResponse> getNotifications() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         List<Notification> notifications = notificationRepository.findAllByUserId(user.getId());
         return notifications.stream().map(notification -> modelMapper.map(notification, NotificationResponse.class)).toList();

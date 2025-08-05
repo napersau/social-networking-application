@@ -11,6 +11,7 @@ import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.PostService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,19 +23,16 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
-
-    private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
     private final LikeRepository likeRepository;
     private final PostMapper postMapper;
+    private final SecurityUtil securityUtil;
 
     @Override
     public PostResponse createPost(PostRequest request) {
 
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
 
         Post post = modelMapper.map(request, Post.class);
         post.setUser(user);
@@ -51,9 +49,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponse> getPostsByUser() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
+
         List<Post> posts = postRepository.findAllByUserId(user.getId());
         List<PostResponse> result =  posts.stream().map(postMapper::toPostResponse).toList();
         for(PostResponse postResponse : result){
@@ -64,9 +62,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponse> getPostsByUserId(Long userId) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
+
         List<Post> posts = postRepository.findAllByUserId(userId);
         List<PostResponse> result =  posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
         for(PostResponse postResponse : result){

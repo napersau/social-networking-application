@@ -57,15 +57,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         // Gửi email sử dụng EmailService như form cũ
         try {
-            MailRequest mailRequest = new MailRequest();
-            mailRequest.setTo(request.getEmail());
-            mailRequest.setSubject("Mã OTP đặt lại mật khẩu");
-            mailRequest.setText(String.format(
-                    "Mã OTP của bạn để đặt lại mật khẩu là: <strong>%s</strong><br>" +
-                            "Mã này có hiệu lực trong %d phút.<br>" +
-                            "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.",
-                    otp, OTP_EXPIRY_MINUTES
-            ));
+            MailRequest mailRequest = getMailRequest(request, otp);
 
             emailService.sendSimpleMessage(mailRequest);
             log.info("OTP sent successfully to email: {}", request.getEmail());
@@ -74,6 +66,19 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             log.error("Failed to send OTP email to: {}", request.getEmail(), e);
             throw new RuntimeException("Không thể gửi email OTP. Vui lòng thử lại sau.");
         }
+    }
+
+    private static MailRequest getMailRequest(ForgotPasswordRequest request, String otp) {
+        MailRequest mailRequest = new MailRequest();
+        mailRequest.setTo(request.getEmail());
+        mailRequest.setSubject("Mã OTP đặt lại mật khẩu");
+        mailRequest.setText(String.format(
+                "Mã OTP của bạn để đặt lại mật khẩu là: <strong>%s</strong><br>" +
+                        "Mã này có hiệu lực trong %d phút.<br>" +
+                        "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.",
+                otp, OTP_EXPIRY_MINUTES
+        ));
+        return mailRequest;
     }
 
     @Override

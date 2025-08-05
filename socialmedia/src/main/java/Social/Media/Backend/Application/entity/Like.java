@@ -30,7 +30,6 @@ public class Like {
     @JoinColumn(name = "post_share_id")
     private PostShare postShare;
 
-
     @ManyToOne
     @JoinColumn(name = "comment_id")
     private Comment comment;

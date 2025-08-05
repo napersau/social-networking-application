@@ -9,6 +9,7 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.FriendshipRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.FriendshipService;
+import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -22,16 +23,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class FriendshipServiceImpl implements FriendshipService {
-
+    private final SecurityUtil securityUtil;
     private final FriendshipRepository friendshipRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
 
     @Override
     public FriendshipResponse createFriendship(FriendshipRequest request) {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
+
         User friend = userRepository.findById(request.getFriendId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Friendship friendship = Friendship.builder()
@@ -63,29 +63,26 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public List<FriendshipResponse> getFriendshipRequest() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        User user = securityUtil.getCurrentUser();
         List<Friendship> friendshipList = friendshipRepository.findAllByFriendIdAndStatusNot(user.getId(), "ACCEPTED");
         return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
     }
 
     @Override
     public List<FriendshipResponse> getFriendship() {
-        var context = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(context).orElseThrow(()
-                -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        User user = securityUtil.getCurrentUser();
+
         List<Friendship> friendshipList = friendshipRepository.findAllFriendshipsByUserIdAndStatus(user.getId(), "ACCEPTED");
         return friendshipList.stream().map(friendship -> modelMapper.map(friendship, FriendshipResponse.class)).toList();
     }
 
     @Override
     public FriendshipResponse getFriendshipStatus(Long userId) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        Friendship friendship = friendshipRepository.findFriendshipBetween(currentUser.getId(), userId);
+        User user = securityUtil.getCurrentUser();
+
+        Friendship friendship = friendshipRepository.findFriendshipBetween(user.getId(), userId);
 
         if (friendship == null) {
             return null;

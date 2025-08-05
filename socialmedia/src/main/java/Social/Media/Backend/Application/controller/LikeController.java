@@ -7,6 +7,8 @@ import Social.Media.Backend.Application.service.LikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/like")
 @RequiredArgsConstructor
@@ -32,5 +34,13 @@ public class LikeController {
                 .build();
     }
 
-
+    @GetMapping("/{postId}")
+    ApiResponse<List<LikeResponse>> getUsersLikedPost(@PathVariable Long postId) {
+//        LikeResponse response = likeService.likeComment(request);
+//        return ApiResponse.<LikeResponse>builder()
+//                .code(1000)
+//                .result(response)
+//                .build();
+        return null;
+    }
 }
