@@ -18,6 +18,11 @@ import {
   CommentOutlined,
   RetweetOutlined,
   UserOutlined,
+  SmileOutlined,
+  MehOutlined,
+  FrownOutlined,
+  ThunderboltOutlined,
+  FireOutlined,
 } from "@ant-design/icons";
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
@@ -43,10 +48,41 @@ const PostCard = ({
   const likeCount = post.likes?.length || 0;
   const commentCount = post.commentCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
-
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
-
+  const reactionOptions = [
+    {
+      type: "Like",
+      icon: <HeartFilled style={{ color: "#1890ff" }} />,
+      label: "Thích",
+    },
+    {
+      type: "Love",
+      icon: <HeartFilled style={{ color: "red" }} />,
+      label: "Yêu thích",
+    },
+    {
+      type: "Haha",
+      icon: <SmileOutlined style={{ color: "orange" }} />,
+      label: "Haha",
+    },
+    {
+      type: "Wow",
+      icon: <ThunderboltOutlined style={{ color: "purple" }} />,
+      label: "Wow",
+    },
+    {
+      type: "Sad",
+      icon: <FrownOutlined style={{ color: "gray" }} />,
+      label: "Buồn",
+    },
+    {
+      type: "Angry",
+      icon: <FireOutlined style={{ color: "red" }} />,
+      label: "Phẫn nộ",
+    },
+  ];
+  console.log("post", post)
   const handleDeletePost = (postId) => {
     Modal.confirm({
       title: "Xác nhận xoá bài viết",
@@ -175,17 +211,30 @@ const PostCard = ({
         <Divider className="post-divider" />
 
         <div className="post-actions">
-          <Button
-            type="text"
-            icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
-            onClick={() => onLike(post.id)}
-            loading={isLiking}
-            className={`action-button ${isLiked ? "liked" : ""}`}
-            style={{ color: isLiked ? "#ff4d4f" : undefined }}
+          <Dropdown
+            trigger={["click"]}
+            menu={{
+              items: reactionOptions.map((r) => ({
+                key: r.type,
+                icon: r.icon,
+                label: r.label,
+                onClick: () => onLike(post.id, r.type),
+              })),
+            }}
           >
-            {isLiked ? "Đã thích" : "Thích"}{" "}
-            {likeCount > 0 && `(${likeCount})`}
-          </Button>
+            <Button
+              type="text"
+              icon={
+                reactionOptions.find((r) => r.type === post.reactionType)
+                  ?.icon || <HeartOutlined />
+              }
+              loading={isLiking}
+              className={`action-button ${post.reactionType ? "liked" : ""}`}
+              style={{ color: post.reactionType ? "#ff4d4f" : undefined }}
+            >
+              {post.reactionType || "Thích"} {likeCount > 0 && `(${likeCount})`}
+            </Button>
+          </Dropdown>
 
           <Button
             type="text"

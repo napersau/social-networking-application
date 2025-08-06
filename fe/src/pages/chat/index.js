@@ -274,28 +274,23 @@ export default function Chat() {
       // Add the new message to the appropriate conversation
       setMessagesMap((prev) => {
         const existingMessages = prev[message.conversationId] || [];
-
         // Check if message already exists to avoid duplicates
         const messageExists = existingMessages.some((msg) => {
           // Primary: Compare by ID if both messages have IDs
           if (msg.id && message.id) {
             return msg.id === message.id;
           }
-
           return false;
         });
-
         if (!messageExists) {
           const updatedMessages = [...existingMessages, message].sort(
             (a, b) => new Date(a.createdDate) - new Date(b.createdDate)
           );
-
           return {
             ...prev,
             [message.conversationId]: updatedMessages,
           };
         }
-
         console.log("Message already exists, not adding");
         return prev;
       });

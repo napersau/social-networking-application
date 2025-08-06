@@ -12,6 +12,7 @@ import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.PostService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final ModelMapper modelMapper;
@@ -54,10 +56,7 @@ public class PostServiceImpl implements PostService {
 
         List<Post> posts = postRepository.findAllByUserId(user.getId());
         List<PostResponse> result =  posts.stream().map(postMapper::toPostResponse).toList();
-        for(PostResponse postResponse : result){
-            postResponse.setIsLiked(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent());
-        }
-        return result;
+        return getPostResponses(user, result);
     }
 
     @Override
@@ -67,8 +66,19 @@ public class PostServiceImpl implements PostService {
 
         List<Post> posts = postRepository.findAllByUserId(userId);
         List<PostResponse> result =  posts.stream().map(post -> modelMapper.map(post, PostResponse.class)).toList();
-        for(PostResponse postResponse : result){
-            postResponse.setIsLiked(likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId()).isPresent());
+        return getPostResponses(user, result);
+    }
+
+    private List<PostResponse> getPostResponses(User user, List<PostResponse> result) {
+        for (PostResponse postResponse : result) {
+            likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId())
+                    .ifPresentOrElse(like -> {
+                        postResponse.setIsLiked(true);
+                        postResponse.setReactionType(like.getReactionType());
+                    }, () -> {
+                        postResponse.setIsLiked(false);
+                        postResponse.setReactionType(null);
+                    });
         }
         return result;
     }

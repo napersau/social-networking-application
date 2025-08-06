@@ -57,49 +57,41 @@ const PostPage = () => {
     }
   };
 
-  const handleLike = async (postId) => {
-    if (likingPosts.has(postId)) {
-      return;
-    }
-    setLikingPosts((prev) => new Set(prev).add(postId));
-    try {
-      const reactionType = "Like";
-      const response = await likeService.likePost(postId, reactionType);
-      if (response.data && response.data.code === 1000) {
-        setPosts((prevPosts) =>
-          prevPosts.map((post) => {
-            if (post.id === postId) {
-              const wasLiked = post.isLiked;
-              return {
-                ...post,
-                isLiked: !wasLiked,
-                likes: wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1,
-              };
-            }
-            return post;
-          })
-        );
+  const handleLike = async (postId, reactionType = "Like") => {
+  if (likingPosts.has(postId)) return;
 
-        const currentPost = posts.find((p) => p.id === postId);
-        if (currentPost?.isLiked) {
-          message.success("Đã bỏ thích bài viết!");
-        } else {
-          message.success("Đã thích bài viết!");
-        }
-      } else {
-        message.warning("Không thể thực hiện hành động này!");
-      }
-    } catch (error) {
-      console.error("Lỗi khi like/unlike bài viết:", error);
-      message.error("Đã xảy ra lỗi khi thực hiện hành động!");
-    } finally {
-      setLikingPosts((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(postId);
-        return newSet;
-      });
+  setLikingPosts((prev) => new Set(prev).add(postId));
+  try {
+    const response = await likeService.likePost(postId, reactionType);
+    if (response.data && response.data.code === 1000) {
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              reactionType, // lưu loại cảm xúc mới
+              likes: post.likes || 0, // hoặc cập nhật đúng nếu backend trả likes mới
+            };
+          }
+          return post;
+        })
+      );
+      message.success(`Bạn đã chọn cảm xúc: ${reactionType}`);
+    } else {
+      message.warning("Không thể thực hiện hành động này!");
     }
-  };
+  } catch (error) {
+    console.error("Lỗi khi gửi cảm xúc:", error);
+    message.error("Đã xảy ra lỗi khi gửi cảm xúc!");
+  } finally {
+    setLikingPosts((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(postId);
+      return newSet;
+    });
+  }
+};
+
 
   const handleComment = (postId) => {
     setExpandedComments((prev) => {

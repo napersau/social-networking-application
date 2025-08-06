@@ -968,3 +968,40 @@ Post Page Styles .post-page {
 }
 
 /* Hover Effects */
+
+
+
+.facebook-reactions {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.reaction-option {
+  transition: transform 0.1s ease !important;
+}
+
+.reaction-option:hover {
+  transform: scale(1.2) !important;
+}
+
+.action-button.reacted {
+  font-weight: bold;
+}
+
+.post-actions {
+  padding: 8px 0;
+}
+
+.reaction-wrapper {
+  position: relative;
+}
