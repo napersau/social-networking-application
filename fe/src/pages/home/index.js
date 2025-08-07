@@ -15,6 +15,7 @@ import {
 } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import { searchUsersByFullName } from "../../services/userService";
+import FriendListSidebar from "./FriendListSidebar";
 import "./styles.css";
 
 const { Title, Paragraph } = Typography;
@@ -183,6 +184,7 @@ function Home() {
           </Card>
         </Col>
       </Row>
+      <FriendListSidebar />
     </div>
   );
 }

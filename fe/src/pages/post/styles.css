@@ -1005,3 +1005,29 @@ Post Page Styles .post-page {
 .reaction-wrapper {
   position: relative;
 }
+
+
+/* src/components/FriendListSidebar.css */
+.friend-sidebar {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 280px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  border-radius: 8px;
+}
+
+.friend-title {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.friend-item {
+  padding: 8px 0;
+}

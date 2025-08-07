@@ -9,13 +9,11 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.mapper.PostMapper;
 import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
-import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.PostService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
