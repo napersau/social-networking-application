@@ -58,7 +58,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .findAny()
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
-        var messages = chatMessageRepository.findAllByConversationIdOrderByCreatedDateDesc(conversationId);
+        var messages = chatMessageRepository.findAllByConversationIdOrderByCreatedDateAsc(conversationId);
 
         return messages.stream().map(this::toChatMessageResponse).toList();
     }

@@ -305,13 +305,13 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
         open={Boolean(selectedImage)}
         onCancel={() => setSelectedImage(null)}
         footer={null}
-        width="80%"
+        width="60%"
         centered
       >
         <img
           src={selectedImage}
           alt="Preview"
-          style={{ width: "100%", height: "auto", objectFit: "contain" }}
+          style={{ width: "60%", height: "60%", objectFit: "contain" }}
         />
       </Modal>
     </div>

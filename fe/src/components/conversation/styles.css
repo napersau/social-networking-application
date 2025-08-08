@@ -1,0 +1,74 @@
+/* FriendListSidebar.css */
+.friend-sidebar {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-right: 1px solid #f0f0f0;
+  padding: 16px;
+}
+
+.friend-title {
+  margin-bottom: 16px !important;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.friend-item {
+  padding: 12px 8px !important;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.friend-item:hover {
+  background-color: #f5f5f5;
+  border-color: #e8e8e8;
+}
+
+.friend-item-active {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.friend-item .ant-list-item-meta-title {
+  margin-bottom: 0;
+  font-weight: 500;
+  color: #333;
+}
+
+.friend-item:hover .ant-list-item-meta-title {
+  color: #1890ff;
+}
+
+.friend-item-active .ant-list-item-meta-title {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.chatboxes-container {
+  position: relative;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .chatbox {
+    width: 280px;
+    right: 20px !important;
+  }
+  
+  .chatbox:nth-child(n+2) {
+    display: none; /* Ẩn các chatbox thứ 2, 3 trên mobile */
+  }
+  
+  .chatbox-minimized {
+    width: 200px;
+    right: 20px !important;
+  }
+  
+  .chatbox-minimized:nth-child(n+2) {
+    display: none;
+  }
+}

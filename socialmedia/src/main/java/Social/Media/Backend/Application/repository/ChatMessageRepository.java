@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
-    List<ChatMessage> findAllByConversationIdOrderByCreatedDateDesc(Long conversationId);
+    List<ChatMessage> findAllByConversationIdOrderByCreatedDateAsc(Long conversationId);
 
     @Query("SELECT COUNT(m) FROM ChatMessage m " +
             "WHERE m.conversation.id = :conversationId " +

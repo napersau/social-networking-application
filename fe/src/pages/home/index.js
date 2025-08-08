@@ -15,7 +15,7 @@ import {
 } from "antd";
 import { UserOutlined, SearchOutlined } from "@ant-design/icons";
 import { searchUsersByFullName } from "../../services/userService";
-import FriendListSidebar from "./FriendListSidebar";
+import FriendListSidebar from "../../components/conversation";
 import "./styles.css";
 
 const { Title, Paragraph } = Typography;
