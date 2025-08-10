@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Card,
-  Input,
-  Button,
   Avatar,
   List,
   Spin,
   Typography,
-  Image,
+  Button,
 } from "antd";
 import {
-  SendOutlined,
   MinusOutlined,
   CloseOutlined,
   UserOutlined,
@@ -18,6 +15,7 @@ import {
 import { getMessages, createMessage } from "../../services/chatService";
 import { io } from "socket.io-client";
 import { getToken } from "../../services/localStorageService";
+import MessageInput from "../../pages/chat/MessageInput"; // ✅ import component mới
 import "./styles.css";
 
 const { Text } = Typography;
@@ -153,29 +151,22 @@ function ChatBox({ conversation, onClose, onMinimize, isMinimized }) {
     [conversation?.id]
   );
 
-  /* ---------- Gửi tin nhắn (không tạo tin nhắn tạm) ---------- */
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || sending) return;
+  /* ---------- Gửi tin nhắn với media ---------- */
+  const handleSendMessage = async ({ message, mediaUrls }) => {
+    if ((!message || !message.trim()) && mediaUrls.length === 0) return;
 
     setSending(true);
     try {
       await createMessage({
         conversationId: conversation.id,
-        message: newMessage,
-        mediaUrls: [],
+        message,
+        mediaUrls,
       });
       setNewMessage(""); // clear input
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
       setSending(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
     }
   };
 
@@ -306,24 +297,12 @@ function ChatBox({ conversation, onClose, onMinimize, isMinimized }) {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="chatbox-input">
-          <Input.TextArea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Nhập tin nhắn..."
-            autoSize={{ minRows: 1, maxRows: 3 }}
-            style={{ border: "none", resize: "none" }}
-          />
-          <Button
-            type="primary"
-            size="small"
-            icon={<SendOutlined />}
-            onClick={handleSendMessage}
-            loading={sending}
-            disabled={!newMessage.trim()}
-          />
-        </div>
+        {/* ✅ Sử dụng MessageInput thay vì Input.TextArea */}
+        <MessageInput
+          message={newMessage}
+          onMessageChange={setNewMessage}
+          onSendMessage={handleSendMessage}
+        />
       </div>
 
       {selectedImage && (
