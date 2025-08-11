@@ -2,7 +2,10 @@ package Social.Media.Backend.Application.service;
 
 import Social.Media.Backend.Application.entity.WebSocketSession;
 
+import java.util.List;
+
 public interface WebSocketSessionService {
     WebSocketSession create(WebSocketSession webSocketSession);
-    void deleteSession(String sessionId);
+    Long deleteSession(String sessionId);
+    List<Long> getOnlineUsers();
 }

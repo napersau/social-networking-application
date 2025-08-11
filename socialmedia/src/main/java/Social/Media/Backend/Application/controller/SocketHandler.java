@@ -42,6 +42,7 @@ public class SocketHandler {
         // If Token is invalid disconnect
         if (introspectResponse.isValid()) {
             log.info("Client connected: {}", client.getSessionId());
+            Long userId = introspectResponse.getUserId();
             // Persist webSocketSession
             WebSocketSession webSocketSession = WebSocketSession.builder()
                     .socketSessionId(client.getSessionId().toString())
@@ -49,6 +50,8 @@ public class SocketHandler {
                     .createdAt(Instant.now())
                     .build();
             webSocketSession = webSocketSessionService.create(webSocketSession);
+
+            server.getBroadcastOperations().sendEvent("user_online", userId);
 
             log.info("WebSocketSession created with id: {}", webSocketSession.getId());
         } else {
@@ -60,7 +63,13 @@ public class SocketHandler {
     @OnDisconnect
     public void onDisconnect(SocketIOClient client) {
         log.info("Client disConnected: {}", client.getSessionId());
-        webSocketSessionService.deleteSession(client.getSessionId().toString());
+
+        Long userId = webSocketSessionService.deleteSession(client.getSessionId().toString());
+
+        // 🔹 Gửi thông báo user offline cho tất cả admin
+        if (userId != null) {
+            server.getBroadcastOperations().sendEvent("user_offline", userId);
+        }
     }
 
 

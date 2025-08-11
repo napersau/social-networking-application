@@ -67,6 +67,8 @@ public class SecurityConfig {
                                 //Comment
                                 .requestMatchers( "/api/v1/comments/**").hasAnyRole("USER","ADMIN")
 
+                                .requestMatchers( "/api/v1/websocket-session/**").hasAnyRole("USER","ADMIN")
+
                                 .requestMatchers( "/api/v1/friendship/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/api/v1/notifications/**").hasAnyRole("USER","ADMIN")
                                 .requestMatchers( "/api/v1/post-share/**").hasAnyRole("USER","ADMIN")
