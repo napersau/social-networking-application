@@ -22,6 +22,7 @@ export default function Chat() {
   const [error, setError] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const messageContainerRef = useRef(null);
   const socketRef = useRef(null);
 
@@ -182,6 +183,18 @@ export default function Chat() {
         console.log("Socket disconnected");
       });
 
+      // 🔹 Khi có user online
+      socketRef.current.on("user_online", (userId) => {
+        console.log("User online:", userId);
+        setOnlineUsers((prev) => [...new Set([...prev, userId])]); // thêm nếu chưa có
+      });
+
+      // 🔹 Khi có user offline
+      socketRef.current.on("user_offline", (userId) => {
+        console.log("User offline:", userId);
+        setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+      });
+
       socketRef.current.on("message", (message) => {
         console.log("New message received:", message);
 
@@ -194,7 +207,6 @@ export default function Chat() {
         }
       });
 
-      // 🔧 Handle incoming reactions
       socketRef.current.on("reaction", (data) => {
         const { messageId, reactions } = JSON.parse(data);
 
@@ -210,8 +222,6 @@ export default function Chat() {
           return updatedMap;
         });
       });
-
-      
     }
 
     // Cleanup function - disconnect socket when component unmounts
@@ -323,6 +333,7 @@ export default function Chat() {
           onConversationSelect={handleConversationSelect}
           onNewChatClick={handleNewChatClick}
           onRefresh={fetchConversations}
+          onlineUsers={onlineUsers}
         />
         <ChatArea
           selectedConversation={selectedConversation}

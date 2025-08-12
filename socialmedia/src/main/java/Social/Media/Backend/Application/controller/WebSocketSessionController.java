@@ -19,10 +19,10 @@ public class WebSocketSessionController {
 
     @GetMapping("/user-online")
     ApiResponse<List<Long>> getOnlineUsers() {
-        List<Long> respone = webSocketSessionService.getOnlineUsers();
+        List<Long> response = webSocketSessionService.getOnlineUsers();
         return ApiResponse.<List<Long>>builder()
                 .code(1000)
-                .result(respone)
+                .result(response)
                 .build();
     }
 }

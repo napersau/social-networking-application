@@ -25,7 +25,11 @@ const ConversationList = ({
   onConversationSelect,
   onNewChatClick,
   onRefresh,
+  onlineUsers,
 }) => {
+  console.log("onlineUsers", onlineUsers);
+  console.log(conversations);
+  const currentUserId = localStorage.getItem("userId")
   return (
     <Box
       sx={{
@@ -82,7 +86,7 @@ const ConversationList = ({
               </Box>
             );
           }
-          
+
           if (error) {
             return (
               <Box sx={{ p: 2 }}>
@@ -104,7 +108,7 @@ const ConversationList = ({
               </Box>
             );
           }
-          
+
           if (!conversations || conversations.length === 0) {
             return (
               <Box sx={{ p: 2, textAlign: "center" }}>
@@ -114,96 +118,123 @@ const ConversationList = ({
               </Box>
             );
           }
-          
+
           return (
             <List sx={{ width: "100%", p: 0 }}>
-              {conversations.map((conversation, index) => (
-                <React.Fragment key={conversation.id}>
-                  <ListItem
-                    alignItems="flex-start"
-                    onClick={() => onConversationSelect(conversation)}
-                    sx={{
-                      cursor: "pointer",
-                      bgcolor:
-                        selectedConversation?.id === conversation.id
-                          ? "rgba(0, 0, 0, 0.04)"
-                          : "transparent",
-                      "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.08)",
-                      },
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <Badge
-                        color="error"
-                        badgeContent={conversation.unread}
-                        invisible={conversation.unread === 0}
-                        overlap="circular"
-                      >
-                        <Avatar src={conversation.conversationAvatar || ""} />
-                      </Badge>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Stack
-                          direction="row"
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
+              {conversations.map((conversation, index) => {
+                const otherUserId = conversation.participants.find(
+                  (p) => p.userId != currentUserId // currentUserId là id người đang đăng nhập
+                )?.userId;
+                return (
+                  <React.Fragment key={conversation.id}>
+                    <ListItem
+                      alignItems="flex-start"
+                      onClick={() => onConversationSelect(conversation)}
+                      sx={{
+                        cursor: "pointer",
+                        bgcolor:
+                          selectedConversation?.id === conversation.id
+                            ? "rgba(0, 0, 0, 0.04)"
+                            : "transparent",
+                        "&:hover": {
+                          bgcolor: "rgba(0, 0, 0, 0.08)",
+                        },
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Box
+                          sx={{ position: "relative", display: "inline-block" }}
                         >
+                          <Badge
+                            color="error"
+                            badgeContent={conversation.unread}
+                            invisible={conversation.unread === 0}
+                            overlap="circular"
+                          >
+                            <Avatar
+                              src={conversation.conversationAvatar || ""}
+                            />
+                          </Badge>
+
+                          {/* 🔹 Chấm xanh báo online */}
+                          {onlineUsers?.includes(otherUserId) && (
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                bottom: 2,
+                                right: 2,
+                                width: 10,
+                                height: 10,
+                                bgcolor: "#4caf50",
+                                borderRadius: "50%",
+                                border: "2px solid white",
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Typography
+                              component="span"
+                              variant="body2"
+                              color="text.primary"
+                              noWrap
+                              sx={{ display: "inline" }}
+                            >
+                              {conversation.conversationName}
+                            </Typography>
+                            <Typography
+                              component="span"
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ display: "inline", fontSize: "0.7rem" }}
+                            >
+                              {new Date(
+                                conversation.modifiedDate
+                              ).toLocaleString("vi-VN", {
+                                year: "numeric",
+                                month: "numeric",
+                                day: "numeric",
+                              })}
+                            </Typography>
+                          </Stack>
+                        }
+                        secondary={
                           <Typography
+                            sx={{ display: "inline" }}
                             component="span"
                             variant="body2"
                             color="text.primary"
                             noWrap
-                            sx={{ display: "inline" }}
                           >
-                            {conversation.conversationName}
+                            {conversation.lastMessage || "Start a conversation"}
                           </Typography>
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ display: "inline", fontSize: "0.7rem" }}
-                          >
-                            {new Date(conversation.modifiedDate).toLocaleString(
-                              "vi-VN",
-                              {
-                                year: "numeric",
-                                month: "numeric",
-                                day: "numeric",
-                              }
-                            )}
-                          </Typography>
-                        </Stack>
-                      }
-                      secondary={
-                        <Typography
-                          sx={{ display: "inline" }}
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                          noWrap
-                        >
-                          {conversation.lastMessage || "Start a conversation"}
-                        </Typography>
-                      }
-                      primaryTypographyProps={{
-                        fontWeight: conversation.unread > 0 ? "bold" : "normal",
-                      }}
-                      sx={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        pr: 1,
-                      }}
-                    />
-                  </ListItem>
-                  {index < conversations.length - 1 && (
-                    <Divider variant="inset" component="li" />
-                  )}
-                </React.Fragment>
-              ))}
+                        }
+                        primaryTypographyProps={{
+                          fontWeight:
+                            conversation.unread > 0 ? "bold" : "normal",
+                        }}
+                        sx={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          pr: 1,
+                        }}
+                      />
+                    </ListItem>
+                    {index < conversations.length - 1 && (
+                      <Divider variant="inset" component="li" />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </List>
           );
         })()}

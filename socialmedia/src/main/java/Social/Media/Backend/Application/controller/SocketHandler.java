@@ -1,6 +1,5 @@
 package Social.Media.Backend.Application.controller;
 
-import Social.Media.Backend.Application.config.SocketIOConfig;
 import Social.Media.Backend.Application.dto.request.IntrospectRequest;
 import Social.Media.Backend.Application.entity.WebSocketSession;
 import Social.Media.Backend.Application.service.AuthenticationService;
@@ -9,13 +8,11 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.annotation.OnConnect;
 import com.corundumstudio.socketio.annotation.OnDisconnect;
-import com.corundumstudio.socketio.annotation.OnEvent;
 import com.nimbusds.jose.JOSEException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
