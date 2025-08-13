@@ -268,12 +268,6 @@ footer {
 }
 
 
-
-
-.new-chat-popover {
-  text-align: left;
-}
-
 .ant-popover-placement-bottomLeft {
   transform-origin: top left !important;
 }

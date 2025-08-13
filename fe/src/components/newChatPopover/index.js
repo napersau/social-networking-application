@@ -1,11 +1,10 @@
-// ✅ NewChatPopover.js
 import React, { useState, useEffect } from "react";
-import { Input, List, Avatar, Spin, Popover, Button } from "antd";
-import { SearchOutlined, UserAddOutlined } from "@ant-design/icons";
+import { Input, List, Avatar, Spin, Popover } from "antd";
+import { SearchOutlined,UserOutlined } from "@ant-design/icons";
 import { searchUsers } from "../../services/userService";
 import "./styles.css";
 
-const NewChatPopover = ({ open, onClose, onSelectUser }) => {
+const NewChatPopover = ({ open, onClose, onSelectUser, children }) => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -46,9 +45,14 @@ const NewChatPopover = ({ open, onClose, onSelectUser }) => {
                 }}
               >
                 <List.Item.Meta
-                  avatar={<Avatar src={user.avatarUrl} />}
+                  avatar={
+                    <Avatar
+                      src={user.avatarUrl}
+                      icon={!user.avatarUrl && <UserOutlined />}
+                    />
+                  }
                   title={user.displayName}
-                  description={`@${user.username}`}
+                  description={`${user.username}`}
                 />
               </List.Item>
             )}
@@ -64,13 +68,16 @@ const NewChatPopover = ({ open, onClose, onSelectUser }) => {
       title="Start New Chat"
       open={open}
       onOpenChange={(visible) => {
-        if (!visible) onClose();
+        if (!visible) {
+          onClose();
+          setSearchKeyword("");
+          setUsers([]);
+        }
       }}
       trigger="click"
       placement="bottomLeft"
     >
-      {/* Trigger phải là phần tử có thể hiển thị */}
-      <Button icon={<UserAddOutlined />} type="text" />
+      {children}
     </Popover>
   );
 };

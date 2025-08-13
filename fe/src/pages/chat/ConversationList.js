@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import NewChatPopover from "../../components/newChatPopover";
 
 const ConversationList = ({
   conversations,
@@ -26,10 +27,12 @@ const ConversationList = ({
   onNewChatClick,
   onRefresh,
   onlineUsers,
+  onSelectUser
 }) => {
   console.log("onlineUsers", onlineUsers);
   console.log(conversations);
-  const currentUserId = localStorage.getItem("userId")
+  const currentUserId = localStorage.getItem("userId");
+  const [openPopover, setOpenPopover] = React.useState(false);
   return (
     <Box
       sx={{
@@ -54,20 +57,27 @@ const ConversationList = ({
         }}
       >
         <Typography variant="h6">Chats</Typography>
-        <IconButton
-          color="primary"
-          size="small"
-          onClick={onNewChatClick}
-          sx={{
-            bgcolor: "primary.light",
-            color: "white",
-            "&:hover": {
-              bgcolor: "primary.main",
-            },
+        <NewChatPopover
+          open={openPopover}
+          onClose={() => setOpenPopover(false)}
+          onSelectUser={(user) => {
+            onSelectUser(user); // gọi callback để tạo conversation
+            setOpenPopover(false);
           }}
         >
-          <AddIcon fontSize="small" />
-        </IconButton>
+          <IconButton
+            color="primary"
+            size="small"
+            onClick={() => setOpenPopover((prev) => !prev)}
+            sx={{
+              bgcolor: "primary.light",
+              color: "white",
+              "&:hover": { bgcolor: "primary.main" },
+            }}
+          >
+            <AddIcon fontSize="small" />
+          </IconButton>
+        </NewChatPopover>
       </Box>
 
       {/* Conversations List */}

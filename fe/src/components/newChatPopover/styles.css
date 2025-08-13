@@ -1,7 +1,49 @@
 .new-chat-popover {
-  text-align: left;
+  width: 280px;
+  padding: 8px;
 }
 
-.ant-popover-placement-bottomLeft {
-  transform-origin: top left !important;
+.new-chat-popover .ant-input {
+  border-radius: 6px;
+}
+
+.new-chat-popover .ant-input-affix-wrapper {
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.new-chat-popover .ant-input-affix-wrapper:hover {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.15);
+}
+
+.new-chat-popover .ant-list-item {
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.new-chat-popover .ant-list-item:hover {
+  background-color: #f5f5f5;
+}
+
+.new-chat-popover .ant-list-item-meta-title {
+  font-weight: 500;
+  color: #333;
+}
+
+.new-chat-popover .ant-list-item-meta-description {
+  font-size: 12px;
+  color: #888;
+}
+
+.new-chat-popover .ant-avatar {
+  border: 1px solid #f0f0f0;
+}
+
+.new-chat-popover .ant-spin {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
 }

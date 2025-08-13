@@ -103,9 +103,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponse> searchUsers(String username) {
+
+        User me = securityUtil.getCurrentUser();
+
         List<User> users = userRepository.findByUsernameContaining(username);
         List<UserResponse> userResponses = new ArrayList<>();
-        users.forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
+        users.stream()
+                .filter(user -> !user.getId().equals(me.getId()))
+                .forEach(user -> userResponses.add(modelMapper.map(user, UserResponse.class)));
         return userResponses;
     }
 

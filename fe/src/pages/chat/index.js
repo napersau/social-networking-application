@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 import "./styles.css";
 import ConversationList from "./ConversationList";
 import ChatArea from "./ChatArea";
-import NewChatPopover from "../../components/newChatPopover";
 import {
   getMyConversations,
   createConversation,
@@ -334,6 +333,7 @@ export default function Chat() {
           onNewChatClick={handleNewChatClick}
           onRefresh={fetchConversations}
           onlineUsers={onlineUsers}
+          onSelectUser={handleSelectNewChatUser}
         />
         <ChatArea
           selectedConversation={selectedConversation}
@@ -350,11 +350,6 @@ export default function Chat() {
           onMessageChange={setMessage}
           onSendMessage={handleSendMessage}
           messageContainerRef={messageContainerRef}
-        />
-        <NewChatPopover
-          open={Boolean(newChatAnchorEl)}
-          onClose={handleCloseNewChat}
-          onSelectUser={handleSelectNewChatUser}
         />
       </Card>
     </Box>
