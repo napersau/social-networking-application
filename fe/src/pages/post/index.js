@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, List, message, Spin, Row, Col } from "antd";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
-import { getPostShares } from "../../services/postShareService";
+import { getPostShares, deletePostShare } from "../../services/postShareService";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import CreatePostButton from "./CreatePostButton";
@@ -26,6 +26,7 @@ const PostPage = () => {
   useEffect(() => {
     fetchPosts();
   }, []);
+
   const fetchPosts = async () => {
     setLoading(true);
     try {
@@ -58,40 +59,39 @@ const PostPage = () => {
   };
 
   const handleLike = async (postId, reactionType = "Like") => {
-  if (likingPosts.has(postId)) return;
+    if (likingPosts.has(postId)) return;
 
-  setLikingPosts((prev) => new Set(prev).add(postId));
-  try {
-    const response = await likeService.likePost(postId, reactionType);
-    if (response.data && response.data.code === 1000) {
-      setPosts((prevPosts) =>
-        prevPosts.map((post) => {
-          if (post.id === postId) {
-            return {
-              ...post,
-              reactionType, // lưu loại cảm xúc mới
-              likes: post.likes || 0, // hoặc cập nhật đúng nếu backend trả likes mới
-            };
-          }
-          return post;
-        })
-      );
-      message.success(`Bạn đã chọn cảm xúc: ${reactionType}`);
-    } else {
-      message.warning("Không thể thực hiện hành động này!");
+    setLikingPosts((prev) => new Set(prev).add(postId));
+    try {
+      const response = await likeService.likePost(postId, reactionType);
+      if (response.data && response.data.code === 1000) {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                reactionType,
+                likes: post.likes || 0,
+              };
+            }
+            return post;
+          })
+        );
+        message.success(`Bạn đã chọn cảm xúc: ${reactionType}`);
+      } else {
+        message.warning("Không thể thực hiện hành động này!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi cảm xúc:", error);
+      message.error("Đã xảy ra lỗi khi gửi cảm xúc!");
+    } finally {
+      setLikingPosts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
     }
-  } catch (error) {
-    console.error("Lỗi khi gửi cảm xúc:", error);
-    message.error("Đã xảy ra lỗi khi gửi cảm xúc!");
-  } finally {
-    setLikingPosts((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(postId);
-      return newSet;
-    });
-  }
-};
-
+  };
 
   const handleComment = (postId) => {
     setExpandedComments((prev) => {
@@ -107,6 +107,18 @@ const PostPage = () => {
 
   const handleShare = (postId) => {
     message.info("Tính năng chia sẻ đang phát triển");
+  };
+
+  // ✅ Hàm xóa bài viết share
+  const handleDeletePostShare = async (shareId) => {
+    try {
+      await deletePostShare(shareId);
+      setPosts((prev) => prev.filter((p) => p.id !== shareId));
+      message.success("Đã xóa bài viết chia sẻ");
+    } catch (error) {
+      console.error("Lỗi khi xóa bài viết share:", error);
+      message.error("Không thể xóa bài viết chia sẻ");
+    }
   };
 
   return (
@@ -136,13 +148,14 @@ const PostPage = () => {
                       onLike={handleLike}
                       onComment={handleComment}
                       onShare={handleShare}
+                      onDeletePostShare={handleDeletePostShare} // ✅ Truyền hàm xóa xuống
                     />
                   ) : (
                     <PostCard
                       post={item}
                       likingPosts={likingPosts}
                       expandedComments={expandedComments}
-                      setExpandedComments={setExpandedComments} 
+                      setExpandedComments={setExpandedComments}
                       commentingPosts={commentingPosts}
                       setCommentingPosts={setCommentingPosts}
                       setPosts={setPosts}

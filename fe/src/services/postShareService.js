@@ -26,3 +26,12 @@ export const createPostShare = async (postShareData) => {
     },
   });
 };
+
+export const deletePostShare = async (id) => {
+  return await httpClient.delete(`${API.POST_SHARE}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};

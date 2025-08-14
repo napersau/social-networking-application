@@ -2,9 +2,6 @@ import React from "react";
 import {
   Card,
   message,
-  Dropdown,
-  Menu,
-  Modal,
   Button,
   Avatar,
   Divider,
@@ -13,15 +10,15 @@ import {
 } from "antd";
 import {
   HeartOutlined,
-  MoreOutlined,
   HeartFilled,
   CommentOutlined,
   RetweetOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import CommentSection from "./CommentSection";
-import { commentService } from "../../services/commentService"; // thêm import
-import { postService } from "../../services/postService";
+import { commentService } from "../../services/commentService";
+import { createPostShare } from "../../services/postShareService";
+
 const { Text, Paragraph } = Typography;
 
 const PostCard = ({
@@ -34,7 +31,6 @@ const PostCard = ({
   setPosts,
   commentForms,
   onLike,
-  onShare,
 }) => {
   const isLiking = likingPosts.has(post.id);
   const isLiked = post.isLiked || false;
@@ -61,11 +57,37 @@ const PostCard = ({
           );
           setExpandedComments((prev) => new Set(prev).add(post.id));
         } else {
-          console.error("Không thể tải bình luận");
+          message.error("Không thể tải bình luận");
         }
       } catch (err) {
         console.error("Lỗi khi tải bình luận:", err);
+        message.error("Lỗi khi tải bình luận");
       }
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      const res = await createPostShare({
+        postId: post.id,
+        sharedContent: "", // Có thể mở modal cho người dùng nhập nội dung
+      });
+      if (res.data?.code === 1000) {
+        message.success("Chia sẻ bài viết thành công!");
+        // Cập nhật số lượng chia sẻ ngay
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === post.id
+              ? { ...p, shares: (p.shares || 0) + 1 }
+              : p
+          )
+        );
+      } else {
+        message.error("Chia sẻ thất bại!");
+      }
+    } catch (error) {
+      console.error("Lỗi khi chia sẻ bài viết:", error);
+      message.error("Đã xảy ra lỗi khi chia sẻ!");
     }
   };
 
@@ -120,7 +142,7 @@ const PostCard = ({
         <Button
           type="text"
           icon={<RetweetOutlined />}
-          onClick={() => onShare(post.id)}
+          onClick={handleShare}
           className="action-button"
         >
           Chia sẻ {post.shares ? `(${post.shares})` : ""}

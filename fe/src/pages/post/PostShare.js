@@ -1,18 +1,12 @@
 import React from "react";
-import {
-  Card,
-  Button,
-  Avatar,
-  Divider,
-  Typography,
-  Image,
-} from "antd";
+import { Card, Button, Avatar, Divider, Typography, Image, Dropdown, Menu } from "antd";
 import {
   HeartOutlined,
   HeartFilled,
   CommentOutlined,
   RetweetOutlined,
   UserOutlined,
+  EllipsisOutlined,
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
@@ -31,6 +25,7 @@ const PostShare = ({
   onLike,
   onComment,
   onShare,
+  onDeletePostShare,
 }) => {
   if (!postShare || !postShare.post) return null;
 
@@ -40,6 +35,28 @@ const PostShare = ({
   const likeCount = post.likes?.length || 0;
   const commentCount = post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+
+  const menu = (
+    <Menu
+      items={[
+        {
+          key: "edit",
+          label: "Chỉnh sửa bài viết",
+          onClick: () => {
+            // Tính năng chỉnh sửa sẽ làm sau
+            console.log("Edit post share", postShare.id);
+          },
+        },
+        {
+          key: "delete",
+          label: <span style={{ color: "red" }}>Xóa bài viết</span>,
+          onClick: () => {
+            onDeletePostShare(postShare.id);
+          },
+        },
+      ]}
+    />
+  );
 
   return (
     <Card className="post-card" hoverable style={{ marginBottom: "20px" }}>
@@ -56,6 +73,9 @@ const PostShare = ({
           </Text>
           <Text type="secondary"> đã chia sẻ một bài viết</Text>
         </div>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <EllipsisOutlined style={{ fontSize: 20, cursor: "pointer" }} />
+        </Dropdown>
       </div>
 
       {sharedContent && (
@@ -70,11 +90,7 @@ const PostShare = ({
       {/* Original Post */}
       <Card type="inner" className="post-card">
         <div className="post-header">
-          <Avatar
-            size={40}
-            src={post.user.avatarUrl}
-            icon={<UserOutlined />}
-          />
+          <Avatar size={40} src={post.user.avatarUrl} icon={<UserOutlined />} />
           <div className="post-user-info">
             <Text strong>
               {post.user.firstName || "Anonymous"} {post.user.lastName || ""}
