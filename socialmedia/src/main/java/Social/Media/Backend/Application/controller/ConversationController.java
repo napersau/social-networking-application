@@ -23,6 +23,7 @@ public class ConversationController {
     ApiResponse<ConversationResponse> createConversation(@RequestBody @Valid ConversationRequest request) {
         ConversationResponse response = conversationService.create(request);
         return ApiResponse.<ConversationResponse>builder()
+                .code(1000)
                 .result(response)
                 .build();
     }
@@ -31,7 +32,17 @@ public class ConversationController {
     ApiResponse<List<ConversationResponse>> myConversations() {
         List<ConversationResponse> conversationResponseList = conversationService.myConversations();
         return ApiResponse.<List<ConversationResponse>>builder()
+                .code(1000)
                 .result(conversationResponseList)
+                .build();
+    }
+
+    @PostMapping("/create-group")
+    ApiResponse<ConversationResponse> createGroupConversation(@RequestBody @Valid ConversationRequest request) {
+        ConversationResponse response = conversationService.createGroupConversation(request);
+        return ApiResponse.<ConversationResponse>builder()
+                .code(1000)
+                .result(response)
                 .build();
     }
 }

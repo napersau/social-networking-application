@@ -10,9 +10,7 @@ import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.ChatMessageRepository;
 import Social.Media.Backend.Application.repository.ConversationRepository;
-import Social.Media.Backend.Application.repository.ParticipantInfoRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
-import Social.Media.Backend.Application.service.ChatMessageService;
 import Social.Media.Backend.Application.service.ConversationService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import lombok.AccessLevel;
@@ -20,23 +18,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional
+@Slf4j
 public class ConversationServiceImpl implements ConversationService {
     ConversationRepository conversationRepository;
     UserRepository userRepository;
@@ -46,97 +41,93 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public List<ConversationResponse> myConversations() {
-
         User user = securityUtil.getCurrentUser();
-
         List<Conversation> conversations = conversationRepository.findAllByUserIdOrderByModifiedDateDesc(user.getId());
-
         return conversations.stream().map(this::toConversationResponse).toList();
     }
 
     @Override
     public ConversationResponse create(ConversationRequest request) {
+        User currentUser = securityUtil.getCurrentUser();
+        User participant = userRepository.findById(request.getParticipantIds().get(0))
+                .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION));
 
-        User user = securityUtil.getCurrentUser();
+        List<Long> userIds = List.of(currentUser.getId(), participant.getId());
+        String participantsHash = generateParticipantHash(userIds);
 
-        Long userId = user.getId();
-        User userInfo = userRepository.findById(userId).get();
-
-        User participantInfo = userRepository.findById(request.getParticipantIds().get(0)).get();
-
-        if (Objects.isNull(userInfo) || Objects.isNull(participantInfo)) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
-        }
-
-        List<Long> userIds = new ArrayList<>();
-        userIds.add(userId);
-        userIds.add(participantInfo.getId());
-
-        List<String> sortedIds = userIds.stream()
-                .sorted()
-                .map(String::valueOf)
-                .collect(Collectors.toList());
-        String userIdHash = generateParticipantHash(sortedIds);
-
-        var conversation = conversationRepository.findByParticipantsHash(userIdHash)
-                .orElseGet(() -> {
-                    Conversation newConversation = Conversation.builder()
-                            .type(request.getType())
-                            .participantsHash(userIdHash)
-                            .createdDate(Instant.now())
-                            .modifiedDate(Instant.now())
-                            .build();
-
-                    List<ParticipantInfo> participantInfos = List.of(
-                            ParticipantInfo.builder()
-                                    .userId(userInfo.getId())
-                                    .username(userInfo.getUsername())
-                                    .firstName(userInfo.getFirstName())
-                                    .lastName(userInfo.getLastName())
-                                    .avatar(userInfo.getAvatarUrl())
-                                    .conversation(newConversation)
-                                    .build(),
-                            ParticipantInfo.builder()
-                                    .userId(participantInfo.getId())
-                                    .username(participantInfo.getUsername())
-                                    .firstName(participantInfo.getFirstName())
-                                    .lastName(participantInfo.getLastName())
-                                    .avatar(participantInfo.getAvatarUrl())
-                                    .conversation(newConversation)
-                                    .build()
-                    );
-
-                    newConversation.setParticipants(participantInfos);
-                    return conversationRepository.save(newConversation);
-                });
+        Conversation conversation = conversationRepository.findByParticipantsHash(participantsHash)
+                .orElseGet(() -> createNewConversation(request.getType(), userIds, List.of(currentUser, participant), participantsHash));
 
         return toConversationResponse(conversation);
     }
 
-    private String generateParticipantHash(List<String> ids) {
-        StringJoiner stringJoiner = new StringJoiner("_");
-        ids.forEach(stringJoiner::add);
-        // SHA 256
-        return stringJoiner.toString();
+    @Override
+    public ConversationResponse createGroupConversation(ConversationRequest request) {
+        User currentUser = securityUtil.getCurrentUser();
+        List<User> participants = userRepository.findAllById(request.getParticipantIds());
+        if (participants.isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        List<Long> userIds = new ArrayList<>(request.getParticipantIds());
+        userIds.add(currentUser.getId());
+        String participantsHash = generateParticipantHash(userIds);
+
+        List<User> allParticipants = new ArrayList<>(participants);
+        allParticipants.add(currentUser);
+
+        Conversation conversation = conversationRepository.findByParticipantsHash(participantsHash)
+                .orElseGet(() -> createNewConversation(request.getType(), userIds, allParticipants, participantsHash));
+
+        return toConversationResponse(conversation);
+    }
+
+    private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
+        Conversation conversation = Conversation.builder()
+                .type(type)
+                .participantsHash(participantsHash)
+                .createdDate(Instant.now())
+                .modifiedDate(Instant.now())
+                .build();
+
+        List<ParticipantInfo> participantInfos = users.stream()
+                .map(user -> ParticipantInfo.builder()
+                        .userId(user.getId())
+                        .username(user.getUsername())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .avatar(user.getAvatarUrl())
+                        .conversation(conversation)
+                        .build())
+                .toList();
+
+        conversation.setParticipants(participantInfos);
+        return conversationRepository.save(conversation);
+    }
+
+    private String generateParticipantHash(List<Long> ids) {
+        return ids.stream()
+                .sorted()
+                .map(String::valueOf)
+                .collect(Collectors.joining("_"));
     }
 
     private ConversationResponse toConversationResponse(Conversation conversation) {
-
         User user = securityUtil.getCurrentUser();
-
-        ConversationResponse conversationResponse = modelMapper.map(conversation, ConversationResponse.class);
+        ConversationResponse response = modelMapper.map(conversation, ConversationResponse.class);
 
         conversation.getParticipants().stream()
-                .filter(participantInfo -> !participantInfo.getUserId().equals(user.getId()))
-                .findFirst().ifPresent(participantInfo -> {
-                    conversationResponse.setConversationName(participantInfo.getLastName() + " " + participantInfo.getFirstName());
-                    conversationResponse.setConversationAvatar(participantInfo.getAvatar());
+                .filter(p -> !p.getUserId().equals(user.getId()))
+                .findFirst()
+                .ifPresent(p -> {
+                    response.setConversationName(p.getLastName() + " " + p.getFirstName());
+                    response.setConversationAvatar(p.getAvatar());
                 });
 
         ChatMessage lastMsg = chatMessageRepository.findTopByConversation_IdOrderByCreatedDateDesc(conversation.getId());
         int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());
-        conversationResponse.setUnread(unreadCount);
-        conversationResponse.setLastMessage(lastMsg != null ? lastMsg.getMessage() : null);
-        return conversationResponse;
+        response.setUnread(unreadCount);
+        response.setLastMessage(lastMsg != null ? lastMsg.getMessage() : null);
+        return response;
     }
 }
