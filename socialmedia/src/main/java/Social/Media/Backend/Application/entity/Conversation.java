@@ -37,4 +37,10 @@ public class Conversation {
 
     @Column(name = "modified_date")
     Instant modifiedDate;
+
+    @Column(name = "name")
+    String name;
+
+    @Column(name = "avatar_url")
+    String avatarUrl;
 }

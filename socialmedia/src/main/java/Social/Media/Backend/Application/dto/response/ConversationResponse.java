@@ -18,8 +18,8 @@ public class ConversationResponse {
     Long id;
     String type; // GROUP, DIRECT
     String participantsHash;
-    String conversationAvatar;
-    String conversationName;
+    String avatarUrl;
+    String name;
     List<ParticipantInfo> participants;
     Instant createdDate;
     Instant modifiedDate;

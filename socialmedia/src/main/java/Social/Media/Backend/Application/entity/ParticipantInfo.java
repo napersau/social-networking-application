@@ -36,7 +36,7 @@ public class ParticipantInfo {
     String avatar;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id") // Tên cột FK trong participant_info
+    @JoinColumn(name = "conversation_id")
     @JsonBackReference
     Conversation conversation;
 }

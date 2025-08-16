@@ -56,7 +56,17 @@ public class ConversationServiceImpl implements ConversationService {
         String participantsHash = generateParticipantHash(userIds);
 
         Conversation conversation = conversationRepository.findByParticipantsHash(participantsHash)
-                .orElseGet(() -> createNewConversation(request.getType(), userIds, List.of(currentUser, participant), participantsHash));
+                .orElseGet(() -> {
+                    Conversation newConv = createNewConversation(
+                            request.getType(),
+                            userIds,
+                            List.of(currentUser, participant),
+                            participantsHash
+                    );
+                    newConv.setName(participant.getLastName() + " " + participant.getFirstName());
+                    newConv.setAvatarUrl(participant.getAvatarUrl());
+                    return newConv;
+                });
 
         return toConversationResponse(conversation);
     }
@@ -76,8 +86,15 @@ public class ConversationServiceImpl implements ConversationService {
         List<User> allParticipants = new ArrayList<>(participants);
         allParticipants.add(currentUser);
 
-        Conversation conversation = conversationRepository.findByParticipantsHash(participantsHash)
-                .orElseGet(() -> createNewConversation(request.getType(), userIds, allParticipants, participantsHash));
+        Conversation conversation = createNewConversation(
+                request.getType(),
+                userIds,
+                allParticipants,
+                participantsHash
+        );
+        conversation.setName(request.getName());
+        conversation.setAvatarUrl(request.getAvatarUrl());
+
 
         return toConversationResponse(conversation);
     }
@@ -116,16 +133,9 @@ public class ConversationServiceImpl implements ConversationService {
         User user = securityUtil.getCurrentUser();
         ConversationResponse response = modelMapper.map(conversation, ConversationResponse.class);
 
-        conversation.getParticipants().stream()
-                .filter(p -> !p.getUserId().equals(user.getId()))
-                .findFirst()
-                .ifPresent(p -> {
-                    response.setConversationName(p.getLastName() + " " + p.getFirstName());
-                    response.setConversationAvatar(p.getAvatar());
-                });
-
         ChatMessage lastMsg = chatMessageRepository.findTopByConversation_IdOrderByCreatedDateDesc(conversation.getId());
         int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());
+
         response.setUnread(unreadCount);
         response.setLastMessage(lastMsg != null ? lastMsg.getMessage() : null);
         return response;

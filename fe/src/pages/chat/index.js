@@ -10,6 +10,7 @@ import {
   getMessages,
   createMessage,
   markMessagesAsRead,
+  createConversationGroup,
 } from "../../services/chatService";
 import { getToken } from "../../services/localStorageService";
 
@@ -44,6 +45,24 @@ export default function Chat() {
   const handleCloseNewChat = () => {
     setNewChatAnchorEl(null);
   };
+
+  const handleCreateGroup = async (groupData) => {
+  try {
+    const response = await createConversationGroup({
+      type: "GROUP",
+      name: groupData.name,
+      participantIds: groupData.participantIds,
+    });
+
+    const newConversation = response?.data?.result;
+    if (newConversation) {
+      setConversations((prev) => [newConversation, ...prev]);
+      setSelectedConversation(newConversation);
+    }
+  } catch (error) {
+    console.error("Error creating group:", error);
+  }
+};
 
   const handleSelectNewChatUser = async (user) => {
     const response = await createConversation({
@@ -334,6 +353,7 @@ export default function Chat() {
           onRefresh={fetchConversations}
           onlineUsers={onlineUsers}
           onSelectUser={handleSelectNewChatUser}
+          onCreateGroup={handleCreateGroup}
         />
         <ChatArea
           selectedConversation={selectedConversation}

@@ -35,6 +35,24 @@ export const createConversation = async (data) => {
   );
 };
 
+export const createConversationGroup = async (data) => {
+  console.log(data)
+  return await httpClient.post(
+    API.CREATE_CONVERSATION_GROUP,
+    {
+      type: data.type,
+      name : data.name,
+      participantIds: data.participantIds,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
+
 
 export const createMessage = async (data) => {
   console.log("data",data)

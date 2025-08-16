@@ -27,10 +27,9 @@ const ConversationList = ({
   onNewChatClick,
   onRefresh,
   onlineUsers,
-  onSelectUser
+  onSelectUser,
+  onCreateGroup,
 }) => {
-  console.log("onlineUsers", onlineUsers);
-  console.log(conversations);
   const currentUserId = localStorage.getItem("userId");
   const [openPopover, setOpenPopover] = React.useState(false);
   return (
@@ -62,6 +61,15 @@ const ConversationList = ({
           onClose={() => setOpenPopover(false)}
           onSelectUser={(user) => {
             onSelectUser(user); // gọi callback để tạo conversation
+            setOpenPopover(false);
+          }}
+          onCreateGroup={(groupData) => {
+            const payload = {
+              name: groupData.name,
+              participantIds: groupData.members.map((m) => m.id), // 🔹 convert
+            };
+            console.log("payload", payload)
+            onCreateGroup(payload); // gọi callback cha
             setOpenPopover(false);
           }}
         >
@@ -162,7 +170,7 @@ const ConversationList = ({
                             overlap="circular"
                           >
                             <Avatar
-                              src={conversation.conversationAvatar || ""}
+                              src={conversation.avatarUrl || ""}
                             />
                           </Badge>
 
@@ -198,7 +206,7 @@ const ConversationList = ({
                               noWrap
                               sx={{ display: "inline" }}
                             >
-                              {conversation.conversationName}
+                              {conversation.name}
                             </Typography>
                             <Typography
                               component="span"
