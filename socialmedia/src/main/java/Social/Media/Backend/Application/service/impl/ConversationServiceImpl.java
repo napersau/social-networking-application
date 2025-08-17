@@ -99,6 +99,20 @@ public class ConversationServiceImpl implements ConversationService {
         return toConversationResponse(conversation);
     }
 
+    @Override
+    public ConversationResponse updateConversation(Long conversationId, ConversationRequest request) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+        if (request.getName() != null) {
+            conversation.setName(request.getName());
+        }
+        if (request.getAvatarUrl() != null) {
+            conversation.setAvatarUrl(request.getAvatarUrl());
+        }
+        conversation.setModifiedDate(Instant.now());
+        return toConversationResponse(conversation);
+    }
+
     private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
         Conversation conversation = Conversation.builder()
                 .type(type)

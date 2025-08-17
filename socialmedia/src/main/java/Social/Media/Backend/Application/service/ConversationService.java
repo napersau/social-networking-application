@@ -9,4 +9,5 @@ public interface ConversationService {
     List<ConversationResponse> myConversations();
     ConversationResponse create(ConversationRequest request);
     ConversationResponse createGroupConversation(ConversationRequest request);
+    ConversationResponse updateConversation(Long conversationId, ConversationRequest request);
 }

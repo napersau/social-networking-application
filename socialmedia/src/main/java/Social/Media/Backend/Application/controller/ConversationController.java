@@ -45,4 +45,15 @@ public class ConversationController {
                 .result(response)
                 .build();
     }
+
+    @PutMapping("/update/{conversationId}")
+    ApiResponse<ConversationResponse> updateConversation(
+            @PathVariable Long conversationId,
+            @RequestBody @Valid ConversationRequest request) {
+        ConversationResponse response = conversationService.updateConversation(conversationId, request);
+        return ApiResponse.<ConversationResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
 }
