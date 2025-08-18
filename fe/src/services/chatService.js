@@ -54,6 +54,16 @@ export const createConversationGroup = async (data) => {
 };
 
 
+export const updateConversation = async (conversationId, data) => {
+  return await httpClient.put(`${API.UPDATE_CONVERSATION}/${conversationId}`, data, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};
+
+
 export const createMessage = async (data) => {
   console.log("data",data)
   return await httpClient.post(

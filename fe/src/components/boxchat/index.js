@@ -175,12 +175,12 @@ function ChatBox({ conversation, onClose, onMinimize, isMinimized }) {
     return (
       <div className="chatbox-minimized" onClick={onMinimize}>
         <Avatar
-          src={conversation?.conversationAvatar}
+          src={conversation?.avatarUrl}
           icon={<UserOutlined />}
           size={32}
         />
         <Text className="chatbox-minimized-name">
-          {conversation?.conversationName}
+          {conversation?.name}
         </Text>
       </div>
     );
@@ -193,12 +193,12 @@ function ChatBox({ conversation, onClose, onMinimize, isMinimized }) {
       title={
         <div className="chatbox-header">
           <Avatar
-            src={conversation?.conversationAvatar}
+            src={conversation?.avatarUrl}
             icon={<UserOutlined />}
             size={32}
           />
           <Text strong className="chatbox-title">
-            {conversation?.conversationName}
+            {conversation?.name}
           </Text>
           <div className="chatbox-controls">
             <Button

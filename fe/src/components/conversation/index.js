@@ -95,12 +95,12 @@ function FriendListSidebar() {
                     <List.Item.Meta
                       avatar={
                         <Avatar
-                          src={conversation.conversationAvatar}
+                          src={conversation.avatarUrl}
                           icon={<UserOutlined />}
                           size={40}
                         />
                       }
-                      title={conversation.conversationName}
+                      title={conversation.name}
                     />
                   </List.Item>
                 );
