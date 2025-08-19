@@ -26,7 +26,6 @@
         <h3>Phương pháp: Chạy truyền thống</h3>
         <h4>Bước 1: Clone dự án từ Github:</h4>
         <pre><code>git clone https://github.com/napersau/social-networking-application.git</code></pre>
-
         <h4>Bước 2: Chạy ứng dụng</h4>
         <p>Thực hiện các bước sau:</p>
         <p><strong>Bên phía Front-end:</strong></p>
