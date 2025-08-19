@@ -1,0 +1,38 @@
+.chat-header {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+}
+
+.chat-header .clickable {
+  cursor: pointer;
+}
+
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.upload-btn {
+  margin-top: 12px;
+  position: relative;
+}
+
+.upload-btn label {
+  width: 100%;
+  display: block;
+  cursor: pointer;
+}
