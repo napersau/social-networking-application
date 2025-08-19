@@ -19,7 +19,7 @@
 │ └── pom.xml # Cấu hình dependence
 ├── FE/ # Frontend (React)
 │ └── social-network/
-└── README.html # Tài liệu này</code></pre>
+└── README.md # Tài liệu</code></pre>
 </div>
     <div class="section">
         <h2>Cách chạy chương trình</h2>
@@ -59,9 +59,9 @@ npm start</code></pre>
     const container = document.getElementById("screenshots");
     for (let i = 1; i <= 15; i++) {
         const img = document.createElement("img");
-        img.src = `https://github.com/napersau/social-networking-application/blob/main/fe/public/img/${i}.png`;
+        img.src = `https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/${i}.png`;
         img.alt = `Ảnh Demo ${i}`;
-        img.style = "max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;";
+        img.style = "max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px; margin:10px 0;";
         container.appendChild(img);
         container.appendChild(document.createElement("br"));
         container.appendChild(document.createElement("br"));
