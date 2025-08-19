@@ -1,81 +1,129 @@
 import React, { useState } from "react";
-import { Box, Typography, Avatar, TextField, IconButton } from "@mui/material";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
+import { Avatar, Drawer, Button, Input, Typography } from "antd";
+import { CheckOutlined, UserOutlined, CloseOutlined } from "@ant-design/icons";
 import { updateConversation } from "../../services/chatService";
+import "./ChatHeader.css";
+
+const { Title, Text } = Typography;
 
 const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
   const [groupName, setGroupName] = useState(selectedConversation?.name || "");
+  const [avatarUrl, setAvatarUrl] = useState(
+    selectedConversation?.avatarUrl || ""
+  );
 
   if (!selectedConversation) return null;
 
-  const handleSave = async () => {
+  const handleSaveName = async () => {
     try {
-      // Gọi API PUT update tên nhóm
       await updateConversation(selectedConversation.id, { name: groupName });
-
-      setIsEditing(false);
-      // Cập nhật UI parent nếu cần
-      onUpdateConversation &&
-        onUpdateConversation({ ...selectedConversation, name: groupName });
+      setIsEditingName(false);
+      onUpdateConversation?.({ ...selectedConversation, name: groupName });
     } catch (error) {
       console.error("Failed to update group name:", error);
     }
   };
 
-  const handleCancel = () => {
-    setGroupName(selectedConversation.name);
-    setIsEditing(false);
-  };
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const handleEditClick = () => {
-    if (selectedConversation.type === "group") {
-      setIsEditing(true);
+    const newUrl = URL.createObjectURL(file);
+    setAvatarUrl(newUrl);
+
+    try {
+      await updateConversation(selectedConversation.id, { avatarUrl: newUrl });
+      onUpdateConversation?.({ ...selectedConversation, avatarUrl: newUrl });
+    } catch (error) {
+      console.error("Failed to update avatar:", error);
     }
   };
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        borderBottom: 1,
-        borderColor: "divider",
-        display: "flex",
-        alignItems: "center",
-        flexShrink: 0,
-        backgroundColor: "background.paper",
-      }}
-    >
-      <Avatar
-        src={selectedConversation.avatarUrl}
-        sx={{ mr: 2, cursor: selectedConversation.type === "group" ? "pointer" : "default" }}
-        onClick={handleEditClick}
-      />
-      {isEditing ? (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <TextField
-            size="small"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-          />
-          <IconButton onClick={handleSave}>
-            <CheckIcon />
-          </IconButton>
-          <IconButton onClick={handleCancel}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      ) : (
-        <Typography
-          variant="h6"
-          onClick={handleEditClick}
-          sx={{ cursor: selectedConversation.type === "group" ? "pointer" : "default" }}
+    <>
+      {/* Header */}
+      <div className="chat-header">
+        <Avatar
+          src={selectedConversation.avatarUrl}
+          size={40}
+          icon={!selectedConversation.avatarUrl && <UserOutlined />}
+          className={selectedConversation.type === "GROUP" ? "clickable" : ""}
+          onClick={() =>
+            selectedConversation.type === "GROUP" && setOpenDrawer(true)
+          }
+        />
+        <Title
+          level={5}
+          className={selectedConversation.type === "GROUP" ? "clickable" : ""}
+          onClick={() =>
+            selectedConversation.type === "GROUP" && setOpenDrawer(true)
+          }
         >
           {selectedConversation.name}
-        </Typography>
-      )}
-    </Box>
+        </Title>
+      </div>
+
+      {/* Drawer sidebar */}
+      <Drawer
+        title="Tuỳ chỉnh đoạn chat"
+        placement="right"
+        onClose={() => setOpenDrawer(false)}
+        open={openDrawer}
+        width={320}
+      >
+        <div className="drawer-content">
+          <Avatar
+            src={selectedConversation.avatarUrl || undefined}
+            size={80}
+            icon={!selectedConversation.avatarUrl && <UserOutlined />}
+          />
+          <Title level={4}>{selectedConversation.name}</Title>
+        </div>
+
+        {/* Đổi tên (chỉ cho GROUP) */}
+        {selectedConversation.type === "GROUP" && (
+          <>
+            {isEditingName ? (
+              <div className="edit-row">
+                <Input
+                  size="middle"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+                <Button
+                  type="primary"
+                  icon={<CheckOutlined />}
+                  onClick={handleSaveName}
+                />
+                <Button
+                  danger
+                  icon={<CloseOutlined />}
+                  onClick={() => setIsEditingName(false)}
+                />
+              </div>
+            ) : (
+              <Button block onClick={() => setIsEditingName(true)}>
+                Đổi tên đoạn chat
+              </Button>
+            )}
+          </>
+        )}
+
+        {/* Thay đổi ảnh */}
+        <Button block className="upload-btn">
+          <label htmlFor="upload-avatar">Thay đổi ảnh</label>
+          <input
+            id="upload-avatar"
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleAvatarChange}
+          />
+        </Button>
+      </Drawer>
+    </>
   );
 };
 

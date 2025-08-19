@@ -12,6 +12,7 @@ const ChatArea = ({
   onMessageChange,
   onSendMessage,
   messageContainerRef,
+  onUpdateConversation, // 👈 thêm prop này
 }) => {
   if (!selectedConversation) {
     return (
@@ -41,7 +42,11 @@ const ChatArea = ({
         minHeight: 0, // Important for flex scrolling
       }}
     >
-      <ChatHeader selectedConversation={selectedConversation} />
+      {/* Truyền callback xuống Header */}
+      <ChatHeader
+        selectedConversation={selectedConversation}
+        onUpdateConversation={onUpdateConversation}
+      />
       <MessageList
         ref={messageContainerRef}
         messages={currentMessages}

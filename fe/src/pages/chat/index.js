@@ -296,6 +296,21 @@ export default function Chat() {
     }
   };
 
+  // thêm hàm xử lý update
+const handleUpdateConversation = (updatedConv) => {
+  setConversations((prev) =>
+    prev.map((conv) =>
+      conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv
+    )
+  );
+
+  // nếu đang mở chính conversation đó thì cập nhật selected
+  if (selectedConversation?.id === updatedConv.id) {
+    setSelectedConversation((prev) => ({ ...prev, ...updatedConv }));
+  }
+};
+
+
   // Helper function to handle incoming socket messages
   const handleIncomingMessage = useCallback(
     (message) => {
@@ -370,6 +385,7 @@ export default function Chat() {
           onMessageChange={setMessage}
           onSendMessage={handleSendMessage}
           messageContainerRef={messageContainerRef}
+          onUpdateConversation={handleUpdateConversation}
         />
       </Card>
     </Box>

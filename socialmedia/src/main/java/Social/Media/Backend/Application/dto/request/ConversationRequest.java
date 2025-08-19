@@ -14,8 +14,8 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ConversationRequest {
     String type;
-    @Size(min = 1)
-    @NotNull
+//    @Size(min = 1)
+//    @NotNull
     List<Long> participantIds;
     String name;
     String avatarUrl;
