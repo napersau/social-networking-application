@@ -3,9 +3,8 @@ import { Avatar, Drawer, Button, Input, Typography } from "antd";
 import { CheckOutlined, UserOutlined, CloseOutlined } from "@ant-design/icons";
 import { updateConversation } from "../../services/chatService";
 import "./ChatHeader.css";
-
+import axios from "axios";
 const { Title, Text } = Typography;
-
 const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -13,9 +12,7 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
   const [avatarUrl, setAvatarUrl] = useState(
     selectedConversation?.avatarUrl || ""
   );
-
   if (!selectedConversation) return null;
-
   const handleSaveName = async () => {
     try {
       await updateConversation(selectedConversation.id, { name: groupName });
@@ -30,11 +27,30 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const newUrl = URL.createObjectURL(file);
-    setAvatarUrl(newUrl);
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
+      // 1. Upload file lên backend
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "http://localhost:8080/api/v1/upload/post-image",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const newUrl = response.data.result.url
+
+      if (!newUrl) throw new Error("Upload failed");
+
+      // 2. Gọi updateConversation để lưu avatarUrl mới
       await updateConversation(selectedConversation.id, { avatarUrl: newUrl });
+
+      setAvatarUrl(newUrl);
       onUpdateConversation?.({ ...selectedConversation, avatarUrl: newUrl });
     } catch (error) {
       console.error("Failed to update avatar:", error);
