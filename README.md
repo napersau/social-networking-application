@@ -45,7 +45,36 @@ npm start</code></pre>
     </div>
     <div class="section">
         <h2>Kết quả sau khi chạy ứng dụng</h2>
-        <div id="screenshots"></div>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/1.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/2.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/3.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/4.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/5.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/6.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/7.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/8.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/9.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/10.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/11.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/12.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/13.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/14.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/15.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
     </div>
     <div class="section">
         <h2>Yêu cầu Phiên bản</h2>
@@ -55,17 +84,5 @@ npm start</code></pre>
             <li><strong>Node.js:</strong> Phiên bản 16 trở lên</li>
         </ul>
     </div>
-    <script>
-    const container = document.getElementById("screenshots");
-    for (let i = 1; i <= 15; i++) {
-        const img = document.createElement("img");
-        img.src = `https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/${i}.png`;
-        img.alt = `Ảnh Demo ${i}`;
-        img.style = "max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px; margin:10px 0;";
-        container.appendChild(img);
-        container.appendChild(document.createElement("br"));
-        container.appendChild(document.createElement("br"));
-    }
-</script>
 </body>
 </html>
