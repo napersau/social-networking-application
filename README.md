@@ -11,11 +11,9 @@
         <p>Dự án Social Network là một ứng dụng Web mạng xã hội cho phép người dùng đăng ký, đăng nhập, đăng bài viết, bình luận, kết bạn và nhắn tin. 
         Ứng dụng được xây dựng bằng Spring Boot, Spring Security (JWT Authentication), Spring JPA (ORM), MySQL, RESTful API, Swagger, WebSocket và ReactJS.</p>
     </div>
-
     <div class="section">
         <h2>Cấu trúc dự án</h2>
         <pre><code>Social-Network/
-
 ├── BE/ # Backend (Spring Boot)
 │ ├── src/  
 │ └── pom.xml # Cấu hình dependence
@@ -23,7 +21,6 @@
 │ └── social-network/
 └── README.html # Tài liệu này</code></pre>
 </div>
-
     <div class="section">
         <h2>Cách chạy chương trình</h2>
         <h3>Phương pháp: Chạy truyền thống</h3>
@@ -34,14 +31,11 @@
         <p>Thực hiện các bước sau:</p>
         <p><strong>Bên phía Front-end:</strong></p>
         <pre><code>cd FE/social-network
-
 npm install
 npm start</code></pre>
-
         <p><strong>Bên phía Back-end:</strong></p>
         <pre><code>Chạy trên IDE phù hợp (IntelliJ IDEA, Eclipse, VS Code...)</code></pre>
     </div>
-
     <div class="section">
         <h2>Truy cập ứng dụng</h2>
         <ul>
@@ -50,12 +44,10 @@ npm start</code></pre>
             <li><strong>Swagger API Documentation:</strong> <code>http://localhost:8080/swagger-ui.html</code></li>
         </ul>
     </div>
-
     <div class="section">
         <h2>Kết quả sau khi chạy ứng dụng</h2>
         <div id="screenshots"></div>
     </div>
-
     <div class="section">
         <h2>Yêu cầu Phiên bản</h2>
         <ul>
@@ -75,7 +67,6 @@ npm start</code></pre>
         container.appendChild(document.createElement("br"));
         container.appendChild(document.createElement("br"));
     }
-
 </script>
 </body>
 </html>
