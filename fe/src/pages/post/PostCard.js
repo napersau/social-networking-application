@@ -14,19 +14,14 @@ import {
 import {
   HeartOutlined,
   MoreOutlined,
-  HeartFilled,
   CommentOutlined,
   RetweetOutlined,
   UserOutlined,
-  SmileOutlined,
-  MehOutlined,
-  FrownOutlined,
-  ThunderboltOutlined,
-  FireOutlined,
 } from "@ant-design/icons";
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 import { postService } from "../../services/postService";
+import "./PostCard.css";
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -53,33 +48,51 @@ const PostCard = ({
   const reactionOptions = [
     {
       type: "Like",
-      icon: <HeartFilled style={{ color: "#1890ff" }} />,
+      icon: (
+        <span className="reaction-emoji">👍</span>
+      ),
       label: "Thích",
+      color: "#1890ff",
     },
     {
       type: "Love",
-      icon: <HeartFilled style={{ color: "red" }} />,
+      icon: (
+        <span className="reaction-emoji">❤️</span>
+      ),
       label: "Yêu thích",
+      color: "#ff4757",
     },
     {
       type: "Haha",
-      icon: <SmileOutlined style={{ color: "orange" }} />,
+      icon: (
+        <span className="reaction-emoji">😂</span>
+      ),
       label: "Haha",
+      color: "#ffa502",
     },
     {
       type: "Wow",
-      icon: <ThunderboltOutlined style={{ color: "purple" }} />,
+      icon: (
+        <span className="reaction-emoji">😮</span>
+      ),
       label: "Wow",
+      color: "#5f27cd",
     },
     {
       type: "Sad",
-      icon: <FrownOutlined style={{ color: "gray" }} />,
+      icon: (
+        <span className="reaction-emoji">😢</span>
+      ),
       label: "Buồn",
+      color: "#74b9ff",
     },
     {
       type: "Angry",
-      icon: <FireOutlined style={{ color: "red" }} />,
+      icon: (
+        <span className="reaction-emoji">😡</span>
+      ),
       label: "Phẫn nộ",
+      color: "#fd79a8",
     },
   ];
   console.log("post", post)
@@ -213,13 +226,29 @@ const PostCard = ({
         <div className="post-actions">
           <Dropdown
             trigger={["click"]}
+            className="reaction-dropdown"
             menu={{
               items: reactionOptions.map((r) => ({
                 key: r.type,
                 icon: r.icon,
-                label: r.label,
+                label: (
+                  <span style={{ 
+                    color: r.color, 
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px"
+                  }}>
+                    {r.label}
+                  </span>
+                ),
                 onClick: () => onLike(post.id, r.type),
+                className: "reaction-item",
               })),
+            }}
+            overlayStyle={{
+              borderRadius: "12px",
+              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
             }}
           >
             <Button
@@ -230,9 +259,15 @@ const PostCard = ({
               }
               loading={isLiking}
               className={`action-button ${post.reactionType ? "liked" : ""}`}
-              style={{ color: post.reactionType ? "#ff4d4f" : undefined }}
+              style={{ 
+                color: post.reactionType 
+                  ? reactionOptions.find((r) => r.type === post.reactionType)?.color
+                  : undefined,
+              }}
             >
-              {post.reactionType || "Thích"} {likeCount > 0 && `(${likeCount})`}
+              <span className={`button-text ${post.reactionType ? "reacted" : ""}`}>
+                {post.reactionType || "Thích"} {likeCount > 0 && `(${likeCount})`}
+              </span>
             </Button>
           </Dropdown>
 

@@ -1,0 +1,171 @@
+/* PostCard Styles */
+.post-card {
+  margin-bottom: 16px;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.post-user-info {
+  margin-left: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-time {
+  font-size: 12px !important;
+  margin-top: 2px;
+}
+
+.post-content {
+  margin: 12px 0;
+}
+
+.post-images {
+  margin-top: 12px;
+}
+
+.post-image {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.post-divider {
+  margin: 12px 0 !important;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* Reaction styles */
+.reaction-item {
+  transition: background-color 0.2s ease !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+
+.reaction-item:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.reaction-emoji {
+  font-size: 18px;
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.1s ease;
+}
+
+.reaction-emoji:hover {
+  transform: scale(1.1);
+}
+
+.action-button {
+  transition: background-color 0.2s ease !important;
+  border-radius: 20px !important;
+  padding: 6px 12px !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-button:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.action-button.liked {
+  font-weight: 600 !important;
+}
+
+.action-button.active {
+  background-color: rgba(24, 144, 255, 0.1) !important;
+  color: #1890ff !important;
+}
+
+/* Reaction dropdown animation - simplified */
+.ant-dropdown {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reaction colors */
+.reaction-like {
+  color: #1890ff;
+}
+
+.reaction-love {
+  color: #ff4757;
+}
+
+.reaction-haha {
+  color: #ffa502;
+}
+
+.reaction-wow {
+  color: #5f27cd;
+}
+
+.reaction-sad {
+  color: #74b9ff;
+}
+
+.reaction-angry {
+  color: #fd79a8;
+}
+
+/* Enhanced dropdown styling */
+.reaction-dropdown .ant-dropdown-menu {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  padding: 8px !important;
+  min-width: 120px !important;
+}
+
+.reaction-dropdown .ant-dropdown-menu-item {
+  border-radius: 8px !important;
+  margin: 2px 0 !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.reaction-dropdown .ant-dropdown-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.reaction-dropdown .ant-dropdown-menu-item:active {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Button text styling */
+.button-text {
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.button-text.reacted {
+  font-weight: 600;
+}
