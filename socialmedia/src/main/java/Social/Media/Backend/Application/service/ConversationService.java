@@ -10,4 +10,5 @@ public interface ConversationService {
     ConversationResponse create(ConversationRequest request);
     ConversationResponse createGroupConversation(ConversationRequest request);
     ConversationResponse updateConversation(Long conversationId, ConversationRequest request);
+    void deleteConversation(Long conversationId);
 }

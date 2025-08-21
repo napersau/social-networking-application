@@ -56,4 +56,13 @@ public class ConversationController {
                 .result(response)
                 .build();
     }
+
+    @DeleteMapping("/delete/{conversationId}")
+    ApiResponse<Void> deleteConversation(@PathVariable Long conversationId) {
+        conversationService.deleteConversation(conversationId);
+        return ApiResponse.<Void>builder()
+                .code(1000)
+                .message("Conversation deleted successfully")
+                .build();
+    }
 }

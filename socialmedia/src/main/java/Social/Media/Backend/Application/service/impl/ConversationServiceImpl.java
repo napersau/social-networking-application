@@ -10,6 +10,7 @@ import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.ChatMessageRepository;
 import Social.Media.Backend.Application.repository.ConversationRepository;
+import Social.Media.Backend.Application.repository.ParticipantInfoRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
 import Social.Media.Backend.Application.service.ConversationService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
@@ -111,6 +112,13 @@ public class ConversationServiceImpl implements ConversationService {
         }
         conversation.setModifiedDate(Instant.now());
         return toConversationResponse(conversation);
+    }
+
+    @Override
+    public void deleteConversation(Long conversationId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+        conversationRepository.delete(conversation);
     }
 
     private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
