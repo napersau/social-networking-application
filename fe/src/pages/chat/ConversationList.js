@@ -13,10 +13,14 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import NewChatPopover from "../../components/newChatPopover";
+import { deleteConversation } from "../../services/chatService";
 
 const ConversationList = ({
   conversations,
@@ -32,6 +36,34 @@ const ConversationList = ({
 }) => {
   const currentUserId = localStorage.getItem("userId");
   const [openPopover, setOpenPopover] = React.useState(false);
+
+  // state cho menu 3 chấm
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [menuConversationId, setMenuConversationId] = React.useState(null);
+
+  const handleMenuOpen = (event, conversationId) => {
+    setAnchorEl(event.currentTarget);
+    setMenuConversationId(conversationId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuConversationId(null);
+  };
+
+  const handleDeleteConversation = async () => {
+    try {
+      if (menuConversationId) {
+        await deleteConversation(menuConversationId);
+        onRefresh(); // reload danh sách sau khi xóa
+      }
+    } catch (err) {
+      console.error("Error deleting conversation:", err);
+    } finally {
+      handleMenuClose();
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -66,9 +98,8 @@ const ConversationList = ({
           onCreateGroup={(groupData) => {
             const payload = {
               name: groupData.name,
-              participantIds: groupData.members.map((m) => m.id), // 🔹 convert
+              participantIds: groupData.members.map((m) => m.id),
             };
-            console.log("payload", payload)
             onCreateGroup(payload); // gọi callback cha
             setOpenPopover(false);
           }}
@@ -93,7 +124,7 @@ const ConversationList = ({
         sx={{
           flexGrow: 1,
           overflowY: "auto",
-          minHeight: 0, // Important for flex scrolling
+          minHeight: 0,
         }}
       >
         {(() => {
@@ -138,122 +169,150 @@ const ConversationList = ({
           }
 
           return (
-            <List sx={{ width: "100%", p: 0 }}>
-              {conversations.map((conversation, index) => {
-                const otherUserId = conversation.participants.find(
-                  (p) => p.userId != currentUserId // currentUserId là id người đang đăng nhập
-                )?.userId;
-                return (
-                  <React.Fragment key={conversation.id}>
-                    <ListItem
-                      alignItems="flex-start"
-                      onClick={() => onConversationSelect(conversation)}
-                      sx={{
-                        cursor: "pointer",
-                        bgcolor:
-                          selectedConversation?.id === conversation.id
-                            ? "rgba(0, 0, 0, 0.04)"
-                            : "transparent",
-                        "&:hover": {
-                          bgcolor: "rgba(0, 0, 0, 0.08)",
-                        },
-                      }}
-                    >
-                      <ListItemAvatar>
-                        <Box
-                          sx={{ position: "relative", display: "inline-block" }}
-                        >
-                          <Badge
-                            color="error"
-                            badgeContent={conversation.unread}
-                            invisible={conversation.unread === 0}
-                            overlap="circular"
+            <>
+              <List sx={{ width: "100%", p: 0 }}>
+                {conversations.map((conversation, index) => {
+                  const otherUserId = conversation.participants.find(
+                    (p) => p.userId != currentUserId
+                  )?.userId;
+                  return (
+                    <React.Fragment key={conversation.id}>
+                      <ListItem
+                        alignItems="flex-start"
+                        onClick={() => onConversationSelect(conversation)}
+                        sx={{
+                          cursor: "pointer",
+                          bgcolor:
+                            selectedConversation?.id === conversation.id
+                              ? "rgba(0, 0, 0, 0.04)"
+                              : "transparent",
+                          "&:hover": {
+                            bgcolor: "rgba(0, 0, 0, 0.08)",
+                          },
+                        }}
+                        secondaryAction={
+                          <IconButton
+                            edge="end"
+                            onClick={(e) =>
+                              handleMenuOpen(e, conversation.id)
+                            }
                           >
-                            <Avatar
-                              src={conversation.avatarUrl || ""}
-                            />
-                          </Badge>
+                            <MoreVertIcon />
+                          </IconButton>
+                        }
+                      >
+                        <ListItemAvatar>
+                          <Box
+                            sx={{
+                              position: "relative",
+                              display: "inline-block",
+                            }}
+                          >
+                            <Badge
+                              color="error"
+                              badgeContent={conversation.unread}
+                              invisible={conversation.unread === 0}
+                              overlap="circular"
+                            >
+                              <Avatar src={conversation.avatarUrl || ""} />
+                            </Badge>
 
-                          {/* 🔹 Chấm xanh báo online */}
-                          {onlineUsers?.includes(otherUserId) && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                bottom: 2,
-                                right: 2,
-                                width: 10,
-                                height: 10,
-                                bgcolor: "#4caf50",
-                                borderRadius: "50%",
-                                border: "2px solid white",
-                              }}
-                            />
-                          )}
-                        </Box>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Stack
-                            direction="row"
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
+                            {/* 🔹 Chấm xanh báo online */}
+                            {onlineUsers?.includes(otherUserId) && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 2,
+                                  right: 2,
+                                  width: 10,
+                                  height: 10,
+                                  bgcolor: "#4caf50",
+                                  borderRadius: "50%",
+                                  border: "2px solid white",
+                                }}
+                              />
+                            )}
+                          </Box>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Stack
+                              direction="row"
+                              display="flex"
+                              justifyContent="space-between"
+                              alignItems="center"
+                            >
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                                noWrap
+                                sx={{ display: "inline" }}
+                              >
+                                {conversation.name}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  display: "inline",
+                                  fontSize: "0.7rem",
+                                }}
+                              >
+                                {new Date(
+                                  conversation.modifiedDate
+                                ).toLocaleString("vi-VN", {
+                                  year: "numeric",
+                                  month: "numeric",
+                                  day: "numeric",
+                                })}
+                              </Typography>
+                            </Stack>
+                          }
+                          secondary={
                             <Typography
+                              sx={{ display: "inline" }}
                               component="span"
                               variant="body2"
                               color="text.primary"
                               noWrap
-                              sx={{ display: "inline" }}
                             >
-                              {conversation.name}
+                              {conversation.lastMessage ||
+                                "Start a conversation"}
                             </Typography>
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ display: "inline", fontSize: "0.7rem" }}
-                            >
-                              {new Date(
-                                conversation.modifiedDate
-                              ).toLocaleString("vi-VN", {
-                                year: "numeric",
-                                month: "numeric",
-                                day: "numeric",
-                              })}
-                            </Typography>
-                          </Stack>
-                        }
-                        secondary={
-                          <Typography
-                            sx={{ display: "inline" }}
-                            component="span"
-                            variant="body2"
-                            color="text.primary"
-                            noWrap
-                          >
-                            {conversation.lastMessage || "Start a conversation"}
-                          </Typography>
-                        }
-                        primaryTypographyProps={{
-                          fontWeight:
-                            conversation.unread > 0 ? "bold" : "normal",
-                        }}
-                        sx={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          pr: 1,
-                        }}
-                      />
-                    </ListItem>
-                    {index < conversations.length - 1 && (
-                      <Divider variant="inset" component="li" />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </List>
+                          }
+                          primaryTypographyProps={{
+                            fontWeight:
+                              conversation.unread > 0 ? "bold" : "normal",
+                          }}
+                          sx={{
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            pr: 1,
+                          }}
+                        />
+                      </ListItem>
+                      {index < conversations.length - 1 && (
+                        <Divider variant="inset" component="li" />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </List>
+
+              {/* Menu 3 chấm */}
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+              >
+                <MenuItem onClick={handleDeleteConversation}>
+                  Xóa cuộc trò chuyện
+                </MenuItem>
+              </Menu>
+            </>
           );
         })()}
       </Box>

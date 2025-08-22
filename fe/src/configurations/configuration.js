@@ -22,6 +22,7 @@ export const API = {
   CREATE_CONVERSATION: "/chat/conversations/create",
   CREATE_CONVERSATION_GROUP: "/chat/conversations/create-group",
   UPDATE_CONVERSATION: "/chat/conversations/update",
+  DELETE_CONVERSATION: "/chat/conversations/delete",
 
 
   CREATE_MESSAGE: "/chat/messages/create",

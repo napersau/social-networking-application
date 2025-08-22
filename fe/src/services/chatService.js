@@ -63,6 +63,14 @@ export const updateConversation = async (conversationId, data) => {
   });
 };
 
+export const deleteConversation = async (conversationId) => {
+  return await httpClient.delete(`${API.DELETE_CONVERSATION}/${conversationId}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+};
+
 
 export const createMessage = async (data) => {
   console.log("data",data)
