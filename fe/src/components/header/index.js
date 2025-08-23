@@ -31,8 +31,8 @@ import {
   updateNotification,
   deleteNotification,
 } from "../../services/notificationService";
-import { io } from "socket.io-client";
 import { getMyInfo } from "../../services/userService";
+import { useSocket } from "../../hooks/useSocket";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -48,6 +48,7 @@ function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { initializeSocket, onNotification } = useSocket();
 
   const loadNotifications = async () => {
     try {
@@ -71,36 +72,31 @@ function Header() {
         const userId = payload.sub;
         setUser({ role });
 
+        // Lấy thông tin người dùng
         getMyInfo()
           .then((res) => {
-            setInfo(res.data.result); // Lưu thông tin vào state
+            setInfo(res.data.result);
           })
           .catch(() => {
             message.error("Không thể lấy thông tin người dùng");
           });
 
-        const socket = io("http://localhost:9092", {
-          transports: ["websocket"],
-          query: {
-            token: token, // Hoặc rút gọn thành chỉ "token" nếu ES6
-          },
-        });
+        // Khởi tạo socket
+        initializeSocket(token, userId);
 
-        socket.emit("join", userId);
-
-        socket.on("notification", (newNotification) => {
+        // Lắng nghe thông báo mới
+        onNotification((newNotification) => {
           setNotifications((prev) => [newNotification, ...prev]);
           setHasNewNotification(true);
         });
 
+        // Tải danh sách thông báo
         loadNotifications();
-
-        return () => socket.disconnect();
       } catch (error) {
         console.error("Lỗi khi giải mã token:", error);
       }
     }
-  }, []);
+  }, [initializeSocket, onNotification]);
 
   useEffect(() => {
     const path = location.pathname;

@@ -141,7 +141,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.action-button:hover {
+.action-button {
   color: white;
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
@@ -153,7 +153,7 @@
 }
 
 .notification-button .anticon {
-  font-size: 18px;
+  font-size: 24px;
 }
 
 .notification-badge .ant-badge-count {
@@ -199,7 +199,7 @@
   backdrop-filter: blur(10px);
 }
 
-.mobile-menu-button:hover {
+.mobile-menu-button {
   color: white;
   background: rgba(255, 255, 255, 0.2);
 }
@@ -424,4 +424,9 @@
   50% { transform: rotate(10deg); }
   75% { transform: rotate(-5deg); }
   100% { transform: rotate(0); }
+}
+
+.action-button.notification-button {
+  background: #fff; 
+  transition: color 0.3s;
 }
