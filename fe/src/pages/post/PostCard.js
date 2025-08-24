@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   Card,
   message,
-  Dropdown,
   Modal,
   Button,
   Avatar,
@@ -10,6 +9,7 @@ import {
   Typography,
   Image,
   Input,
+  Popover,
 } from "antd";
 import {
   HeartOutlined,
@@ -39,63 +39,162 @@ const PostCard = ({
   onShare,
 }) => {
   const isLiking = likingPosts.has(post.id);
-  const isLiked = post.isLiked || false;
-  const likeCount = post.likes?.length || 0;
   const commentCount = post.commentCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
+
   const reactionOptions = [
-    {
-      type: "Like",
-      icon: (
-        <span className="reaction-emoji">👍</span>
-      ),
-      label: "Thích",
-      color: "#1890ff",
-    },
-    {
-      type: "Love",
-      icon: (
-        <span className="reaction-emoji">❤️</span>
-      ),
-      label: "Yêu thích",
-      color: "#ff4757",
-    },
-    {
-      type: "Haha",
-      icon: (
-        <span className="reaction-emoji">😂</span>
-      ),
-      label: "Haha",
-      color: "#ffa502",
-    },
-    {
-      type: "Wow",
-      icon: (
-        <span className="reaction-emoji">😮</span>
-      ),
-      label: "Wow",
-      color: "#5f27cd",
-    },
-    {
-      type: "Sad",
-      icon: (
-        <span className="reaction-emoji">😢</span>
-      ),
-      label: "Buồn",
-      color: "#74b9ff",
-    },
-    {
-      type: "Angry",
-      icon: (
-        <span className="reaction-emoji">😡</span>
-      ),
-      label: "Phẫn nộ",
-      color: "#fd79a8",
-    },
+    { type: "Like", icon: "👍", label: "Thích", color: "#1877f2" },
+    { type: "Love", icon: "❤️", label: "Yêu thích", color: "#f33e58" },
+    { type: "Haha", icon: "😂", label: "Haha", color: "#f7b125" },
+    { type: "Wow", icon: "😮", label: "Wow", color: "#f7b125" },
+    { type: "Sad", icon: "😢", label: "Buồn", color: "#f7b125" },
+    { type: "Angry", icon: "😡", label: "Phẫn nộ", color: "#e9710f" },
   ];
-  console.log("post", post)
+
+  // Tính toán reactions giống Facebook - Support nhiều format dữ liệu
+  const getReactionStats = () => {
+    // Debug: Log dữ liệu để kiểm tra
+    console.log('Post data:', {
+      reactions: post.reactions,
+      likes: post.likes,
+      reactionType: post.reactionType,
+      postId: post.id
+    });
+
+    // Xử lý format cũ (post.reactionType và post.likes)
+    if (post.reactionType && !post.reactions) {
+      const currentUserReaction = post.reactionType;
+      const likeCount = post.likes?.length || 0;
+      
+      const topReactions = [reactionOptions.find(r => r.type === currentUserReaction)].filter(Boolean);
+      
+      return {
+        totalCount: likeCount,
+        topReactions: topReactions,
+        currentUserReaction: currentUserReaction,
+        reactionCounts: { [currentUserReaction]: likeCount }
+      };
+    }
+
+    // Xử lý format mới (post.reactions array)
+    if (!post.reactions || !Array.isArray(post.reactions)) {
+      // Fallback: sử dụng post.likes nếu có
+      const likeCount = post.likes?.length || 0;
+      if (likeCount > 0) {
+        return {
+          totalCount: likeCount,
+          topReactions: [reactionOptions.find(r => r.type === 'Like')].filter(Boolean),
+          currentUserReaction: post.reactionType || null,
+          reactionCounts: { 'Like': likeCount }
+        };
+      }
+      
+      return {
+        totalCount: 0,
+        topReactions: [],
+        currentUserReaction: null,
+        reactionCounts: {}
+      };
+    }
+
+    // Đếm từng loại reaction
+    const reactionCounts = {};
+    let currentUserReaction = null;
+    
+    post.reactions.forEach(reaction => {
+      const type = reaction.type || reaction.reactionType || 'Like';
+      reactionCounts[type] = (reactionCounts[type] || 0) + 1;
+      
+      // Kiểm tra user hiện tại (có thể dùng nhiều field khác nhau)
+      const userId = reaction.userId || reaction.user_id || reaction.id;
+      const currentUserId = post.currentUserId || post.currentUser?.id;
+      
+      if (userId === currentUserId) {
+        currentUserReaction = type;
+      }
+    });
+
+    // Sắp xếp reactions theo số lượng (giảm dần)
+    const sortedReactions = Object.entries(reactionCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3); // Chỉ lấy top 3
+
+    const topReactions = sortedReactions.map(([type]) => 
+      reactionOptions.find(r => r.type === type)
+    ).filter(Boolean);
+
+    const totalCount = post.reactions.length;
+
+    return {
+      totalCount,
+      topReactions,
+      currentUserReaction: currentUserReaction || post.reactionType,
+      reactionCounts
+    };
+  };
+
+  const { totalCount, topReactions, currentUserReaction, reactionCounts } = getReactionStats();
+  const currentReaction = reactionOptions.find(r => r.type === currentUserReaction);
+
+  // Click nút Like mặc định
+  const handleDefaultLike = () => {
+    if (currentUserReaction === "Like") {
+      onLike(post.id, null); // bỏ Like
+    } else {
+      onLike(post.id, "Like"); // mặc định Like
+    }
+  };
+
+  // Box hiển thị reactions khi hover
+  const reactionContent = (
+    <div className="reaction-box">
+      {reactionOptions.map((r) => (
+        <Button
+          key={r.type}
+          type="text"
+          className="reaction-item"
+          onClick={() => onLike(post.id, r.type)}
+        >
+          <span className="reaction-emoji">{r.icon}</span>
+        </Button>
+      ))}
+    </div>
+  );
+
+  // Render reaction summary giống Facebook - Luôn hiển thị nếu có reactions
+  const renderReactionSummary = () => {
+    if (totalCount === 0) return null;
+
+    return (
+      <div className="reaction-summary">
+        <div className="reaction-icons">
+          {topReactions.map((reaction, index) => (
+            <span 
+              key={reaction.type} 
+              className="reaction-icon-small" 
+              style={{zIndex: topReactions.length - index}}
+              title={`${reactionCounts[reaction.type] || 0} ${reaction.label}`}
+            >
+              {reaction.icon}
+            </span>
+          ))}
+        </div>
+        <span className="reaction-count" title="Xem ai đã thả cảm xúc">
+          {totalCount > 0 && (
+            <>
+              {Object.entries(reactionCounts).length === 1 && currentUserReaction 
+                ? `Bạn${totalCount > 1 ? ` và ${totalCount - 1} người khác` : ''}`
+                : `${totalCount} ${totalCount === 1 ? 'lượt thả cảm xúc' : 'lượt thả cảm xúc'}`
+              }
+            </>
+          )}
+        </span>
+      </div>
+    );
+  };
+
   const handleDeletePost = (postId) => {
     Modal.confirm({
       title: "Xác nhận xoá bài viết",
@@ -186,29 +285,34 @@ const PostCard = ({
             </Text>
           </div>
           <div style={{ marginLeft: "auto" }}>
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: "edit",
-                    label: "Chỉnh sửa bài viết",
-                    onClick: () => {
-                      setEditingContent(post.content);
-                      setIsEditModalVisible(true);
-                    },
-                  },
-                  {
-                    key: "delete",
-                    danger: true,
-                    label: "Xoá bài viết",
-                    onClick: () => handleDeletePost(post.id),
-                  },
-                ],
-              }}
-              trigger={["click"]}
-            >
-              <Button icon={<MoreOutlined />} />
-            </Dropdown>
+            <Button
+              icon={<MoreOutlined />}
+              onClick={() =>
+                Modal.info({
+                  title: "Tùy chọn",
+                  content: (
+                    <div>
+                      <Button
+                        type="text"
+                        onClick={() => {
+                          setEditingContent(post.content);
+                          setIsEditModalVisible(true);
+                        }}
+                      >
+                        Chỉnh sửa
+                      </Button>
+                      <Button
+                        type="text"
+                        danger
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        Xoá bài viết
+                      </Button>
+                    </div>
+                  ),
+                })
+              }
+            />
           </div>
         </div>
 
@@ -221,55 +325,33 @@ const PostCard = ({
           )}
         </div>
 
+        {/* Hiển thị reaction summary giống Facebook */}
+        {renderReactionSummary()}
+
         <Divider className="post-divider" />
 
         <div className="post-actions">
-          <Dropdown
-            trigger={["click"]}
-            className="reaction-dropdown"
-            menu={{
-              items: reactionOptions.map((r) => ({
-                key: r.type,
-                icon: r.icon,
-                label: (
-                  <span style={{ 
-                    color: r.color, 
-                    fontWeight: "500",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px"
-                  }}>
-                    {r.label}
-                  </span>
-                ),
-                onClick: () => onLike(post.id, r.type),
-                className: "reaction-item",
-              })),
-            }}
-            overlayStyle={{
-              borderRadius: "12px",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-            }}
-          >
+          {/* Nút Reaction */}
+          <Popover content={reactionContent} trigger="hover" placement="top">
             <Button
               type="text"
-              icon={
-                reactionOptions.find((r) => r.type === post.reactionType)
-                  ?.icon || <HeartOutlined />
-              }
               loading={isLiking}
-              className={`action-button ${post.reactionType ? "liked" : ""}`}
-              style={{ 
-                color: post.reactionType 
-                  ? reactionOptions.find((r) => r.type === post.reactionType)?.color
-                  : undefined,
-              }}
+              onClick={handleDefaultLike}
+              className={`action-button ${currentUserReaction ? "reacted" : ""}`}
+              style={{ color: currentReaction?.color || "#65676b" }}
+              icon={
+                currentReaction ? (
+                  <span className="reaction-emoji">{currentReaction.icon}</span>
+                ) : (
+                  <HeartOutlined />
+                )
+              }
             >
-              <span className={`button-text ${post.reactionType ? "reacted" : ""}`}>
-                {post.reactionType || "Thích"} {likeCount > 0 && `(${likeCount})`}
+              <span className={`button-text ${currentUserReaction ? "reacted" : ""}`}>
+                {currentUserReaction || "Thích"}
               </span>
             </Button>
-          </Dropdown>
+          </Popover>
 
           <Button
             type="text"
