@@ -1031,3 +1031,7 @@ Post Page Styles .post-page {
 .friend-item {
   padding: 8px 0;
 }
+
+.post-share-card {
+  width: 100% !important;
+}

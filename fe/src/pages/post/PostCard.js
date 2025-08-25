@@ -10,6 +10,8 @@ import {
   Image,
   Input,
   Popover,
+  List,
+  Tabs,
 } from "antd";
 import {
   HeartOutlined,
@@ -44,6 +46,9 @@ const PostCard = ({
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
 
+  // Modal danh sách reactions
+  const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
+
   const reactionOptions = [
     { type: "Like", icon: "👍", label: "Thích", color: "#1877f2" },
     { type: "Love", icon: "❤️", label: "Yêu thích", color: "#f33e58" },
@@ -53,97 +58,51 @@ const PostCard = ({
     { type: "Angry", icon: "😡", label: "Phẫn nộ", color: "#e9710f" },
   ];
 
-  // Tính toán reactions giống Facebook - Support nhiều format dữ liệu
   const getReactionStats = () => {
-    // Debug: Log dữ liệu để kiểm tra
-    console.log('Post data:', {
-      reactions: post.reactions,
-      likes: post.likes,
-      reactionType: post.reactionType,
-      postId: post.id
-    });
-
-    // Xử lý format cũ (post.reactionType và post.likes)
-    if (post.reactionType && !post.reactions) {
-      const currentUserReaction = post.reactionType;
-      const likeCount = post.likes?.length || 0;
-      
-      const topReactions = [reactionOptions.find(r => r.type === currentUserReaction)].filter(Boolean);
-      
-      return {
-        totalCount: likeCount,
-        topReactions: topReactions,
-        currentUserReaction: currentUserReaction,
-        reactionCounts: { [currentUserReaction]: likeCount }
-      };
-    }
-
-    // Xử lý format mới (post.reactions array)
-    if (!post.reactions || !Array.isArray(post.reactions)) {
-      // Fallback: sử dụng post.likes nếu có
-      const likeCount = post.likes?.length || 0;
-      if (likeCount > 0) {
-        return {
-          totalCount: likeCount,
-          topReactions: [reactionOptions.find(r => r.type === 'Like')].filter(Boolean),
-          currentUserReaction: post.reactionType || null,
-          reactionCounts: { 'Like': likeCount }
-        };
-      }
-      
+    if (!post.likes || !Array.isArray(post.likes)) {
       return {
         totalCount: 0,
         topReactions: [],
-        currentUserReaction: null,
-        reactionCounts: {}
+        currentUserReaction: post.reactionType || null, // lấy trực tiếp từ backend
+        reactionCounts: {},
       };
     }
 
-    // Đếm từng loại reaction
     const reactionCounts = {};
-    let currentUserReaction = null;
-    
-    post.reactions.forEach(reaction => {
-      const type = reaction.type || reaction.reactionType || 'Like';
+    post.likes.forEach((reaction) => {
+      const type = reaction.reactionType || "Like";
       reactionCounts[type] = (reactionCounts[type] || 0) + 1;
-      
-      // Kiểm tra user hiện tại (có thể dùng nhiều field khác nhau)
-      const userId = reaction.userId || reaction.user_id || reaction.id;
-      const currentUserId = post.currentUserId || post.currentUser?.id;
-      
-      if (userId === currentUserId) {
-        currentUserReaction = type;
-      }
     });
 
-    // Sắp xếp reactions theo số lượng (giảm dần)
     const sortedReactions = Object.entries(reactionCounts)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3); // Chỉ lấy top 3
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3);
 
-    const topReactions = sortedReactions.map(([type]) => 
-      reactionOptions.find(r => r.type === type)
-    ).filter(Boolean);
+    const topReactions = sortedReactions
+      .map(([type]) => reactionOptions.find((r) => r.type === type))
+      .filter(Boolean);
 
-    const totalCount = post.reactions.length;
+    const totalCount = post.likes.length;
 
     return {
       totalCount,
       topReactions,
-      currentUserReaction: currentUserReaction || post.reactionType,
-      reactionCounts
+      currentUserReaction: post.reactionType || null, // lấy thẳng từ backend
+      reactionCounts,
     };
   };
 
-  const { totalCount, topReactions, currentUserReaction, reactionCounts } = getReactionStats();
-  const currentReaction = reactionOptions.find(r => r.type === currentUserReaction);
+  const { totalCount, topReactions, currentUserReaction, reactionCounts } =
+    getReactionStats();
+  const currentReaction = reactionOptions.find(
+    (r) => r.type === currentUserReaction
+  );
 
-  // Click nút Like mặc định
   const handleDefaultLike = () => {
     if (currentUserReaction === "Like") {
-      onLike(post.id, null); // bỏ Like
+      onLike(post.id, null);
     } else {
-      onLike(post.id, "Like"); // mặc định Like
+      onLike(post.id, "Like");
     }
   };
 
@@ -163,31 +122,37 @@ const PostCard = ({
     </div>
   );
 
-  // Render reaction summary giống Facebook - Luôn hiển thị nếu có reactions
+  // Render reaction summary giống Facebook
   const renderReactionSummary = () => {
     if (totalCount === 0) return null;
-
     return (
       <div className="reaction-summary">
         <div className="reaction-icons">
           {topReactions.map((reaction, index) => (
-            <span 
-              key={reaction.type} 
-              className="reaction-icon-small" 
-              style={{zIndex: topReactions.length - index}}
+            <span
+              key={reaction.type}
+              className="reaction-icon-small"
+              style={{ zIndex: topReactions.length - index }}
               title={`${reactionCounts[reaction.type] || 0} ${reaction.label}`}
             >
               {reaction.icon}
             </span>
           ))}
         </div>
-        <span className="reaction-count" title="Xem ai đã thả cảm xúc">
+        <span
+          className="reaction-count"
+          title="Xem ai đã thả cảm xúc"
+          style={{ cursor: "pointer" }}
+          onClick={() => setIsReactionModalVisible(true)}
+        >
           {totalCount > 0 && (
             <>
-              {Object.entries(reactionCounts).length === 1 && currentUserReaction 
-                ? `Bạn${totalCount > 1 ? ` và ${totalCount - 1} người khác` : ''}`
-                : `${totalCount} ${totalCount === 1 ? 'lượt thả cảm xúc' : 'lượt thả cảm xúc'}`
-              }
+              {Object.entries(reactionCounts).length === 1 &&
+              currentUserReaction
+                ? `Bạn${
+                    totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""
+                  }`
+                : `${totalCount} lượt thả cảm xúc`}
             </>
           )}
         </span>
@@ -269,6 +234,17 @@ const PostCard = ({
     }
   };
 
+  // Nhóm người theo reactionType
+  const groupedReactions =
+    post.likes?.reduce((acc, r) => {
+      const type = r.reactionType || "Like";
+      if (!acc[type]) acc[type] = [];
+      acc[type].push(r);
+      return acc;
+    }, {}) || {};
+
+  const allReactions = Object.values(groupedReactions).flat();
+
   return (
     <>
       <Card className="post-card" hoverable>
@@ -325,11 +301,10 @@ const PostCard = ({
           )}
         </div>
 
-        {/* Hiển thị reaction summary giống Facebook */}
+        {/* Hiển thị reaction summary */}
         {renderReactionSummary()}
 
         <Divider className="post-divider" />
-
         <div className="post-actions">
           {/* Nút Reaction */}
           <Popover content={reactionContent} trigger="hover" placement="top">
@@ -337,7 +312,9 @@ const PostCard = ({
               type="text"
               loading={isLiking}
               onClick={handleDefaultLike}
-              className={`action-button ${currentUserReaction ? "reacted" : ""}`}
+              className={`action-button ${
+                currentUserReaction ? "reacted" : ""
+              }`}
               style={{ color: currentReaction?.color || "#65676b" }}
               icon={
                 currentReaction ? (
@@ -347,7 +324,11 @@ const PostCard = ({
                 )
               }
             >
-              <span className={`button-text ${currentUserReaction ? "reacted" : ""}`}>
+              <span
+                className={`button-text ${
+                  currentUserReaction ? "reacted" : ""
+                }`}
+              >
                 {currentUserReaction || "Thích"}
               </span>
             </Button>
@@ -397,6 +378,67 @@ const PostCard = ({
           onChange={(e) => setEditingContent(e.target.value)}
           rows={5}
           maxLength={1000}
+        />
+      </Modal>
+
+      {/* Modal hiển thị danh sách reactions */}
+      <Modal
+        title="Người đã thả cảm xúc"
+        open={isReactionModalVisible}
+        onCancel={() => setIsReactionModalVisible(false)}
+        footer={null}
+      >
+        <Tabs
+          defaultActiveKey="all"
+          items={[
+            {
+              key: "all",
+              label: `Tất cả (${allReactions.length})`,
+              children: (
+                <List
+                  dataSource={allReactions}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                        description={item.reactionType}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+            ...Object.entries(groupedReactions).map(([type, users]) => ({
+              key: type,
+              label: `${type} (${users.length})`,
+              children: (
+                <List
+                  dataSource={users}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            })),
+          ]}
         />
       </Modal>
     </>

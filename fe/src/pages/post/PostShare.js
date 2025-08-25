@@ -1,5 +1,14 @@
 import React from "react";
-import { Card, Button, Avatar, Divider, Typography, Image, Dropdown, Menu } from "antd";
+import {
+  Card,
+  Button,
+  Avatar,
+  Divider,
+  Typography,
+  Image,
+  Dropdown,
+  Menu,
+} from "antd";
 import {
   HeartOutlined,
   HeartFilled,
@@ -32,9 +41,11 @@ const PostShare = ({
   const { user, sharedContent, createdAt, post } = postShare;
   const isLiking = likingPosts.has(post.id);
   const isLiked = post.isLiked || false;
-  const likeCount = post.likes?.length || 0;
-  const commentCount = post.comments?.length || 0;
+  const likeCount = postShare.likes?.length || 0;
+  const commentCount = postShare.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+
+  console.log("postShare",postShare)
 
   const menu = (
     <Menu
@@ -42,24 +53,20 @@ const PostShare = ({
         {
           key: "edit",
           label: "Chỉnh sửa bài viết",
-          onClick: () => {
-            // Tính năng chỉnh sửa sẽ làm sau
-            console.log("Edit post share", postShare.id);
-          },
+          onClick: () => console.log("Edit post share", postShare.id),
         },
         {
           key: "delete",
           label: <span style={{ color: "red" }}>Xóa bài viết</span>,
-          onClick: () => {
-            onDeletePostShare(postShare.id);
-          },
+          onClick: () => onDeletePostShare(postShare.id),
         },
       ]}
     />
   );
 
   return (
-    <Card className="post-card" hoverable style={{ marginBottom: "20px" }}>
+    <Card className="post-share-card" hoverable style={{ marginBottom: "20px" }}>
+      {/* Header người chia sẻ */}
       <div className="post-header">
         <Avatar size={40} src={user.avatarUrl} icon={<UserOutlined />} />
         <div className="post-user-info">
@@ -78,6 +85,7 @@ const PostShare = ({
         </Dropdown>
       </div>
 
+      {/* Nội dung người share viết thêm */}
       {sharedContent && (
         <>
           <Divider className="post-divider" />
@@ -87,8 +95,8 @@ const PostShare = ({
 
       <Divider className="post-divider" />
 
-      {/* Original Post */}
-      <Card type="inner" className="post-card">
+      {/* Bài gốc */}
+      <Card type="inner" className="shared-post-inner" style={{ width: "100%" }}>
         <div className="post-header">
           <Avatar size={40} src={post.user.avatarUrl} icon={<UserOutlined />} />
           <div className="post-user-info">
@@ -118,53 +126,54 @@ const PostShare = ({
             </div>
           )}
         </div>
-
-        <Divider className="post-divider" />
-
-        <div className="post-actions">
-          <Button
-            type="text"
-            icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
-            onClick={() => onLike(post.id)}
-            loading={isLiking}
-            className={`action-button ${isLiked ? "liked" : ""}`}
-            style={{ color: isLiked ? "#ff4d4f" : undefined }}
-            aria-label={isLiked ? "Bỏ thích bài viết" : "Thích bài viết"}
-          >
-            {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
-          </Button>
-
-          <Button
-            type="text"
-            icon={<CommentOutlined />}
-            onClick={() => onComment(post.id)}
-            className={`action-button ${isCommentsExpanded ? "active" : ""}`}
-            aria-label="Bình luận bài viết"
-          >
-            Bình luận {commentCount > 0 && `(${commentCount})`}
-          </Button>
-
-          <Button
-            type="text"
-            icon={<RetweetOutlined />}
-            onClick={() => onShare(post.id)}
-            className="action-button"
-            aria-label="Chia sẻ bài viết"
-          >
-            Chia sẻ {post.sharesCount ? `(${post.sharesCount})` : ""}
-          </Button>
-        </div>
-
-        {isCommentsExpanded && (
-          <CommentSection
-            post={post}
-            commentingPosts={commentingPosts}
-            setCommentingPosts={setCommentingPosts}
-            setPosts={setPosts}
-            commentForms={commentForms}
-          />
-        )}
       </Card>
+
+      {/* Actions giống post thường */}
+      <Divider className="post-divider" />
+
+      <div className="post-actions">
+        <Button
+          type="text"
+          icon={isLiked ? <HeartFilled /> : <HeartOutlined />}
+          onClick={() => onLike(post.id)}
+          loading={isLiking}
+          className={`action-button ${isLiked ? "liked" : ""}`}
+          style={{ color: isLiked ? "#ff4d4f" : undefined }}
+          aria-label={isLiked ? "Bỏ thích bài viết" : "Thích bài viết"}
+        >
+          {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
+        </Button>
+
+        <Button
+          type="text"
+          icon={<CommentOutlined />}
+          onClick={() => onComment(post.id)}
+          className={`action-button ${isCommentsExpanded ? "active" : ""}`}
+          aria-label="Bình luận bài viết"
+        >
+          Bình luận {commentCount > 0 && `(${commentCount})`}
+        </Button>
+
+        <Button
+          type="text"
+          icon={<RetweetOutlined />}
+          onClick={() => onShare(post.id)}
+          className="action-button"
+          aria-label="Chia sẻ bài viết"
+        >
+          Chia sẻ {post.sharesCount ? `(${post.sharesCount})` : ""}
+        </Button>
+      </div>
+
+      {isCommentsExpanded && (
+        <CommentSection
+          post={postShare}
+          commentingPosts={commentingPosts}
+          setCommentingPosts={setCommentingPosts}
+          setPosts={setPosts}
+          commentForms={commentForms}
+        />
+      )}
     </Card>
   );
 };
