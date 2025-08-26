@@ -121,6 +121,38 @@ public class ConversationServiceImpl implements ConversationService {
         conversationRepository.delete(conversation);
     }
 
+    @Override
+    public ConversationResponse addUserToConversation(Long conversationId, Long userId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+        ParticipantInfo existingParticipant = conversation.getParticipants().stream()
+                .filter(p -> p.getUserId().equals(userId))
+                .findFirst()
+                .orElse(null);
+        if (existingParticipant != null) {
+            throw new AppException(ErrorCode.USER_ALREADY_IN_CONVERSATION);
+        }
+        User userToAdd = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        ParticipantInfo newParticipant = ParticipantInfo.builder()
+                .userId(userToAdd.getId())
+                .username(userToAdd.getUsername())
+                .firstName(userToAdd.getFirstName())
+                .lastName(userToAdd.getLastName())
+                .avatar(userToAdd.getAvatarUrl())
+                .conversation(conversation)
+                .build();
+        conversation.getParticipants().add(newParticipant);
+        conversation.setModifiedDate(Instant.now());
+        String newParticipantsHash = generateParticipantHash(
+                conversation.getParticipants().stream()
+                        .map(ParticipantInfo::getUserId)
+                        .collect(Collectors.toList())
+        );
+        conversation.setParticipantsHash(newParticipantsHash);
+        return toConversationResponse(conversation);
+    }
+
     private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
         Conversation conversation = Conversation.builder()
                 .type(type)

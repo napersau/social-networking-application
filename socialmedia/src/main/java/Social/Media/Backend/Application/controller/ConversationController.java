@@ -65,4 +65,15 @@ public class ConversationController {
                 .message("Conversation deleted successfully")
                 .build();
     }
+
+    @PutMapping("/add-user/{conversationId}")
+    ApiResponse<ConversationResponse> addUserToConversation(
+            @PathVariable Long conversationId,
+            @RequestParam Long userId) {
+        ConversationResponse response = conversationService.addUserToConversation(conversationId, userId);
+        return ApiResponse.<ConversationResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
 }
