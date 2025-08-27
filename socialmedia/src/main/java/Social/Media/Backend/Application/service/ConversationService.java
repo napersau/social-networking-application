@@ -12,4 +12,5 @@ public interface ConversationService {
     ConversationResponse updateConversation(Long conversationId, ConversationRequest request);
     void deleteConversation(Long conversationId);
     ConversationResponse addUserToConversation(Long conversationId, Long userId);
+    ConversationResponse removeUserFromConversation(Long conversationId, Long userId);
 }

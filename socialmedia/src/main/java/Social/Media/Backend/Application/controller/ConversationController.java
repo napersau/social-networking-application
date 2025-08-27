@@ -76,4 +76,15 @@ public class ConversationController {
                 .result(response)
                 .build();
     }
+
+    @PutMapping("/remove-user/{conversationId}")
+    ApiResponse<ConversationResponse> removeUserFromConversation(
+            @PathVariable Long conversationId,
+            @RequestParam Long userId) {
+        ConversationResponse response = conversationService.removeUserFromConversation(conversationId, userId);
+        return ApiResponse.<ConversationResponse>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
 }

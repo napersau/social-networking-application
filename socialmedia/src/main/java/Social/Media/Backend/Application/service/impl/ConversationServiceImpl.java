@@ -153,6 +153,25 @@ public class ConversationServiceImpl implements ConversationService {
         return toConversationResponse(conversation);
     }
 
+    @Override
+    public ConversationResponse removeUserFromConversation(Long conversationId, Long userId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+        ParticipantInfo participantToRemove = conversation.getParticipants().stream()
+                .filter(p -> p.getUserId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_IN_CONVERSATION));
+        conversation.getParticipants().remove(participantToRemove);
+        conversation.setModifiedDate(Instant.now());
+        String newParticipantsHash = generateParticipantHash(
+                conversation.getParticipants().stream()
+                        .map(ParticipantInfo::getUserId)
+                        .collect(Collectors.toList())
+        );
+        conversation.setParticipantsHash(newParticipantsHash);
+        return toConversationResponse(conversation);
+    }
+
     private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
         Conversation conversation = Conversation.builder()
                 .type(type)
