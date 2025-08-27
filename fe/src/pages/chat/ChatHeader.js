@@ -1,7 +1,11 @@
 import { Avatar, Drawer, Button, Input, Typography, List } from "antd";
 import { CheckOutlined, UserOutlined, CloseOutlined } from "@ant-design/icons";
-import { updateConversation } from "../../services/chatService";
-import { useState } from "react";
+import {
+  updateConversation,
+  addUserToConversation,
+} from "../../services/chatService";
+import { getAllUsers, searchUsersByFullName } from "../../services/userService";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import "./ChatHeader.css";
 
@@ -15,6 +19,68 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     selectedConversation?.avatarUrl || ""
   );
   const [showMembers, setShowMembers] = useState(false);
+  const [openAddMember, setOpenAddMember] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (openAddMember) {
+        try {
+          const res = await getAllUsers();
+          let results = res.data?.result || [];
+          console.log("user", results);
+          // lọc bỏ những user đã có trong nhóm
+          const existingIds = selectedConversation.participants.map(
+            (p) => p.userId
+          );
+          results = results.filter((user) => !existingIds.includes(user.id));
+          setSearchResults(results);
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+        }
+      }
+    };
+    fetchUsers();
+  }, [openAddMember]);
+
+  const handleSearchUsers = async () => {
+    if (!searchKeyword.trim()) return;
+    setLoadingSearch(true);
+    try {
+      const res = await searchUsersByFullName(searchKeyword);
+      let results = res.data?.result || [];
+      // Lọc bỏ các user đã có trong conversation
+      const existingIds = selectedConversation.participants.map(
+        (p) => p.userId
+      );
+      results = results.filter((user) => !existingIds.includes(user.id));
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Failed to search users:", error);
+    } finally {
+      setLoadingSearch(false);
+    }
+  };
+
+  const handleAddMember = async (userId) => {
+    try {
+      await addUserToConversation(selectedConversation.id, userId);
+
+      // Cập nhật lại participants trong UI
+      const addedUser = searchResults.find((u) => u.id === userId);
+      onUpdateConversation?.({
+        ...selectedConversation,
+        participants: [...selectedConversation.participants, addedUser],
+      });
+
+      // Xoá user vừa thêm khỏi searchResults
+      setSearchResults((prev) => prev.filter((u) => u.id !== userId));
+    } catch (error) {
+      console.error("Failed to add member:", error);
+    }
+  };
 
   if (!selectedConversation) return null;
 
@@ -174,6 +240,55 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
             />
           )}
         </div>
+        <Button
+          block
+          className="upload-btn"
+          onClick={() => setOpenAddMember(true)}
+        >
+          <label>Thêm thành viên</label>
+        </Button>
+
+        <Drawer
+          title="Thêm thành viên"
+          placement="right"
+          onClose={() => setOpenAddMember(false)}
+          open={openAddMember}
+          width={320}
+        >
+          <Input.Search
+            placeholder="Nhập tên thành viên"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onSearch={handleSearchUsers}
+            enterButton="Tìm"
+            loading={loadingSearch}
+          />
+
+          <List
+            style={{ marginTop: 15 }}
+            dataSource={searchResults}
+            locale={{ emptyText: "Không tìm thấy người dùng" }}
+            renderItem={(user) => (
+              <List.Item
+                actions={[
+                  <Button
+                    type="primary"
+                    onClick={() => handleAddMember(user.id)}
+                  >
+                    Thêm
+                  </Button>,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <Avatar src={user.avatarUrl} icon={<UserOutlined />} />
+                  }
+                  title={<Text>{user.firstName + " " + user.lastName}</Text>}
+                />
+              </List.Item>
+            )}
+          />
+        </Drawer>
       </Drawer>
     </>
   );

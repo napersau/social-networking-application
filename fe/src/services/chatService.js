@@ -2,6 +2,19 @@ import httpClient from "../configurations/httpClient";
 import { API } from "../configurations/configuration";
 import { getToken } from "./localStorageService";
 
+export const addUserToConversation = async (conversationId, userId) => {
+  return httpClient.put(
+    `${API.ADD_MEMBER_CONVERSATION}/${conversationId}?userId=${userId}`,
+    {}, // body trống
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+};
+
+
 export const getMyConversations = async () => {
   return await httpClient.get(API.MY_CONVERSATIONS, {
     headers: {
