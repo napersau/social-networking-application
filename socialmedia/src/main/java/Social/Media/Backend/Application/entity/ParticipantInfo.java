@@ -35,6 +35,9 @@ public class ParticipantInfo {
     @Column(name = "avatar")
     String avatar;
 
+    @Column(name = "status")
+    String status = "ACTIVE"; // ACTIVE, REMOVED
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id")
     @JsonBackReference

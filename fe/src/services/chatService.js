@@ -14,6 +14,18 @@ export const addUserToConversation = async (conversationId, userId) => {
   );
 };
 
+export const removeUserFromConversation = async (conversationId, userId) => {
+  return httpClient.put(
+    `${API.REMOVE_MEMBER_CONVERSATION}/${conversationId}?userId=${userId}`,
+    {}, // body trống
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+};
+
 
 export const getMyConversations = async () => {
   return await httpClient.get(API.MY_CONVERSATIONS, {

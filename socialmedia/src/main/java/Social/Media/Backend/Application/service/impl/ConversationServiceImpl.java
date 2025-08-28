@@ -161,14 +161,17 @@ public class ConversationServiceImpl implements ConversationService {
                 .filter(p -> p.getUserId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_IN_CONVERSATION));
-        conversation.getParticipants().remove(participantToRemove);
+        participantToRemove.setStatus("REMOVED");
+
         conversation.setModifiedDate(Instant.now());
         String newParticipantsHash = generateParticipantHash(
                 conversation.getParticipants().stream()
+                        .filter(p -> !"REMOVED".equals(p.getStatus()))
                         .map(ParticipantInfo::getUserId)
                         .collect(Collectors.toList())
         );
         conversation.setParticipantsHash(newParticipantsHash);
+
         return toConversationResponse(conversation);
     }
 

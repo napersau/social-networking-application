@@ -24,6 +24,7 @@ export const API = {
   UPDATE_CONVERSATION: "/chat/conversations/update",
   DELETE_CONVERSATION: "/chat/conversations/delete",
   ADD_MEMBER_CONVERSATION: "/chat/conversations/add-user",
+  REMOVE_MEMBER_CONVERSATION: "/chat/conversations/remove-user",
 
 
   CREATE_MESSAGE: "/chat/messages/create",

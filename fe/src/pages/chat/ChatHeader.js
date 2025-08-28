@@ -1,8 +1,9 @@
-import { Avatar, Drawer, Button, Input, Typography, List } from "antd";
+import { Avatar, Drawer, Button, Input, Typography, List, Modal } from "antd";
 import { CheckOutlined, UserOutlined, CloseOutlined } from "@ant-design/icons";
 import {
   updateConversation,
   addUserToConversation,
+  removeUserFromConversation,
 } from "../../services/chatService";
 import { getAllUsers, searchUsersByFullName } from "../../services/userService";
 import { useState, useEffect } from "react";
@@ -30,8 +31,6 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
         try {
           const res = await getAllUsers();
           let results = res.data?.result || [];
-          console.log("user", results);
-          // lọc bỏ những user đã có trong nhóm
           const existingIds = selectedConversation.participants.map(
             (p) => p.userId
           );
@@ -62,6 +61,30 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     } finally {
       setLoadingSearch(false);
     }
+  };
+
+  const handleLeaveGroup = async () => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn rời nhóm?",
+      content: "Sau khi rời, bạn sẽ không còn nhận được tin nhắn từ nhóm này.",
+      okText: "Rời nhóm",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          const userId = localStorage.getItem("userId");
+          if (!userId) {
+            console.error("Không tìm thấy userId trong localStorage");
+            return;
+          }
+          await removeUserFromConversation(selectedConversation.id, userId);
+          onUpdateConversation?.(null); // Callback reload hoặc navigate ra ngoài
+          setOpenDrawer(false);
+        } catch (error) {
+          console.error("Failed to leave group:", error);
+        }
+      },
+    });
   };
 
   const handleAddMember = async (userId) => {
@@ -289,6 +312,14 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
             )}
           />
         </Drawer>
+        <Button
+          block
+          danger
+          style={{ marginTop: 10 }}
+          onClick={handleLeaveGroup}
+        >
+          Rời nhóm chat
+        </Button>
       </Drawer>
     </>
   );
