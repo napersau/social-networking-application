@@ -129,20 +129,33 @@ public class ConversationServiceImpl implements ConversationService {
                 .filter(p -> p.getUserId().equals(userId))
                 .findFirst()
                 .orElse(null);
+
         if (existingParticipant != null) {
-            throw new AppException(ErrorCode.USER_ALREADY_IN_CONVERSATION);
+            if (Boolean.TRUE.equals(existingParticipant.getActive())) {
+                throw new AppException(ErrorCode.USER_ALREADY_IN_CONVERSATION);
+            } else {
+                // User đã rời nhóm → join lại
+                existingParticipant.setActive(true);
+                existingParticipant.setJoinedAt(Instant.now());
+                existingParticipant.setLeftAt(null);
+            }
+        } else {
+            User userToAdd = userRepository.findById(userId)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+            ParticipantInfo newParticipant = ParticipantInfo.builder()
+                    .userId(userToAdd.getId())
+                    .username(userToAdd.getUsername())
+                    .firstName(userToAdd.getFirstName())
+                    .lastName(userToAdd.getLastName())
+                    .avatar(userToAdd.getAvatarUrl())
+                    .conversation(conversation)
+                    .active(true)
+                    .joinedAt(Instant.now())
+                    .build();
+            conversation.getParticipants().add(newParticipant);
         }
-        User userToAdd = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        ParticipantInfo newParticipant = ParticipantInfo.builder()
-                .userId(userToAdd.getId())
-                .username(userToAdd.getUsername())
-                .firstName(userToAdd.getFirstName())
-                .lastName(userToAdd.getLastName())
-                .avatar(userToAdd.getAvatarUrl())
-                .conversation(conversation)
-                .build();
-        conversation.getParticipants().add(newParticipant);
+
         conversation.setModifiedDate(Instant.now());
         String newParticipantsHash = generateParticipantHash(
                 conversation.getParticipants().stream()
@@ -157,23 +170,20 @@ public class ConversationServiceImpl implements ConversationService {
     public ConversationResponse removeUserFromConversation(Long conversationId, Long userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
+
         ParticipantInfo participantToRemove = conversation.getParticipants().stream()
-                .filter(p -> p.getUserId().equals(userId))
+                .filter(p -> p.getUserId().equals(userId) && Boolean.TRUE.equals(p.getActive()))
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_IN_CONVERSATION));
-        participantToRemove.setStatus("REMOVED");
+
+        // Không xóa, chỉ set inactive
+        participantToRemove.setActive(false);
+        participantToRemove.setLeftAt(Instant.now());
 
         conversation.setModifiedDate(Instant.now());
-        String newParticipantsHash = generateParticipantHash(
-                conversation.getParticipants().stream()
-                        .filter(p -> !"REMOVED".equals(p.getStatus()))
-                        .map(ParticipantInfo::getUserId)
-                        .collect(Collectors.toList())
-        );
-        conversation.setParticipantsHash(newParticipantsHash);
-
         return toConversationResponse(conversation);
     }
+
 
     private Conversation createNewConversation(String type, List<Long> userIds, List<User> users, String participantsHash) {
         Conversation conversation = Conversation.builder()
@@ -208,6 +218,12 @@ public class ConversationServiceImpl implements ConversationService {
     private ConversationResponse toConversationResponse(Conversation conversation) {
         User user = securityUtil.getCurrentUser();
         ConversationResponse response = modelMapper.map(conversation, ConversationResponse.class);
+
+        response.setParticipants(
+                conversation.getParticipants().stream()
+                        .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                        .collect(Collectors.toList())
+        );
 
         ChatMessage lastMsg = chatMessageRepository.findTopByConversation_IdOrderByCreatedDateDesc(conversation.getId());
         int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());

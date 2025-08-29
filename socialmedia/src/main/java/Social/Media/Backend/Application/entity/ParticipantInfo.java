@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.Instant;
+
 @Entity
 @Getter
 @Setter
@@ -35,11 +37,17 @@ public class ParticipantInfo {
     @Column(name = "avatar")
     String avatar;
 
-    @Column(name = "status")
-    String status = "ACTIVE"; // ACTIVE, REMOVED
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id")
     @JsonBackReference
     Conversation conversation;
+
+    @Column(name = "active")
+    Boolean active = true; // còn trong nhóm
+
+    @Column(name = "joined_at")
+    Instant joinedAt;
+
+    @Column(name = "left_at")
+    Instant leftAt;
 }

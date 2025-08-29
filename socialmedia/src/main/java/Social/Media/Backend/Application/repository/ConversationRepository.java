@@ -14,9 +14,12 @@ import java.util.Optional;
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
     Optional<Conversation> findByParticipantsHash(String hash);
 
-//    @Query("SELECT c FROM Conversation c JOIN c.participants p WHERE p.userId = :userId")
-//    List<Conversation> findAllByParticipantIdsContains(Long userId);
-    @Query("SELECT c FROM Conversation c JOIN c.participants p WHERE p.userId = :userId ORDER BY c.modifiedDate DESC")
+    @Query("""
+    SELECT c FROM Conversation c
+    JOIN c.participants p
+    WHERE p.userId = :userId
+      AND p.active = true
+    ORDER BY c.modifiedDate DESC""")
     List<Conversation> findAllByUserIdOrderByModifiedDateDesc(@Param("userId") Long userId);
 
 
