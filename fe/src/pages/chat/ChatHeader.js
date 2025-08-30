@@ -1,5 +1,20 @@
-import { Avatar, Drawer, Button, Input, Typography, List, Modal } from "antd";
-import { CheckOutlined, UserOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  Avatar,
+  Drawer,
+  Button,
+  Input,
+  Typography,
+  List,
+  Modal,
+  Dropdown,
+  Menu,
+} from "antd";
+import {
+  CheckOutlined,
+  UserOutlined,
+  CloseOutlined,
+  MoreOutlined,
+} from "@ant-design/icons";
 import {
   updateConversation,
   addUserToConversation,
@@ -61,6 +76,31 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     } finally {
       setLoadingSearch(false);
     }
+  };
+
+  const handleKickMember = (userId) => {
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa thành viên này?",
+      content: "Thành viên sẽ không còn nhận được tin nhắn từ nhóm.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await removeUserFromConversation(selectedConversation.id, userId);
+
+          // Cập nhật lại participants trong UI
+          onUpdateConversation?.({
+            ...selectedConversation,
+            participants: selectedConversation.participants.filter(
+              (p) => p.userId !== userId
+            ),
+          });
+        } catch (error) {
+          console.error("Failed to remove member:", error);
+        }
+      },
+    });
   };
 
   const handleLeaveGroup = async () => {
@@ -247,22 +287,50 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
               style={{ marginTop: 10 }}
               itemLayout="horizontal"
               dataSource={selectedConversation.participants || []}
-              renderItem={(member) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar src={member.avatar} icon={<UserOutlined />} />
-                    }
-                    title={
-                      <Text>{member.firstName + " " + member.lastName}</Text>
-                    }
-                    description={<Text type="secondary">{member.addedBy}</Text>}
-                  />
-                </List.Item>
-              )}
+              renderItem={(member) => {
+                const menu = (
+                  <Menu>
+                    <Menu.Item
+                      key="kick"
+                      danger
+                      onClick={() => handleKickMember(member.userId)}
+                    >
+                      Xóa khỏi nhóm
+                    </Menu.Item>
+                  </Menu>
+                );
+
+                return (
+                  <List.Item
+                    actions={[
+                      <Dropdown overlay={menu} trigger={["click"]}>
+                        <MoreOutlined
+                          style={{ fontSize: 18, cursor: "pointer" }}
+                        />
+                      </Dropdown>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar src={member.avatar} icon={<UserOutlined />} />
+                      }
+                      title={
+                        <Text>
+                          {member.firstName + " " + member.lastName}
+                        </Text>
+                      }
+                      description={
+                        <Text type="secondary">{member.addedBy}</Text>
+                      }
+                    />
+                  </List.Item>
+                );
+              }}
             />
           )}
         </div>
+
+        {/* Thêm thành viên */}
         <Button
           block
           className="upload-btn"
@@ -312,6 +380,8 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
             )}
           />
         </Drawer>
+
+        {/* Rời nhóm */}
         <Button
           block
           danger
