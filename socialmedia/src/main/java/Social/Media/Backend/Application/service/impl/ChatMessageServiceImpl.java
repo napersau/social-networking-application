@@ -99,42 +99,25 @@ public class ChatMessageServiceImpl implements ChatMessageService {
             mediaRepository.save(media);
             mediaList.add(modelMapper.map(media, MediaResponse.class));
         }
-
         ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
-
-        List<Long> userIds = conversation.getParticipants().stream()
-                .map(ParticipantInfo::getUserId).toList();
-
-        Map<String, WebSocketSession> webSocketSessions =
-                webSocketSessionRepository
-                        .findAllByUserIdIn(userIds).stream()
-                        .collect(Collectors.toMap(
-                                WebSocketSession::getSocketSessionId,
-                                Function.identity()));
-
-        socketIOServer.getAllClients().forEach(client -> {
-            var webSocketSession = webSocketSessions.get(client.getSessionId().toString());
-
-            if (Objects.nonNull(webSocketSession)) {
-                String message = null;
-                try {
-                    chatMessageResponse.setMe(webSocketSession.getUserId().equals(user.getId()));
-                    message = objectMapper.writeValueAsString(chatMessageResponse);
-                    client.sendEvent("message", message);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
+        // 🔹 Notify websocket event "message"
+        notifyMessage(chatMessageResponse, chatMessage.getConversation(), "message");
         return chatMessageResponse;
     }
 
     @Override
     public ChatMessageResponse recalledMessage(Long messageId) {
-        ChatMessage chatMessage = chatMessageRepository.findById(messageId).orElseThrow(RuntimeException::new);
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
         chatMessage.setIsRecalled(true);
-        return toChatMessageResponse(chatMessageRepository.save(chatMessage));
+        ChatMessage saved = chatMessageRepository.save(chatMessage);
+
+        ChatMessageResponse response = toChatMessageResponse(saved);
+
+        // 🔹 Notify websocket event "recalled"
+        notifyMessage(response, saved.getConversation(), "recalled");
+
+        return response;
     }
 
     @Override
@@ -223,6 +206,35 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 try {
                     String message = objectMapper.writeValueAsString(notification);
                     client.sendEvent("reaction", message);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
+
+    /**
+     * Hàm dùng chung để gửi socket event cho các client trong conversation
+     */
+    private void notifyMessage(ChatMessageResponse response, Conversation conversation, String eventName) {
+        User currentUser = securityUtil.getCurrentUser();
+
+        List<Long> userIds = conversation.getParticipants().stream()
+                .map(ParticipantInfo::getUserId).toList();
+
+        Map<String, WebSocketSession> webSocketSessions =
+                webSocketSessionRepository.findAllByUserIdIn(userIds).stream()
+                        .collect(Collectors.toMap(
+                                WebSocketSession::getSocketSessionId,
+                                Function.identity()));
+
+        socketIOServer.getAllClients().forEach(client -> {
+            var session = webSocketSessions.get(client.getSessionId().toString());
+            if (session != null) {
+                try {
+                    response.setMe(session.getUserId().equals(currentUser.getId()));
+                    String message = objectMapper.writeValueAsString(response);
+                    client.sendEvent(eventName, message);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }

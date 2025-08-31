@@ -47,22 +47,22 @@ export default function Chat() {
   };
 
   const handleCreateGroup = async (groupData) => {
-  try {
-    const response = await createConversationGroup({
-      type: "GROUP",
-      name: groupData.name,
-      participantIds: groupData.participantIds,
-    });
+    try {
+      const response = await createConversationGroup({
+        type: "GROUP",
+        name: groupData.name,
+        participantIds: groupData.participantIds,
+      });
 
-    const newConversation = response?.data?.result;
-    if (newConversation) {
-      setConversations((prev) => [newConversation, ...prev]);
-      setSelectedConversation(newConversation);
+      const newConversation = response?.data?.result;
+      if (newConversation) {
+        setConversations((prev) => [newConversation, ...prev]);
+        setSelectedConversation(newConversation);
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
     }
-  } catch (error) {
-    console.error("Error creating group:", error);
-  }
-};
+  };
 
   const handleSelectNewChatUser = async (user) => {
     const response = await createConversation({
@@ -225,6 +225,18 @@ export default function Chat() {
         }
       });
 
+      socketRef.current.on("recalled", (data) => {
+        try {
+          const recalledMsg = JSON.parse(data);
+          console.log(">>> recalled event", recalledMsg);
+
+          // Gọi hàm xử lý recalled message - tương tự như message
+          handleIncomingRecalled(recalledMsg);
+        } catch (err) {
+          console.error("Error handling recalled:", err);
+        }
+      });
+
       socketRef.current.on("reaction", (data) => {
         const { messageId, reactions } = JSON.parse(data);
 
@@ -297,20 +309,16 @@ export default function Chat() {
   };
 
   // thêm hàm xử lý update
-const handleUpdateConversation = (updatedConv) => {
-  setConversations((prev) =>
-    prev.map((conv) =>
-      conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv
-    )
-  );
-
-  // nếu đang mở chính conversation đó thì cập nhật selected
-  if (selectedConversation?.id === updatedConv.id) {
-    setSelectedConversation((prev) => ({ ...prev, ...updatedConv }));
-  }
-};
-
-
+  const handleUpdateConversation = (updatedConv) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.id === updatedConv.id ? { ...conv, ...updatedConv } : conv
+      )
+    );
+    if (selectedConversation?.id === updatedConv.id) {
+      setSelectedConversation((prev) => ({ ...prev, ...updatedConv }));
+    }
+  };
   // Helper function to handle incoming socket messages
   const handleIncomingMessage = useCallback(
     (message) => {
@@ -354,6 +362,53 @@ const handleUpdateConversation = (updatedConv) => {
     },
     [selectedConversation]
   );
+
+  const handleIncomingRecalled = useCallback((recalledMsg) => {
+    console.log("Handling incoming recalled:", recalledMsg);
+
+    // Update messages map - đánh dấu tin nhắn đã bị thu hồi
+    setMessagesMap((prev) => {
+      const updatedMap = { ...prev };
+      if (updatedMap[recalledMsg.conversationId]) {
+        updatedMap[recalledMsg.conversationId] = updatedMap[
+          recalledMsg.conversationId
+        ].map((msg) =>
+          msg.id === recalledMsg.id ? { ...msg, recalled: true } : msg
+        );
+        console.log(
+          "Updated messagesMap for recalled:",
+          updatedMap[recalledMsg.conversationId]
+        );
+      }
+      return updatedMap;
+    });
+
+    // Update conversations list - cập nhật lastMessage nếu tin nhắn bị thu hồi là tin nhắn cuối
+    setConversations((prev) => {
+      const updatedConversations = prev.map((conv) => {
+        if (conv.id === recalledMsg.conversationId) {
+          // ✅ So sánh với lastMessageId thay vì lastMessage.id
+          if (conv.lastMessageId === recalledMsg.id) {
+            console.log(
+              "Updating lastMessage for recalled in conversation:",
+              conv.id
+            );
+            return {
+              ...conv,
+              lastMessage: "(Tin nhắn đã được thu hồi)",
+              lastTimestamp: new Date(
+                recalledMsg.recalledDate || new Date()
+              ).toLocaleString(),
+              modifiedDate:
+                recalledMsg.recalledDate || new Date().toISOString(),
+            };
+          }
+        }
+        return conv;
+      });
+      return updatedConversations;
+    });
+  }, []);
 
   return (
     <Box className="chat-container">
