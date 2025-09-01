@@ -373,7 +373,13 @@ export default function Chat() {
         updatedMap[recalledMsg.conversationId] = updatedMap[
           recalledMsg.conversationId
         ].map((msg) =>
-          msg.id === recalledMsg.id ? { ...msg, recalled: true } : msg
+          msg.id === recalledMsg.id 
+            ? { 
+                ...msg, 
+                isRecalled: true,  // ✅ Đổi từ recalled thành isRecalled để khớp với backend
+                message: "[Tin nhắn đã thu hồi]"  // ✅ Cập nhật message luôn
+              } 
+            : msg
         );
         console.log(
           "Updated messagesMap for recalled:",
@@ -387,20 +393,26 @@ export default function Chat() {
     setConversations((prev) => {
       const updatedConversations = prev.map((conv) => {
         if (conv.id === recalledMsg.conversationId) {
-          // ✅ So sánh với lastMessageId thay vì lastMessage.id
-          if (conv.lastMessageId === recalledMsg.id) {
+          // ✅ Kiểm tra xem tin nhắn bị thu hồi có phải là tin nhắn cuối không
+          // So sánh với ID của tin nhắn cuối cùng
+          const lastMessageInConv = prev.find(c => c.id === recalledMsg.conversationId);
+          if (lastMessageInConv && (
+            lastMessageInConv.lastMessageId === recalledMsg.id ||
+            // Fallback: so sánh với message content nếu không có lastMessageId
+            (lastMessageInConv.lastMessage && lastMessageInConv.lastMessage === recalledMsg.message)
+          )) {
             console.log(
               "Updating lastMessage for recalled in conversation:",
               conv.id
             );
             return {
               ...conv,
-              lastMessage: "(Tin nhắn đã được thu hồi)",
+              lastMessage: "[Tin nhắn đã được thu hồi]",
               lastTimestamp: new Date(
-                recalledMsg.recalledDate || new Date()
+                recalledMsg.modifiedDate || new Date()
               ).toLocaleString(),
               modifiedDate:
-                recalledMsg.recalledDate || new Date().toISOString(),
+                recalledMsg.modifiedDate || new Date().toISOString(),
             };
           }
         }
