@@ -10,15 +10,12 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.ChatMessageService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
-import com.corundumstudio.socketio.BroadcastOperations;
-import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +23,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
@@ -45,9 +40,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final SecurityUtil securityUtil;
     private final MessageReactionRepository messageReactionRepository;
 
-
     public List<ChatMessageResponse> getMessages(Long conversationId) {
-
         User user = securityUtil.getCurrentUser();
 
         conversationRepository.findById(conversationId)
@@ -59,14 +52,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
         var messages = chatMessageRepository.findAllByConversationIdOrderByCreatedDateAsc(conversationId);
-
         return messages.stream().map(this::toChatMessageResponse).toList();
     }
 
     public ChatMessageResponse create(ChatMessageRequest request) {
-
         User user = securityUtil.getCurrentUser();
-        // Validate conversationId
         var conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new AppException(ErrorCode.CONVERSATION_NOT_FOUND));
 
@@ -87,21 +77,13 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         chatMessage = chatMessageRepository.save(chatMessage);
 
-        List<MediaResponse> mediaList = new ArrayList<>();
-        for(String mediaUrl : request.getMediaUrls()) {
-            Media media = Media.builder()
-                    .url(mediaUrl)
-                    .sourceId(chatMessage.getId())
-                    .sourceType("message")
-                    .type("image")
-                    .createdDate(Instant.now())
-                    .build();
-            mediaRepository.save(media);
-            mediaList.add(modelMapper.map(media, MediaResponse.class));
-        }
+        List<MediaResponse> mediaList = createMediaList(request.getMediaUrls(), chatMessage.getId());
+
         ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
-        // 🔹 Notify websocket event "message"
-        notifyMessage(chatMessageResponse, chatMessage.getConversation(), "message");
+
+        // Notify websocket event "message"
+        notifyWebSocketEvent(chatMessageResponse, chatMessage.getConversation(), "message");
+
         return chatMessageResponse;
     }
 
@@ -109,13 +91,14 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public ChatMessageResponse recalledMessage(Long messageId) {
         ChatMessage chatMessage = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
         chatMessage.setIsRecalled(true);
         ChatMessage saved = chatMessageRepository.save(chatMessage);
 
         ChatMessageResponse response = toChatMessageResponse(saved);
 
-        // 🔹 Notify websocket event "recalled"
-        notifyMessage(response, saved.getConversation(), "recalled");
+        // Notify websocket event "recalled"
+        notifyWebSocketEvent(response, saved.getConversation(), "recalled");
 
         return response;
     }
@@ -126,9 +109,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         List<ChatMessage> messages = chatMessageRepository
                 .findAllByConversationIdAndSenderIdNotAndIsReadFalse(conversationId, user.getId());
+
         for (ChatMessage message : messages) {
             message.setIsRead(true);
         }
+
         chatMessageRepository.saveAll(messages);
         return messages.stream().map(this::toChatMessageResponse).toList();
     }
@@ -152,91 +137,111 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         messageReaction.setReactionType(request.getReactionType());
         messageReactionRepository.save(messageReaction);
 
-        // Gửi socket event cho các client
-        notifyReaction(chatMessage, messageReaction);
-
-        return toChatMessageResponse(chatMessage);
-    }
-
-    @Override
-    public ChatMessageResponse updateMessage(ChatMessageRequest request, Long messageId) {
-        ChatMessage chatMessage = chatMessageRepository.findById(messageId).orElseThrow(RuntimeException::new);
-        chatMessage.setMessage(request.getMessage());
-        chatMessageRepository.save(chatMessage);
-        return toChatMessageResponse(chatMessage);
-    }
-
-    private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
-
-        User user = securityUtil.getCurrentUser();
-
-        var chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
-
-        chatMessageResponse.setMe(user.getId().equals(chatMessage.getSender().getUserId()));
-
-        List<Media> mediaList = mediaRepository.findBySourceTypeAndSourceId("message", chatMessage.getId());
-        List<MediaResponse> mediaResponses = mediaList.stream()
-                .map(media -> modelMapper.map(media, MediaResponse.class))
-                .toList();
-        chatMessageResponse.setMediaList(mediaResponses);
-
-        return chatMessageResponse;
-    }
-
-    private void notifyReaction(ChatMessage chatMessage, MessageReaction messageReaction) {
+        // Tạo reaction notification
         ReactionNotification notification = ReactionNotification.builder()
                 .messageId(chatMessage.getId())
                 .userId(messageReaction.getUser().getId())
                 .reactionType(messageReaction.getReactionType())
                 .build();
 
-        List<Long> userIds = chatMessage.getConversation().getParticipants()
-                .stream().map(ParticipantInfo::getUserId).toList();
+        // Gửi socket event cho các client
+        notifyWebSocketEvent(notification, chatMessage.getConversation(), "reaction");
 
-        Map<String, WebSocketSession> webSocketSessions =
-                webSocketSessionRepository.findAllByUserIdIn(userIds)
-                        .stream().collect(Collectors.toMap(
-                                WebSocketSession::getSocketSessionId,
-                                Function.identity()
-                        ));
+        return toChatMessageResponse(chatMessage);
+    }
 
-        socketIOServer.getAllClients().forEach(client -> {
-            var session = webSocketSessions.get(client.getSessionId().toString());
-            if (session != null) {
-                try {
-                    String message = objectMapper.writeValueAsString(notification);
-                    client.sendEvent("reaction", message);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+    @Override
+    public ChatMessageResponse updateMessage(ChatMessageRequest request, Long messageId) {
+        ChatMessage chatMessage = chatMessageRepository.findById(messageId)
+                .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
+
+        chatMessage.setMessage(request.getMessage());
+        chatMessageRepository.save(chatMessage);
+
+        return toChatMessageResponse(chatMessage);
+    }
+
+    private List<MediaResponse> createMediaList(List<String> mediaUrls, Long messageId) {
+        List<MediaResponse> mediaList = new ArrayList<>();
+
+        for (String mediaUrl : mediaUrls) {
+            Media media = Media.builder()
+                    .url(mediaUrl)
+                    .sourceId(messageId)
+                    .sourceType("message")
+                    .type("image")
+                    .createdDate(Instant.now())
+                    .build();
+
+            mediaRepository.save(media);
+            mediaList.add(modelMapper.map(media, MediaResponse.class));
+        }
+
+        return mediaList;
+    }
+
+    private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
+        User user = securityUtil.getCurrentUser();
+
+        var chatMessageResponse = modelMapper.map(chatMessage, ChatMessageResponse.class);
+        chatMessageResponse.setMe(user.getId().equals(chatMessage.getSender().getUserId()));
+
+        List<Media> mediaList = mediaRepository.findBySourceTypeAndSourceId("message", chatMessage.getId());
+        List<MediaResponse> mediaResponses = mediaList.stream()
+                .map(media -> modelMapper.map(media, MediaResponse.class))
+                .toList();
+
+        chatMessageResponse.setMediaList(mediaResponses);
+        return chatMessageResponse;
     }
 
     /**
-     * Hàm dùng chung để gửi socket event cho các client trong conversation
+     * Generic method để gửi WebSocket notification cho tất cả participants trong conversation
+     *
+     * @param payload - Data cần gửi (có thể là ChatMessageResponse hoặc ReactionNotification)
+     * @param conversation - Conversation chứa danh sách participants
+     * @param eventName - Tên event ("message", "recalled", "reaction", v.v.)
      */
-    private void notifyMessage(ChatMessageResponse response, Conversation conversation, String eventName) {
+    private void notifyWebSocketEvent(Object payload, Conversation conversation, String eventName) {
         User currentUser = securityUtil.getCurrentUser();
 
-        List<Long> userIds = conversation.getParticipants().stream()
-                .map(ParticipantInfo::getUserId).toList();
+        // Lấy danh sách userId của tất cả participants
+        List<Long> participantUserIds = conversation.getParticipants().stream()
+                .map(ParticipantInfo::getUserId)
+                .toList();
 
-        Map<String, WebSocketSession> webSocketSessions =
-                webSocketSessionRepository.findAllByUserIdIn(userIds).stream()
-                        .collect(Collectors.toMap(
-                                WebSocketSession::getSocketSessionId,
-                                Function.identity()));
+        // Lấy tất cả WebSocket sessions của participants
+        Map<String, WebSocketSession> webSocketSessions = webSocketSessionRepository
+                .findAllByUserIdIn(participantUserIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        WebSocketSession::getSocketSessionId,
+                        Function.identity()
+                ));
 
+        // Gửi event đến tất cả connected clients
         socketIOServer.getAllClients().forEach(client -> {
-            var session = webSocketSessions.get(client.getSessionId().toString());
+            WebSocketSession session = webSocketSessions.get(client.getSessionId().toString());
+
             if (session != null) {
                 try {
-                    response.setMe(session.getUserId().equals(currentUser.getId()));
-                    String message = objectMapper.writeValueAsString(response);
+                    Object finalPayload = payload;
+
+                    // Đối với ChatMessageResponse, cần set thuộc tính "me" cho từng user
+                    if (payload instanceof ChatMessageResponse chatResponse) {
+                        // Clone response để tránh modify original object
+                        ChatMessageResponse clonedResponse = modelMapper.map(chatResponse, ChatMessageResponse.class);
+                        clonedResponse.setMe(session.getUserId().equals(currentUser.getId()));
+                        clonedResponse.setMediaList(chatResponse.getMediaList());
+                        finalPayload = clonedResponse;
+                    }
+
+                    String message = objectMapper.writeValueAsString(finalPayload);
                     client.sendEvent(eventName, message);
+
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    // Log error instead of throwing runtime exception
+                    System.err.println("Error serializing WebSocket message: " + e.getMessage());
                 }
             }
         });
