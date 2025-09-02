@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Button,
@@ -8,6 +8,8 @@ import {
   Image,
   Dropdown,
   Menu,
+  message,
+  Spin,
 } from "antd";
 import {
   HeartOutlined,
@@ -20,6 +22,7 @@ import {
 import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
 import CommentSection from "./CommentSection";
+import { commentService } from "../../services/commentService";
 
 const { Text, Paragraph } = Typography;
 
@@ -36,16 +39,57 @@ const PostShare = ({
   onShare,
   onDeletePostShare,
 }) => {
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  console.log("comment",comments)
+
+  // Function to fetch comments for this post share
+  const fetchComments = async () => {
+    if (commentsLoaded || loadingComments || !postShare?.id) return;
+
+    setLoadingComments(true);
+    try {
+      const response = await commentService.getCommentsByPostShareId(postShare.id);
+      if (response.data && response.data.code === 1000) {
+        setComments(response.data.result || []);
+        setCommentsLoaded(true);
+      } else {
+        message.error("Không thể tải bình luận!");
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      message.error("Đã xảy ra lỗi khi tải bình luận!");
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  // Fetch comments when comment section is expanded
+  useEffect(() => {
+    if (expandedComments.has(postShare?.post?.id) && !commentsLoaded && postShare?.id) {
+      fetchComments();
+    }
+  }, [expandedComments, commentsLoaded, postShare?.id, postShare?.post?.id]);
+
   if (!postShare || !postShare.post) return null;
 
   const { user, sharedContent, createdAt, post } = postShare;
   const isLiking = likingPosts.has(post.id);
   const isLiked = post.isLiked || false;
   const likeCount = postShare.likes?.length || 0;
-  const commentCount = postShare.comments?.length || 0;
+  const commentCount = comments.length || postShare.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
 
-  console.log("postShare",postShare)
+  console.log("postShare", postShare);
+
+  // Create a modified postShare object with fetched comments for CommentSection
+  const postShareWithComments = {
+    ...postShare,
+    comments: comments,
+    commentCount: comments.length,
+  };
 
   const menu = (
     <Menu
@@ -166,13 +210,32 @@ const PostShare = ({
       </div>
 
       {isCommentsExpanded && (
-        <CommentSection
-          post={postShare}
-          commentingPosts={commentingPosts}
-          setCommentingPosts={setCommentingPosts}
-          setPosts={setPosts}
-          commentForms={commentForms}
-        />
+        <div>
+          {loadingComments ? (
+            <div style={{ textAlign: "center", padding: "20px" }}>
+              <Spin />
+              <p>Đang tải bình luận...</p>
+            </div>
+          ) : (
+            <CommentSection
+              post={postShareWithComments}
+              commentingPosts={commentingPosts}
+              setCommentingPosts={setCommentingPosts}
+              setPosts={(updateFn) => {
+                // Update the local comments state
+                if (typeof updateFn === "function") {
+                  const updatedPosts = updateFn([postShareWithComments]);
+                  if (updatedPosts[0]) {
+                    setComments(updatedPosts[0].comments || []);
+                  }
+                }
+                // Also update the main posts state if needed
+                setPosts(updateFn);
+              }}
+              commentForms={commentForms}
+            />
+          )}
+        </div>
       )}
     </Card>
   );

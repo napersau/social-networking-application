@@ -53,7 +53,9 @@ export const API = {
   UPDATE_COMMENT: "/comments/update",
   DELETE_COMMENT: (id) => `/comments/${id}`,
   REPLY_COMMENT: "/comments/reply",
-  GET_COMMENTS_BY_POST_ID: "/comments/:postId",
+  GET_COMMENTS_BY_POST_ID: "/comments/post/:postId", // 🔹 Revert về endpoint cũ
+  // 🔹 Tạm thời comment out post share endpoint cho đến khi backend ready
+  // GET_COMMENTS_BY_POST_SHARE_ID: (postShareId) => `/comments/post-share/${postShareId}`,
 
   FRIENDSHIP: "/friendship",
   NOTIFICATIONS: "/notifications",

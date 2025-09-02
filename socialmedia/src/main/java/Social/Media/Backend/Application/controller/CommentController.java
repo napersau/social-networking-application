@@ -55,9 +55,18 @@ public class CommentController {
                 .build();
     }
 
-    @GetMapping("/{postId}")
+    @GetMapping("/post/{postId}")
     ApiResponse<List<CommentResponse>> getCommentsByPostId(@PathVariable Long postId) {
         List<CommentResponse> response = commentService.getCommentsByPostId(postId);
+        return ApiResponse.<List<CommentResponse>>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/postShare/{postShareId}")
+    ApiResponse<List<CommentResponse>> getCommentsByPostShareId(@PathVariable Long postShareId) {
+        List<CommentResponse> response = commentService.getCommentsByPostShareId(postShareId);
         return ApiResponse.<List<CommentResponse>>builder()
                 .code(1000)
                 .result(response)

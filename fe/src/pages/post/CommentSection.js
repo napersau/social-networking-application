@@ -31,7 +31,12 @@ const CommentSection = ({
   setPosts,
   commentForms,
 }) => {
-  const isCommenting = commentingPosts.has(post.id);
+  // Determine if this is a post share or regular post
+  const isPostShare = post.sharedContent !== undefined || post.post !== undefined;
+  const postId = isPostShare ? post.id : post.id; // For post share, use the post share ID
+  const actualPost = isPostShare ? post : post; // The actual post object
+  
+  const isCommenting = commentingPosts.has(postId);
   const comments = post.comments || [];
   const commentCount = post.commentCount || comments.length;
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -94,10 +99,20 @@ const CommentSection = ({
     setCommentingPosts((prev) => new Set(prev).add(postId));
 
     try {
-      const response = await commentService.createComment(
-        postId,
-        content.trim()
-      );
+      let response;
+      
+      // Use different API method based on whether it's a post share or regular post
+      if (isPostShare) {
+        response = await commentService.createCommentForPostShare(
+          postId,
+          content.trim()
+        );
+      } else {
+        response = await commentService.createComment(
+          postId,
+          content.trim()
+        );
+      }
 
       if (response.data && response.data.code === 1000) {
         setPosts((prevPosts) =>
@@ -138,11 +153,22 @@ const CommentSection = ({
     }
 
     try {
-      const response = await commentService.replyComment(
-        postId,
-        commentId,
-        content.trim()
-      );
+      let response;
+      
+      // Use different API method based on whether it's a post share or regular post
+      if (isPostShare) {
+        response = await commentService.replyCommentForPostShare(
+          postId,
+          commentId,
+          content.trim()
+        );
+      } else {
+        response = await commentService.replyComment(
+          postId,
+          commentId,
+          content.trim()
+        );
+      }
 
       if (response.data && response.data.code === 1000) {
         const newReply = response.data.result;
@@ -358,7 +384,7 @@ const CommentSection = ({
                     <Button
                       type="primary"
                       size="small"
-                      onClick={() => handleUpdateComment(comment.id, post.id)}
+                      onClick={() => handleUpdateComment(comment.id, postId)}
                     >
                       Lưu
                     </Button>
@@ -427,7 +453,7 @@ const CommentSection = ({
                         type="primary"
                         size="small"
                         onClick={() =>
-                          handleReplyComment(post.id, comment.id, replyContent)
+                          handleReplyComment(postId, comment.id, replyContent)
                         }
                       >
                         Gửi trả lời
@@ -439,7 +465,7 @@ const CommentSection = ({
             </div>
 
             {(currentUserId === comment.user?.id ||
-              currentUserId === post.user.id) && (
+              currentUserId === actualPost.user?.id) && (
               <Dropdown
                 overlay={
                   <Menu>
@@ -457,7 +483,7 @@ const CommentSection = ({
                     <Menu.Item
                       key="delete"
                       danger
-                      onClick={() => confirmDeleteComment(comment.id, post.id)}
+                      onClick={() => confirmDeleteComment(comment.id, postId)}
                     >
                       Xóa
                     </Menu.Item>
@@ -487,13 +513,13 @@ const CommentSection = ({
       <Form
         form={commentForms}
         onFinish={(values) =>
-          handleSubmitComment(post.id, values[`comment_${post.id}`])
+          handleSubmitComment(postId, values[`comment_${postId}`])
         }
       >
-        <Form.Item name={`comment_${post.id}`} style={{ marginBottom: 8 }}>
+        <Form.Item name={`comment_${postId}`} style={{ marginBottom: 8 }}>
           <div className="comment-input-container">
             <Avatar
-              src={post.user.avatarUrl}
+              src={actualPost.user?.avatarUrl}
               size={32}
               icon={<UserOutlined />}
             />
@@ -505,7 +531,7 @@ const CommentSection = ({
                 if (e.shiftKey) return;
                 e.preventDefault();
                 const content = e.target.value;
-                handleSubmitComment(post.id, content);
+                handleSubmitComment(postId, content);
               }}
             />
             <Button

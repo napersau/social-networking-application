@@ -2,9 +2,9 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.CommentRequest;
 import Social.Media.Backend.Application.dto.response.CommentResponse;
-import Social.Media.Backend.Application.dto.response.PostResponse;
 import Social.Media.Backend.Application.entity.Comment;
 import Social.Media.Backend.Application.entity.Post;
+import Social.Media.Backend.Application.entity.PostShare;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
@@ -12,20 +12,16 @@ import Social.Media.Backend.Application.mapper.CommentMapper;
 import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
-import Social.Media.Backend.Application.repository.UserRepository;
+import Social.Media.Backend.Application.repository.PostShareRepository;
 import Social.Media.Backend.Application.service.CommentService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +30,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final ModelMapper modelMapper;
     private final PostRepository postRepository;
+    private final PostShareRepository postShareRepository;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final SecurityUtil securityUtil;
@@ -41,19 +38,29 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponse createComment(CommentRequest request) {
-
         User user = securityUtil.getCurrentUser();
 
-        Post post = postRepository.findById(request.getPostId()).orElseThrow(()
-                -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        Post post = null;
+        PostShare postShare = null;
 
         Comment comment = Comment.builder()
                 .content(request.getContent())
                 .user(user)
                 .imageUrl(request.getImageUrl())
-                .post(post)
                 .createdAt(Instant.now())
                 .build();
+
+        if (request.getPostId() != null) {
+            post = postRepository.findById(request.getPostId())
+                    .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+            comment.setPost(post);
+        } else {
+            postShare = postShareRepository.findById(request.getPostShareId())
+                    .orElseThrow(() -> new AppException(ErrorCode.POST_SHARE_NOT_EXISTED));
+            comment.setPostShare(postShare);
+            comment.setPost(postShare.getPost());
+        }
+
         commentRepository.save(comment);
         return modelMapper.map(comment, CommentResponse.class);
     }
@@ -100,10 +107,23 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentResponse> getCommentsByPostId(Long postId) {
-
         User user = securityUtil.getCurrentUser();
 
         List<Comment> comments = commentRepository.findAllByPostId(postId);
+
+        return comments.stream()
+                .filter(comment -> comment.getPostShare() == null)
+                .map(commentMapper::toCommentResponse)
+                .peek(item -> item.setIsLiked(likeRepository.findByUserIdAndCommentId(user.getId(), item.getId()).isPresent()))
+                .toList();
+    }
+
+    @Override
+    public List<CommentResponse> getCommentsByPostShareId(Long postShareId) {
+
+        User user = securityUtil.getCurrentUser();
+
+        List<Comment> comments = commentRepository.findAllByPostShareId(postShareId);
         List<CommentResponse> commentResponses = comments.stream().map(commentMapper::toCommentResponse).toList();
         for(CommentResponse item : commentResponses){
             item.setIsLiked(likeRepository.findByUserIdAndCommentId(user.getId(), item.getId()).isPresent());

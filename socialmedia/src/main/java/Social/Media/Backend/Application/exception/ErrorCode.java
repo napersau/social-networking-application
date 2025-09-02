@@ -20,6 +20,7 @@ public enum ErrorCode {
     MESSAGE_NOT_FOUND(1011, "Message not existed", HttpStatus.NOT_FOUND),
     USER_ALREADY_IN_CONVERSATION(1012, "User already in conversation", HttpStatus.BAD_REQUEST),
     USER_NOT_IN_CONVERSATION(1014, "User not in conversation", HttpStatus.BAD_REQUEST),
+    POST_SHARE_NOT_EXISTED(1015, "Post share not existed", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

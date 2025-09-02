@@ -9,4 +9,5 @@ public class CommentRequest {
     private Long postId;
     private Long parentCommentId;
     private String imageUrl;
+    private Long postShareId;
 }

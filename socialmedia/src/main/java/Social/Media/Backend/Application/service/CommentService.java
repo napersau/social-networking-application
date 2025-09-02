@@ -11,4 +11,5 @@ public interface CommentService {
     void deleteComment(Long id);
     CommentResponse replyComment(CommentRequest request);
     List<CommentResponse> getCommentsByPostId(Long postId);
+    List<CommentResponse> getCommentsByPostShareId(Long postShareId);
 }

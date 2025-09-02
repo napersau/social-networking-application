@@ -25,6 +25,28 @@ export const commentService = {
     );
   },
 
+  /**
+   * Gửi comment cho một post share
+   * @param {number} postShareId - ID của post share
+   * @param {string} content - Nội dung comment
+   * @returns {Promise} - Kết quả từ API
+   */
+  createCommentForPostShare: async (postShareId, content) => {
+    return await httpClient.post(
+      API.CREATE_COMMENT || "/api/v1/comments/create",
+      {
+        postShareId,
+        content,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  },
+
   updateComment: async (commentId, content) => {
     return await httpClient.post(
       `/comments/update/${commentId}`,
@@ -67,12 +89,54 @@ export const commentService = {
     );
   },
 
+  /**
+   * Trả lời comment trong post share
+   * @param {number} postShareId - ID của post share
+   * @param {number} commentId - ID của comment cha
+   * @param {string} content - Nội dung reply
+   * @param {string} imageUrl - URL hình ảnh (optional)
+   * @returns {Promise} - Kết quả từ API
+   */
+  replyCommentForPostShare: async (postShareId, commentId, content, imageUrl = null) => {
+    return await httpClient.post(
+      API.REPLY_COMMENT || "/api/v1/comments/reply",
+      {
+        postShareId,
+        commentId, // ID của comment cha (reply vào comment này)
+        content,
+        imageUrl,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  },
+
   getCommentsByPostId: async (postId) => {
     return await httpClient.get(
       `${
         API.GET_COMMENTS_BY_POST_ID?.replace(":postId", postId) ||
         `/comments/${postId}`
       }`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      }
+    );
+  },
+
+  /**
+   * Lấy danh sách comment cho một post share
+   * @param {number} postShareId - ID của post share
+   * @returns {Promise} - Kết quả từ API
+   */
+  getCommentsByPostShareId: async (postShareId) => {
+    return await httpClient.get(
+      `/comments/postShare/${postShareId}`,
       {
         headers: {
           Authorization: `Bearer ${getToken()}`,
