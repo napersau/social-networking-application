@@ -2,16 +2,10 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.LikeRequest;
 import Social.Media.Backend.Application.dto.response.LikeResponse;
-import Social.Media.Backend.Application.entity.Comment;
-import Social.Media.Backend.Application.entity.Like;
-import Social.Media.Backend.Application.entity.Post;
-import Social.Media.Backend.Application.entity.User;
+import Social.Media.Backend.Application.entity.*;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
-import Social.Media.Backend.Application.repository.CommentRepository;
-import Social.Media.Backend.Application.repository.LikeRepository;
-import Social.Media.Backend.Application.repository.PostRepository;
-import Social.Media.Backend.Application.repository.UserRepository;
+import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.LikeService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
@@ -33,6 +27,7 @@ public class LikeServiceImpl implements LikeService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final PostShareRepository postShareRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -67,6 +62,30 @@ public class LikeServiceImpl implements LikeService {
         Comment comment = commentRepository.findById(request.getCmtId()).orElseThrow(()
                 -> new RuntimeException("Comment not found"));
         Like like = buildLike(user, request.getReactionType(), null, comment);
+        likeRepository.save(like);
+        return modelMapper.map(like, LikeResponse.class);
+    }
+
+    @Override
+    public LikeResponse likePostShare(LikeRequest request) {
+        User user = securityUtil.getCurrentUser();
+
+        if(likeRepository.findByUserIdAndPostShareId(user.getId(), request.getPostId()).isPresent()){
+            Like like = likeRepository.findByUserIdAndPostShareId(user.getId(), request.getPostShareId()).get();
+            likeRepository.delete(like);
+            return null;
+        }
+
+        PostShare post =  postShareRepository.findById(request.getPostShareId()).orElseThrow(()
+                -> new AppException(ErrorCode.POST_SHARE_NOT_EXISTED));
+
+        Like like = Like.builder()
+                .user(user)
+                .reactionType(request.getReactionType())
+                .postShare(post)
+                .createdAt(Instant.now())
+                .build();
+
         likeRepository.save(like);
         return modelMapper.map(like, LikeResponse.class);
     }

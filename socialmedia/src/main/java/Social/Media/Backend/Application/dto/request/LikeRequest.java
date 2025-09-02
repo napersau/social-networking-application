@@ -7,4 +7,5 @@ public class LikeRequest {
     private Long postId;
     private Long cmtId;
     private String reactionType;
+    private Long postShareId;
 }
