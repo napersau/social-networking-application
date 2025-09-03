@@ -15,4 +15,7 @@ public class PostShareResponse {
     private Instant createdAt;
     private User user;
     private PostResponse post;
+    private Boolean isLiked;
+    private String reactionType;
+
 }

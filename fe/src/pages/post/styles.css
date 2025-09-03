@@ -1035,3 +1035,73 @@ Post Page Styles .post-page {
 .post-share-card {
   width: 100% !important;
 }
+
+/* Reaction Box Styles */
+.reaction-box {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.reaction-item {
+  padding: 4px 8px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.2s ease !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.reaction-item:hover {
+  transform: scale(1.2) !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.reaction-summary {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.reaction-icons {
+  display: flex;
+  align-items: center;
+}
+
+.reaction-icon-small {
+  font-size: 16px;
+  background: white;
+  border-radius: 50%;
+  padding: 2px;
+  border: 1px solid #f0f0f0;
+}
+
+.reaction-count {
+  font-size: 13px;
+  color: #65676b;
+  cursor: pointer;
+}
+
+.reaction-count:hover {
+  text-decoration: underline;
+}
+
+.action-button.reacted {
+  font-weight: bold !important;
+}
+
+.action-button .reaction-emoji {
+  margin-right: 4px;
+}
+
+.button-text.reacted {
+  font-weight: 600;
+}

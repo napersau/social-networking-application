@@ -70,7 +70,7 @@ public class LikeServiceImpl implements LikeService {
     public LikeResponse likePostShare(LikeRequest request) {
         User user = securityUtil.getCurrentUser();
 
-        if(likeRepository.findByUserIdAndPostShareId(user.getId(), request.getPostId()).isPresent()){
+        if(likeRepository.findByUserIdAndPostShareId(user.getId(), request.getPostShareId()).isPresent()){
             Like like = likeRepository.findByUserIdAndPostShareId(user.getId(), request.getPostShareId()).get();
             likeRepository.delete(like);
             return null;

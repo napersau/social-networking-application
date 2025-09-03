@@ -37,6 +37,16 @@ export const likeService = {
     });
   },
 
+  // Like post share
+  likePostShare: async (likeData) => {
+    return await httpClient.post(API.LIKE_POST_SHARE || "/like/postShare", likeData, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+        "Content-Type": "application/json",
+      },
+    });
+  },
+
 
 
   // Lấy danh sách người đã like một bài viết

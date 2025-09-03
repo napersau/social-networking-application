@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Form, List, message, Spin, Row, Col } from "antd";
+import { Form, List, message, Row, Col } from "antd";
 import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
 import { getPostShares, deletePostShare } from "../../services/postShareService";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import CreatePostButton from "./CreatePostButton";
-import EmptyPosts from "./EmptyPosts";
 import PostShare from "./PostShare";
 import "./styles.css";
 
@@ -42,6 +41,10 @@ const PostPage = () => {
       const mappedSharedPosts = sharedPosts.map((share) => ({
         ...share,
         isShared: true,
+        // Ensure likes property exists
+        likes: share.likes || [],
+        // Ensure isLiked property exists
+        isLiked: share.isLiked || false,
       }));
 
       const combined = [...normalPosts, ...mappedSharedPosts];
@@ -58,26 +61,67 @@ const PostPage = () => {
     }
   };
 
-  const handleLike = async (postId, reactionType = "Like") => {
+  const handleLike = async (postId, reactionType = "Like", isPostShare = false, postShareId = null) => {
     if (likingPosts.has(postId)) return;
+
+    console.log("handleLike called with:", { postId, reactionType, isPostShare, postShareId }); // Debug log
 
     setLikingPosts((prev) => new Set(prev).add(postId));
     try {
-      const response = await likeService.likePost(postId, reactionType);
+      let response;
+      
+      if (isPostShare && postShareId) {
+        // Call API for post share
+        console.log("Calling likePostShare API");
+        response = await likeService.likePostShare({
+          postShareId: postShareId,
+          reactionType: reactionType
+        });
+      } else {
+        // Call API for regular post
+        console.log("Calling likePost API");
+        response = await likeService.likePost(postId, reactionType);
+      }
+
       if (response.data && response.data.code === 1000) {
-        setPosts((prevPosts) =>
-          prevPosts.map((post) => {
-            if (post.id === postId) {
-              return {
-                ...post,
-                reactionType,
-                likes: post.likes || 0,
-              };
-            }
-            return post;
-          })
-        );
-        message.success(`Bạn đã chọn cảm xúc: ${reactionType}`);
+        console.log("Like response:", response.data); // Debug log
+        
+        setPosts((prevPosts) => {
+          try {
+            return prevPosts.map((post) => {
+              if (isPostShare && postShareId && post.id === postShareId) {
+                // Update post share - so sánh với postShareId
+                console.log("Updating post share:", post.id, "with result:", response.data.result);
+                return {
+                  ...post,
+                  likes: response.data.result?.likes || post.likes || [],
+                  isLiked: response.data.result?.isLiked !== undefined ? response.data.result.isLiked : (post.isLiked || false),
+                  reactionType: response.data.result?.reactionType || post.reactionType
+                };
+              } else if (!isPostShare && post.id === postId) {
+                // Update regular post
+                console.log("Updating regular post:", post.id, "with result:", response.data.result);
+                return {
+                  ...post,
+                  reactionType,
+                  likes: response.data.result?.likes || post.likes || 0,
+                  isLiked: response.data.result?.isLiked !== undefined ? response.data.result.isLiked : (post.isLiked || false)
+                };
+              }
+              return post;
+            });
+          } catch (mapError) {
+            console.error("Error in setPosts map function:", mapError);
+            return prevPosts; // Return unchanged if there's an error
+          }
+        });
+        
+        const isLiked = response.data.result?.isLiked;
+        if (isLiked !== undefined) {
+          message.success(isLiked ? `Bạn đã thích bài viết` : `Bạn đã bỏ thích bài viết`);
+        } else {
+          message.success(`Đã cập nhật cảm xúc: ${reactionType}`);
+        }
       } else {
         message.warning("Không thể thực hiện hành động này!");
       }

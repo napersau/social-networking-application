@@ -7,6 +7,7 @@ import Social.Media.Backend.Application.entity.PostShare;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
+import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.repository.PostShareRepository;
 import Social.Media.Backend.Application.repository.UserRepository;
@@ -28,6 +29,7 @@ import java.util.List;
 public class PostShareServiceImpl implements PostShareService {
     private final SecurityUtil securityUtil;
     private final PostShareRepository postShareRepository;
+    private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PostRepository postRepository;
@@ -38,7 +40,11 @@ public class PostShareServiceImpl implements PostShareService {
         User user = securityUtil.getCurrentUser();
 
         List<PostShare> postShareResponses = postShareRepository.findAllByUserId(user.getId());
-        return postShareResponses.stream().map(postShare -> modelMapper.map(postShare, PostShareResponse.class)).toList();
+        List<PostShareResponse> postShareResponseList = postShareResponses
+                .stream()
+                .map(postShare -> modelMapper.map(postShare, PostShareResponse.class))
+                .toList();
+        return getPostShareResponses(user, postShareResponseList);
     }
 
     @Override
@@ -67,5 +73,19 @@ public class PostShareServiceImpl implements PostShareService {
     @Override
     public void deletePostShare(Long id) {
         postShareRepository.deleteById(id);
+    }
+
+    private final List<PostShareResponse> getPostShareResponses(User user, List<PostShareResponse> responses) {
+        for (PostShareResponse response : responses) {
+            likeRepository.findByUserIdAndPostShareId(user.getId(), response.getId())
+                    .ifPresentOrElse(like -> {
+                        response.setIsLiked(true);
+                        response.setReactionType(like.getReactionType());
+                    }, () -> {
+                        response.setIsLiked(false);
+                        response.setReactionType(null);
+                    });
+        }
+        return responses;
     }
 }
