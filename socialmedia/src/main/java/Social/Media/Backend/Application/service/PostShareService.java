@@ -9,4 +9,5 @@ public interface PostShareService {
     List<PostShareResponse> getPostShares();
     PostShareResponse createPostShare(PostShareRequest request);
     void deletePostShare(Long id);
+    List<PostShareResponse> getPostSharesByUserId(Long userId);
 }

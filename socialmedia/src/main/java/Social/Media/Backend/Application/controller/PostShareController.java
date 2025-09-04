@@ -43,4 +43,13 @@ public class PostShareController {
                 .build();
     }
 
+    @GetMapping("/{userId}")
+    ApiResponse<List<PostShareResponse>> getPostSharesByUserId(@PathVariable("userId") Long userId) {
+        List<PostShareResponse> postShareResponseList = postShareService.getPostSharesByUserId(userId);
+        return ApiResponse.<List<PostShareResponse>>builder()
+                .code(1000)
+                .result(postShareResponseList)
+                .build();
+    }
+
 }

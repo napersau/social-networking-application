@@ -22,7 +22,6 @@ import {
 } from "@ant-design/icons";
 import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
-import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 
 const { Text, Paragraph } = Typography;
@@ -39,6 +38,7 @@ const PostShare = ({
   onComment,
   onShare,
   onDeletePostShare,
+  handleSubmitComment,
 }) => {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -227,19 +227,24 @@ const PostShare = ({
     );
   };
 
+  const myId = localStorage.getItem("userId");
+  const isMyPost = user.id.toString() === myId;
+
   const menu = (
     <Menu
       items={[
-        {
-          key: "edit",
-          label: "Chỉnh sửa bài viết",
-          onClick: () => console.log("Edit post share", postShare.id),
-        },
-        {
-          key: "delete",
-          label: <span style={{ color: "red" }}>Xóa bài viết</span>,
-          onClick: () => onDeletePostShare(postShare.id),
-        },
+        ...(isMyPost ? [
+          {
+            key: "edit",
+            label: "Chỉnh sửa bài viết",
+            onClick: () => console.log("Edit post share", postShare.id),
+          },
+          {
+            key: "delete",
+            label: <span style={{ color: "red" }}>Xóa bài viết</span>,
+            onClick: () => onDeletePostShare(postShare.id),
+          },
+        ] : []),
       ]}
     />
   );
@@ -260,9 +265,11 @@ const PostShare = ({
           </Text>
           <Text type="secondary"> đã chia sẻ một bài viết</Text>
         </div>
-        <Dropdown overlay={menu} trigger={["click"]}>
-          <EllipsisOutlined style={{ fontSize: 20, cursor: "pointer" }} />
-        </Dropdown>
+        {isMyPost && (
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <EllipsisOutlined style={{ fontSize: 20, cursor: "pointer" }} />
+          </Dropdown>
+        )}
       </div>
 
       {/* Nội dung người share viết thêm */}
@@ -352,7 +359,7 @@ const PostShare = ({
         <Button
           type="text"
           icon={<RetweetOutlined />}
-          onClick={() => onShare(post.id)}
+          onClick={() => onShare(post)}
           className="action-button"
           aria-label="Chia sẻ bài viết"
         >
@@ -361,30 +368,89 @@ const PostShare = ({
       </div>
 
       {isCommentsExpanded && (
-        <div>
+        <div style={{ marginTop: '16px' }}>
           {loadingComments ? (
             <div style={{ textAlign: "center", padding: "20px" }}>
               <Spin />
               <p>Đang tải bình luận...</p>
             </div>
           ) : (
-            <CommentSection
-              post={postShareWithComments}
-              commentingPosts={commentingPosts}
-              setCommentingPosts={setCommentingPosts}
-              setPosts={(updateFn) => {
-                // Update the local comments state
-                if (typeof updateFn === "function") {
-                  const updatedPosts = updateFn([postShareWithComments]);
-                  if (updatedPosts[0]) {
-                    setComments(updatedPosts[0].comments || []);
-                  }
-                }
-                // Also update the main posts state if needed
-                setPosts(updateFn);
-              }}
-              commentForms={commentForms}
-            />
+            <div className="comment-section">
+              {/* Comment Form */}
+              <div className="comment-form" style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Avatar size={32} src={user.avatarUrl} icon={<UserOutlined />} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        placeholder="Viết bình luận..."
+                        style={{
+                          flex: 1,
+                          padding: '8px 12px',
+                          border: '1px solid #d9d9d9',
+                          borderRadius: '20px',
+                          outline: 'none'
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && e.target.value.trim()) {
+                            handleSubmitComment(post.id, e.target.value);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        type="primary"
+                        size="small"
+                        onClick={(e) => {
+                          const input = e.target.closest('.comment-form').querySelector('input');
+                          if (input.value.trim()) {
+                            handleSubmitComment(post.id, input.value);
+                            input.value = '';
+                          }
+                        }}
+                      >
+                        Gửi
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments List */}
+              {comments.length > 0 && (
+                <div className="comments-list">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="comment-item" style={{ marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <Avatar size={32} src={comment.user?.avatarUrl} icon={<UserOutlined />} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            background: '#f5f5f5',
+                            padding: '8px 12px',
+                            borderRadius: '18px',
+                            display: 'inline-block'
+                          }}>
+                            <Text strong style={{ fontSize: '13px' }}>
+                              {comment.user?.firstName} {comment.user?.lastName}
+                            </Text>
+                            <div style={{ marginTop: '2px' }}>
+                              <Text>{comment.content}</Text>
+                            </div>
+                          </div>
+                          <div style={{ marginTop: '4px', paddingLeft: '12px' }}>
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              {comment.createdAt
+                                ? format(new Date(comment.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })
+                                : "Vừa xong"}
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

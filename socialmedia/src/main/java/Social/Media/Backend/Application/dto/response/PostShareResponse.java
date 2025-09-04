@@ -17,5 +17,7 @@ public class PostShareResponse {
     private PostResponse post;
     private Boolean isLiked;
     private String reactionType;
+    private Integer likesCount;
+    private Integer commentsCount;
 
 }

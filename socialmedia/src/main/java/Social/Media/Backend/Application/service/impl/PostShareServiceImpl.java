@@ -7,18 +7,13 @@ import Social.Media.Backend.Application.entity.PostShare;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
-import Social.Media.Backend.Application.repository.LikeRepository;
-import Social.Media.Backend.Application.repository.PostRepository;
-import Social.Media.Backend.Application.repository.PostShareRepository;
-import Social.Media.Backend.Application.repository.UserRepository;
+import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.PostShareService;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,9 +25,9 @@ public class PostShareServiceImpl implements PostShareService {
     private final SecurityUtil securityUtil;
     private final PostShareRepository postShareRepository;
     private final LikeRepository likeRepository;
-    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public List<PostShareResponse> getPostShares() {
@@ -75,7 +70,18 @@ public class PostShareServiceImpl implements PostShareService {
         postShareRepository.deleteById(id);
     }
 
-    private final List<PostShareResponse> getPostShareResponses(User user, List<PostShareResponse> responses) {
+    @Override
+    public List<PostShareResponse> getPostSharesByUserId(Long userId) {
+        List<PostShare> postShares = postShareRepository.findAllByUserId(userId);
+        User user = securityUtil.getCurrentUser();
+        List<PostShareResponse> responses = postShares
+                .stream()
+                .map(postShare -> modelMapper.map(postShare, PostShareResponse.class))
+                .toList();
+        return getPostShareResponses(user, responses);
+    }
+
+    private List<PostShareResponse> getPostShareResponses(User user, List<PostShareResponse> responses) {
         for (PostShareResponse response : responses) {
             likeRepository.findByUserIdAndPostShareId(user.getId(), response.getId())
                     .ifPresentOrElse(like -> {
@@ -85,6 +91,9 @@ public class PostShareServiceImpl implements PostShareService {
                         response.setIsLiked(false);
                         response.setReactionType(null);
                     });
+
+            Integer commentCount = commentRepository.countByPostShareId(response.getId());
+            response.setCommentsCount(commentCount);
         }
         return responses;
     }

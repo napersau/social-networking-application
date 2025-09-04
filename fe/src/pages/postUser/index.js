@@ -5,9 +5,10 @@ import { postService } from "../../services/postService";
 import { likeService } from "../../services/likeService";
 import { commentService } from "../../services/commentService";
 import { createNotification } from "../../services/notificationService";
-import { createPostShare } from "../../services/postShareService";
+import { createPostShare, getPostSharesByUserId, deletePostShare } from "../../services/postShareService";
 import UserInfoCard from "./UserInfoCard";
 import PostCard from "./PostCard";
+import PostShare from "./PostShare";
 import ShareModal from "./ShareModal";
 import EmptyPosts from "./EmptyPosts";
 import "./styles.css";
@@ -40,11 +41,37 @@ const PostUser = () => {
   const fetchUserPosts = async () => {
     setLoading(true);
     try {
-      const response = await postService.getPostsByUserId(userId);
-      if (response.data && response.data.code === 1000) {
-        setPosts(response.data.result);
-        if (response.data.result.length > 0) {
-          setUserInfo(response.data.result[0].user);
+      const [postsRes, sharesRes] = await Promise.all([
+        postService.getPostsByUserId(userId),
+        getPostSharesByUserId(userId),
+      ]);
+
+      const normalPosts = postsRes.data?.result || [];
+      const sharedPosts = sharesRes.data?.result || [];
+
+      // Đánh dấu shared post để render đúng component (PostShare)
+      const mappedSharedPosts = sharedPosts.map((share) => ({
+        ...share,
+        isShared: true,
+        // Ensure likes property exists
+        likes: share.likes || [],
+        // Ensure isLiked property exists
+        isLiked: share.isLiked || false,
+      }));
+
+      const combined = [...normalPosts, ...mappedSharedPosts];
+
+      // Sắp xếp theo thời gian mới nhất
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      setPosts(combined);
+      if (combined.length > 0) {
+        // Lấy thông tin user từ post đầu tiên (normal post hoặc shared post)
+        const firstPost = combined[0];
+        if (firstPost.isShared) {
+          setUserInfo(firstPost.user);
+        } else {
+          setUserInfo(firstPost.user);
         }
       }
     } catch (error) {
@@ -54,26 +81,69 @@ const PostUser = () => {
     }
   };
 
-  const handleLike = async (postId) => {
+  const handleLike = async (postId, reactionType = "Like", isPostShare = false, postShareId = null) => {
     if (likingPosts.has(postId)) return;
+
+    console.log("handleLike called with:", { postId, reactionType, isPostShare, postShareId }); // Debug log
 
     setLikingPosts((prev) => new Set(prev).add(postId));
     try {
-      const reactionType = "Like";
-      const response = await likeService.likePost(postId, reactionType);
-      if (response.data && response.data.code === 1000) {
-        const updatedPosts = posts.map((post) => {
-          if (post.id === postId) {
-            const wasLiked = post.isLiked;
-            return {
-              ...post,
-              isLiked: !wasLiked,
-              likes: wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1,
-            };
-          }
-          return post;
+      let response;
+      
+      if (isPostShare && postShareId) {
+        // Call API for post share
+        console.log("Calling likePostShare API");
+        response = await likeService.likePostShare({
+          postShareId: postShareId,
+          reactionType: reactionType
         });
+      } else {
+        // Call API for regular post
+        console.log("Calling likePost API");
+        response = await likeService.likePost(postId, reactionType);
+      }
 
+      if (response.data && response.data.code === 1000) {
+        console.log("Like response:", response.data); // Debug log
+        
+        setPosts((prevPosts) => {
+          try {
+            return prevPosts.map((post) => {
+              if (isPostShare && postShareId && post.id === postShareId) {
+                // Update post share - so sánh với postShareId
+                console.log("Updating post share:", post.id, "with result:", response.data.result);
+                return {
+                  ...post,
+                  likes: response.data.result?.likes || post.likes || [],
+                  isLiked: response.data.result?.isLiked !== undefined ? response.data.result.isLiked : (post.isLiked || false),
+                  reactionType: response.data.result?.reactionType || post.reactionType
+                };
+              } else if (!isPostShare && post.id === postId) {
+                // Update regular post
+                console.log("Updating regular post:", post.id, "with result:", response.data.result);
+                return {
+                  ...post,
+                  reactionType,
+                  likes: response.data.result?.likes || post.likes || 0,
+                  isLiked: response.data.result?.isLiked !== undefined ? response.data.result.isLiked : (post.isLiked || false)
+                };
+              }
+              return post;
+            });
+          } catch (mapError) {
+            console.error("Error in setPosts map function:", mapError);
+            return prevPosts; // Return unchanged if there's an error
+          }
+        });
+        
+        const isLiked = response.data.result?.isLiked;
+        if (isLiked !== undefined) {
+          message.success(isLiked ? `Bạn đã thích bài viết` : `Bạn đã bỏ thích bài viết`);
+        } else {
+          message.success(`Đã cập nhật cảm xúc: ${reactionType}`);
+        }
+
+        // Thông báo cho chủ bài viết nếu không phải là chính mình
         const currentPost = posts.find((p) => p.id === postId);
         if (!currentPost?.isLiked && currentPost?.user?.id !== myId) {
           await createNotification({
@@ -89,11 +159,6 @@ const PostUser = () => {
             type: "POST_LIKED",
           });
         }
-
-        setPosts(updatedPosts);
-        message.success(
-          currentPost?.isLiked ? "Đã bỏ thích bài viết!" : "Đã thích bài viết!"
-        );
       } else {
         message.warning("Không thể thực hiện hành động này!");
       }
@@ -214,6 +279,19 @@ const PostUser = () => {
     setSharingPostId(null);
   };
 
+  // ✅ Hàm xóa bài viết share
+  const handleDeletePostShare = async (shareId) => {
+    try {
+      await deletePostShare(shareId);
+      setPosts((prev) => prev.filter((p) => p.id !== shareId));
+      message.success("Đã xóa bài viết chia sẻ");
+      fetchUserPosts(); // Refresh the posts
+    } catch (error) {
+      console.error("Lỗi khi xóa bài viết share:", error);
+      message.error("Không thể xóa bài viết chia sẻ");
+    }
+  };
+
   return (
     <div className="post-page">
       <div className="post-container">
@@ -230,21 +308,38 @@ const PostUser = () => {
                     dataSource={posts}
                     renderItem={(post) => (
                       <List.Item key={post.id} className="post-list-item">
-                        <PostCard
-                          post={post}
-                          userInfo={userInfo}
-                          likingPosts={likingPosts}
-                          expandedComments={expandedComments}
-                          setExpandedComments={setExpandedComments}
-                          commentingPosts={commentingPosts}
-                          commentForms={commentForms}
-                          handleLike={handleLike}
-                          onLike={handleLike}
-                          onComment={handleComment}
-                          onShare={handleShare}
-                          fetchUserPosts={fetchUserPosts}
-                          setPosts={setPosts}
-                        />
+                        {post.post ? (
+                          <PostShare
+                            postShare={post}
+                            likingPosts={likingPosts}
+                            expandedComments={expandedComments}
+                            commentingPosts={commentingPosts}
+                            setCommentingPosts={setCommentingPosts}
+                            setPosts={setPosts}
+                            commentForms={commentForms}
+                            onLike={handleLike}
+                            onComment={handleComment}
+                            onShare={handleShare}
+                            onDeletePostShare={handleDeletePostShare}
+                            handleSubmitComment={handleSubmitComment}
+                          />
+                        ) : (
+                          <PostCard
+                            post={post}
+                            userInfo={userInfo}
+                            likingPosts={likingPosts}
+                            expandedComments={expandedComments}
+                            setExpandedComments={setExpandedComments}
+                            commentingPosts={commentingPosts}
+                            commentForms={commentForms}
+                            handleLike={handleLike}
+                            onLike={handleLike}
+                            onComment={handleComment}
+                            onShare={handleShare}
+                            fetchUserPosts={fetchUserPosts}
+                            setPosts={setPosts}
+                          />
+                        )}
                       </List.Item>
                     )}
                     split={false}

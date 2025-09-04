@@ -35,3 +35,16 @@ export const deletePostShare = async (id) => {
     },
   });
 };
+
+/**
+ * Lấy danh sách các bài post đã chia sẻ theo userId
+ * @param {number} userId - ID của người dùng
+ */
+export const getPostSharesByUserId = async (userId) => {
+  return await httpClient.get(`${API.POST_SHARE}/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      "Content-Type": "application/json",
+    },
+  });
+};
