@@ -93,7 +93,9 @@ public class PostShareServiceImpl implements PostShareService {
                     });
 
             Integer commentCount = commentRepository.countByPostShareId(response.getId());
+            Integer likeCount = likeRepository.countByPostShareId(response.getId());
             response.setCommentsCount(commentCount);
+            response.setLikesCount(likeCount);
         }
         return responses;
     }

@@ -11,6 +11,9 @@ import {
   message,
   Spin,
   Popover,
+  Modal,
+  List,
+  Tabs,
 } from "antd";
 import {
   HeartOutlined,
@@ -24,6 +27,7 @@ import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
+import { likeService } from "../../services/likeService";
 
 const { Text, Paragraph } = Typography;
 
@@ -44,8 +48,10 @@ const PostShare = ({
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
 
-  console.log("comment",comments)
-
+  // Modal danh sách reactions
+  const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
+  const [postShareLikes, setPostShareLikes] = useState([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
   // Function to fetch comments for this post share
   const fetchComments = async () => {
     if (commentsLoaded || loadingComments || !postShare?.id) return;
@@ -66,13 +72,34 @@ const PostShare = ({
       setLoadingComments(false);
     }
   };
-
+  
   // Fetch comments when comment section is expanded
   useEffect(() => {
     if (expandedComments.has(postShare?.post?.id) && !commentsLoaded && postShare?.id) {
       fetchComments();
     }
   }, [expandedComments, commentsLoaded, postShare?.id, postShare?.post?.id]);
+  console.log("postShareLikes",postShareLikes)
+  // Fetch post share likes
+  const fetchPostShareLikes = async () => {
+    if (loadingLikes || !postShare?.id) return;
+
+    setLoadingLikes(true);
+    try {
+      const response = await likeService.getPostShareLikes(postShare.id);
+      console.log("response",response)
+      if (response.data && response.data.code === 1000) {
+        setPostShareLikes(response.data.result || []);
+      } else {
+        message.error("Không thể tải danh sách người thích!");
+      }
+    } catch (error) {
+      console.error("Error fetching post share likes:", error);
+      message.error("Đã xảy ra lỗi khi tải danh sách người thích!");
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   if (!postShare || !postShare.post) return null;
 
@@ -127,7 +154,7 @@ const PostShare = ({
   
   // Check if the post share itself is liked, not the original post
   const isLiked = postShare.isLiked || false;
-  const likeCount = totalCount;
+  const likeCount = postShare.likesCount;
   const commentCount = comments.length || postShare.commentsCount || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
 
@@ -211,6 +238,10 @@ const PostShare = ({
           className="reaction-count"
           title="Xem ai đã thả cảm xúc"
           style={{ cursor: "pointer", fontSize: '13px', color: '#65676b' }}
+          onClick={() => {
+            setIsReactionModalVisible(true);
+            fetchPostShareLikes();
+          }}
         >
           {totalCount > 0 && (
             <>
@@ -243,6 +274,16 @@ const PostShare = ({
       ]}
     />
   );
+
+  // Nhóm người theo reactionType từ postShareLikes 
+  const groupedReactions = postShareLikes.reduce((acc, like) => {
+    const type = like.reactionType || "Like";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(like);
+    return acc;
+  }, {});
+
+  const allReactions = Object.values(groupedReactions).flat();
 
   return (
     <Card className="post-share-card" hoverable style={{ marginBottom: "20px" }}>
@@ -388,6 +429,68 @@ const PostShare = ({
           )}
         </div>
       )}
+
+      {/* Modal hiển thị danh sách reactions cho post share */}
+      <Modal
+        title="Người đã thả cảm xúc"
+        open={isReactionModalVisible}
+        onCancel={() => setIsReactionModalVisible(false)}
+        footer={null}
+        loading={loadingLikes}
+      >
+        <Tabs
+          defaultActiveKey="all"
+          items={[
+            {
+              key: "all",
+              label: `Tất cả (${allReactions.length})`,
+              children: (
+                <List
+                  dataSource={allReactions}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                        description={item.reactionType}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+            ...Object.entries(groupedReactions).map(([type, users]) => ({
+              key: type,
+              label: `${type} (${users.length})`,
+              children: (
+                <List
+                  dataSource={users}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            })),
+          ]}
+        />
+      </Modal>
     </Card>
   );
 };

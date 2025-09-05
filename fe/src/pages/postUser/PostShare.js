@@ -11,6 +11,9 @@ import {
   message,
   Spin,
   Popover,
+  Modal,
+  List,
+  Tabs,
 } from "antd";
 import {
   HeartOutlined,
@@ -23,6 +26,7 @@ import {
 import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
 import { commentService } from "../../services/commentService";
+import { likeService } from "../../services/likeService";
 
 const { Text, Paragraph } = Typography;
 
@@ -43,6 +47,11 @@ const PostShare = ({
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  // Modal danh sách reactions
+  const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
+  const [postShareLikes, setPostShareLikes] = useState([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
 
   console.log("comment",comments)
 
@@ -73,6 +82,26 @@ const PostShare = ({
       fetchComments();
     }
   }, [expandedComments, commentsLoaded, postShare?.id, postShare?.post?.id]);
+
+  // Fetch post share likes
+  const fetchPostShareLikes = async () => {
+    if (loadingLikes || !postShare?.id) return;
+
+    setLoadingLikes(true);
+    try {
+      const response = await likeService.getPostShareLikes(postShare.id);
+      if (response.data && response.data.code === 1000) {
+        setPostShareLikes(response.data.result || []);
+      } else {
+        message.error("Không thể tải danh sách người thích!");
+      }
+    } catch (error) {
+      console.error("Error fetching post share likes:", error);
+      message.error("Đã xảy ra lỗi khi tải danh sách người thích!");
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   if (!postShare || !postShare.post) return null;
 
@@ -211,6 +240,10 @@ const PostShare = ({
           className="reaction-count"
           title="Xem ai đã thả cảm xúc"
           style={{ cursor: "pointer", fontSize: '13px', color: '#65676b' }}
+          onClick={() => {
+            setIsReactionModalVisible(true);
+            fetchPostShareLikes();
+          }}
         >
           {totalCount > 0 && (
             <>
@@ -454,6 +487,75 @@ const PostShare = ({
           )}
         </div>
       )}
+
+      {/* Modal hiển thị danh sách reactions cho post share */}
+      <Modal
+        title="Người đã thả cảm xúc"
+        open={isReactionModalVisible}
+        onCancel={() => setIsReactionModalVisible(false)}
+        footer={null}
+        loading={loadingLikes}
+      >
+        <Tabs
+          defaultActiveKey="all"
+          items={[
+            {
+              key: "all",
+              label: `Tất cả (${postShareLikes.length})`,
+              children: (
+                <List
+                  dataSource={postShareLikes}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                        description={item.reactionType}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+            ...Object.entries(
+              postShareLikes.reduce((acc, like) => {
+                const type = like.reactionType || "Like";
+                if (!acc[type]) acc[type] = [];
+                acc[type].push(like);
+                return acc;
+              }, {})
+            ).map(([type, users]) => ({
+              key: type,
+              label: `${type} (${users.length})`,
+              children: (
+                <List
+                  dataSource={users}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            })),
+          ]}
+        />
+      </Modal>
     </Card>
   );
 };

@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 
 @Service
@@ -88,6 +89,14 @@ public class LikeServiceImpl implements LikeService {
 
         likeRepository.save(like);
         return modelMapper.map(like, LikeResponse.class);
+    }
+
+    @Override
+    public List<LikeResponse> getLikesByPostShareId(Long postShareId) {
+        List<Like> likes = likeRepository.findAllByPostShareId(postShareId);
+        return likes.stream()
+                .map(like -> modelMapper.map(like, LikeResponse.class))
+                .toList();
     }
 
     private Like buildLike(User user, String reactionType, Post post, Comment comment) {

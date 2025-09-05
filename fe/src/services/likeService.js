@@ -47,6 +47,15 @@ export const likeService = {
     });
   },
 
+  // Lấy danh sách người đã like một bài post share
+  getPostShareLikes: async (postShareId) => {
+    return await httpClient.get(API.GET_POST_SHARE_LIKES(postShareId), {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+  },
+
 
 
   // Lấy danh sách người đã like một bài viết

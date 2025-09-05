@@ -42,4 +42,13 @@ public class LikeController {
                 .result(response)
                 .build();
     }
+
+    @GetMapping("/list/{postShareId}" )
+    ApiResponse<List<LikeResponse>> getLikesByPostShareId(@PathVariable Long postShareId) {
+        List<LikeResponse> response = likeService.getLikesByPostShareId(postShareId);
+        return ApiResponse.<List<LikeResponse>>builder()
+                .code(1000)
+                .result(response)
+                .build();
+    }
 }
