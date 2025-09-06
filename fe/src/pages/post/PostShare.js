@@ -28,6 +28,7 @@ import vi from "date-fns/locale/vi";
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
+import "./PostShare.css";
 
 const { Text, Paragraph } = Typography;
 
@@ -116,45 +117,13 @@ const PostShare = ({
     { type: "Angry", icon: "😡", label: "Phẫn nộ", color: "#e9710f" },
   ];
 
-  // Get reaction stats từ postShare
-  const getReactionStats = () => {
-    if (!postShare.likes || !Array.isArray(postShare.likes)) {
-      return {
-        totalCount: 0,
-        topReactions: [],
-        currentUserReaction: postShare.reactionType || null,
-        reactionCounts: {},
-      };
-    }
-
-    const reactionCounts = {};
-    postShare.likes.forEach((reaction) => {
-      const type = reaction.reactionType || "Like";
-      reactionCounts[type] = (reactionCounts[type] || 0) + 1;
-    });
-
-    const sortedReactions = Object.entries(reactionCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3);
-
-    const topReactions = sortedReactions
-      .map(([type]) => reactionOptions.find((r) => r.type === type))
-      .filter(Boolean);
-
-    return {
-      totalCount: postShare.likes.length,
-      topReactions,
-      currentUserReaction: postShare.reactionType || null,
-      reactionCounts,
-    };
-  };
-
-  const { totalCount, topReactions, currentUserReaction, reactionCounts } = getReactionStats();
+  // Simplified stats for post share - chỉ lấy số lượng từ likesCount
+  const currentUserReaction = postShare.reactionType || null;
   const currentReaction = reactionOptions.find((r) => r.type === currentUserReaction);
   
   // Check if the post share itself is liked, not the original post
   const isLiked = postShare.isLiked || false;
-  const likeCount = postShare.likesCount;
+  const likeCount = postShare.likesCount || 0; // Sử dụng likesCount từ backend
   const commentCount = comments.length || postShare.commentsCount || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
 
@@ -175,34 +144,13 @@ const PostShare = ({
 
   // Reaction picker content
   const reactionContent = (
-    <div className="reaction-box" style={{ 
-      display: 'flex', 
-      gap: '8px', 
-      padding: '8px',
-      background: 'white',
-      borderRadius: '25px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-    }}>
+    <div className="reaction-box">
       {reactionOptions.map((r) => (
         <Button
           key={r.type}
           type="text"
           className="reaction-item"
           onClick={() => onLike(post.id, r.type, true, postShare.id)}
-          style={{
-            padding: '4px 8px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'transform 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1)';
-          }}
         >
           <span style={{ fontSize: '20px' }}>{r.icon}</span>
         </Button>
@@ -210,50 +158,39 @@ const PostShare = ({
     </div>
   );
 
-  // Render reaction summary giống Facebook
-  const renderReactionSummary = () => {
-    if (totalCount === 0) return null;
+  // Render like count và comment count trên cùng một hàng giống Facebook
+  const renderCountSummary = () => {
+    const likeCount = postShare.likesCount || 0;
+    const commentCount = comments.length || postShare.commentsCount || 0;
+    
+    if (likeCount === 0 && commentCount === 0) return null;
+    
     return (
-      <div className="reaction-summary" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div className="reaction-icons" style={{ display: 'flex' }}>
-          {topReactions.map((reaction, index) => (
+      <div className="count-summary">
+        <div className="left-counts">
+          {likeCount > 0 && (
             <span
-              key={reaction.type}
-              className="reaction-icon-small"
-              style={{ 
-                fontSize: '16px',
-                marginLeft: index > 0 ? '-4px' : '0',
-                zIndex: topReactions.length - index,
-                background: 'white',
-                borderRadius: '50%',
-                padding: '2px'
+              className="like-count-text"
+              title="Xem ai đã thả cảm xúc"
+              onClick={() => {
+                setIsReactionModalVisible(true);
+                fetchPostShareLikes();
               }}
-              title={`${reactionCounts[reaction.type] || 0} ${reaction.label}`}
             >
-              {reaction.icon}
+              {likeCount === 1 ? '1 lượt thả cảm xúc' : `${likeCount} lượt thả cảm xúc`}
             </span>
-          ))}
-        </div>
-        <span
-          className="reaction-count"
-          title="Xem ai đã thả cảm xúc"
-          style={{ cursor: "pointer", fontSize: '13px', color: '#65676b' }}
-          onClick={() => {
-            setIsReactionModalVisible(true);
-            fetchPostShareLikes();
-          }}
-        >
-          {totalCount > 0 && (
-            <>
-              {Object.entries(reactionCounts).length === 1 &&
-              currentUserReaction
-                ? `Bạn${
-                    totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""
-                  }`
-                : `${totalCount} lượt thả cảm xúc`}
-            </>
           )}
-        </span>
+        </div>
+        <div className="right-counts">
+          {commentCount > 0 && (
+            <span
+              className="comment-count-text"
+              onClick={() => onComment(post.id)}
+            >
+              {commentCount === 1 ? '1 bình luận' : `${commentCount} bình luận`}
+            </span>
+          )}
+        </div>
       </div>
     );
   };
@@ -275,7 +212,7 @@ const PostShare = ({
     />
   );
 
-  // Nhóm người theo reactionType từ postShareLikes 
+  // Nhóm người theo reactionType từ postShareLikes (nếu cần thiết)
   const groupedReactions = postShareLikes.reduce((acc, like) => {
     const type = like.reactionType || "Like";
     if (!acc[type]) acc[type] = [];
@@ -283,10 +220,10 @@ const PostShare = ({
     return acc;
   }, {});
 
-  const allReactions = Object.values(groupedReactions).flat();
+  const allReactions = postShareLikes; // Sử dụng trực tiếp postShareLikes
 
   return (
-    <Card className="post-share-card" hoverable style={{ marginBottom: "20px" }}>
+    <Card className="post-share-card" hoverable>
       {/* Header người chia sẻ */}
       <div className="post-header">
         <Avatar size={40} src={user.avatarUrl} icon={<UserOutlined />} />
@@ -317,7 +254,7 @@ const PostShare = ({
       <Divider className="post-divider" />
 
       {/* Bài gốc */}
-      <Card type="inner" className="shared-post-inner" style={{ width: "100%" }}>
+      <Card type="inner" className="shared-post-inner">
         <div className="post-header">
           <Avatar size={40} src={post.user.avatarUrl} icon={<UserOutlined />} />
           <div className="post-user-info">
@@ -349,8 +286,8 @@ const PostShare = ({
         </div>
       </Card>
 
-      {/* Hiển thị reaction summary */}
-      {renderReactionSummary()}
+      {/* Hiển thị số lượng like và comment trên cùng một hàng */}
+      {renderCountSummary()}
 
       {/* Actions giống post thường */}
       <Divider className="post-divider" />
@@ -376,21 +313,20 @@ const PostShare = ({
             <span className={`button-text ${currentUserReaction ? "reacted" : ""}`}>
               {currentUserReaction || "Thích"}
             </span>
-            {likeCount > 0 && ` (${likeCount})`}
           </Button>
         </Popover>
 
-        <Button
-          type="text"
-          icon={<CommentOutlined />}
-          onClick={() => onComment(post.id)}
-          className={`action-button ${isCommentsExpanded ? "active" : ""}`}
-          aria-label="Bình luận bài viết"
-        >
-          Bình luận {commentCount > 0 && `(${commentCount})`}
-        </Button>
+          <Button
+            type="text"
+            icon={<CommentOutlined />}
+            onClick={() => onComment(post.id)}
+            className={`action-button ${isCommentsExpanded ? "active" : ""}`}
+            aria-label="Bình luận bài viết"
+          >
+            Bình luận
+          </Button>
 
-        <Button
+          <Button
           type="text"
           icon={<RetweetOutlined />}
           onClick={() => onShare(post.id)}
@@ -404,7 +340,7 @@ const PostShare = ({
       {isCommentsExpanded && (
         <div>
           {loadingComments ? (
-            <div style={{ textAlign: "center", padding: "20px" }}>
+            <div className="loading-comments">
               <Spin />
               <p>Đang tải bình luận...</p>
             </div>

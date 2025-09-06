@@ -122,40 +122,38 @@ const PostCard = ({
     </div>
   );
 
-  // Render reaction summary giống Facebook
-  const renderReactionSummary = () => {
-    if (totalCount === 0) return null;
+  // Render like count và comment count trên cùng một hàng giống Facebook
+  const renderCountSummary = () => {
+    const likeCount = totalCount;
+    const commentCount = post.commentCount || post.comments?.length || 0;
+    
+    if (likeCount === 0 && commentCount === 0) return null;
+    
     return (
-      <div className="reaction-summary">
-        <div className="reaction-icons">
-          {topReactions.map((reaction, index) => (
+      <div className="count-summary">
+        <div className="left-counts">
+          {likeCount > 0 && (
             <span
-              key={reaction.type}
-              className="reaction-icon-small"
-              style={{ zIndex: topReactions.length - index }}
-              title={`${reactionCounts[reaction.type] || 0} ${reaction.label}`}
+              className="like-count-text"
+              title="Xem ai đã thả cảm xúc"
+              onClick={() => setIsReactionModalVisible(true)}
             >
-              {reaction.icon}
-            </span>
-          ))}
-        </div>
-        <span
-          className="reaction-count"
-          title="Xem ai đã thả cảm xúc"
-          style={{ cursor: "pointer" }}
-          onClick={() => setIsReactionModalVisible(true)}
-        >
-          {totalCount > 0 && (
-            <>
-              {Object.entries(reactionCounts).length === 1 &&
-              currentUserReaction
-                ? `Bạn${
-                    totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""
-                  }`
+              {Object.entries(reactionCounts).length === 1 && currentUserReaction
+                ? `Bạn${totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""}`
                 : `${totalCount} lượt thả cảm xúc`}
-            </>
+            </span>
           )}
-        </span>
+        </div>
+        <div className="right-counts">
+          {commentCount > 0 && (
+            <span
+              className="comment-count-text"
+              onClick={handleToggleComments}
+            >
+              {commentCount === 1 ? '1 bình luận' : `${commentCount} bình luận`}
+            </span>
+          )}
+        </div>
       </div>
     );
   };
@@ -301,8 +299,8 @@ const PostCard = ({
           )}
         </div>
 
-        {/* Hiển thị reaction summary */}
-        {renderReactionSummary()}
+        {/* Hiển thị số lượng like và comment trên cùng một hàng */}
+        {renderCountSummary()}
 
         <Divider className="post-divider" />
         <div className="post-actions">
@@ -340,7 +338,7 @@ const PostCard = ({
             onClick={handleToggleComments}
             className={`action-button ${isCommentsExpanded ? "active" : ""}`}
           >
-            Bình luận {commentCount > 0 && `(${commentCount})`}
+            Bình luận
           </Button>
 
           <Button
