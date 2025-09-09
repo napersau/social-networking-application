@@ -238,19 +238,60 @@ export default function Chat() {
       });
 
       socketRef.current.on("reaction", (data) => {
-        const { messageId, reactions } = JSON.parse(data);
+        try {
+          const reactionData = JSON.parse(data);
+          console.log("reaction: ", data);
+          console.log("Parsed reaction data:", reactionData);
+          
+          const { messageId, userId, reactionType } = reactionData;
 
-        setMessagesMap((prev) => {
-          const updatedMap = { ...prev };
+          setMessagesMap((prev) => {
+            const updatedMap = { ...prev };
 
-          for (const convId in updatedMap) {
-            updatedMap[convId] = updatedMap[convId].map((msg) =>
-              msg.id === messageId ? { ...msg, reactions } : msg
-            );
-          }
+            for (const convId in updatedMap) {
+              updatedMap[convId] = updatedMap[convId].map((msg) => {
+                if (msg.id === messageId) {
+                  // Khởi tạo reactions array nếu chưa có
+                  const currentReactions = msg.reactions || [];
+                  
+                  // Tìm reaction hiện tại của user này
+                  const existingReactionIndex = currentReactions.findIndex(
+                    r => r.userId === userId
+                  );
+                  
+                  let updatedReactions;
+                  if (existingReactionIndex >= 0) {
+                    // Update reaction hiện tại
+                    updatedReactions = [...currentReactions];
+                    updatedReactions[existingReactionIndex] = {
+                      ...updatedReactions[existingReactionIndex],
+                      reactionType
+                    };
+                  } else {
+                    // Thêm reaction mới
+                    updatedReactions = [
+                      ...currentReactions,
+                      {
+                        userId,
+                        reactionType,
+                        user: { id: userId } // có thể cần thêm thông tin user khác
+                      }
+                    ];
+                  }
+                  
+                  console.log("Updated reactions for message", messageId, ":", updatedReactions);
+                  
+                  return { ...msg, reactions: updatedReactions };
+                }
+                return msg;
+              });
+            }
 
-          return updatedMap;
-        });
+            return updatedMap;
+          });
+        } catch (error) {
+          console.error("Error handling reaction:", error);
+        }
       });
     }
 

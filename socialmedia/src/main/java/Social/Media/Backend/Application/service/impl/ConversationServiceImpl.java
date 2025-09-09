@@ -216,17 +216,32 @@ public class ConversationServiceImpl implements ConversationService {
     }
 
     private ConversationResponse toConversationResponse(Conversation conversation) {
-        User user = securityUtil.getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
         ConversationResponse response = modelMapper.map(conversation, ConversationResponse.class);
 
-        response.setParticipants(
-                conversation.getParticipants().stream()
-                        .filter(p -> Boolean.TRUE.equals(p.getActive()))
-                        .collect(Collectors.toList())
-        );
+        // Filter active participants
+        List<ParticipantInfo> activeParticipants = conversation.getParticipants().stream()
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .collect(Collectors.toList());
+
+        response.setParticipants(activeParticipants);
+
+        // Handle DIRECT conversation - use other participant's info
+        if ("DIRECT".equals(conversation.getType())) {
+            ParticipantInfo otherParticipant = activeParticipants.stream()
+                    .filter(p -> !p.getUserId().equals(currentUser.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (otherParticipant != null) {
+                response.setName(otherParticipant.getLastName() + " " + otherParticipant.getFirstName());
+                response.setAvatarUrl(otherParticipant.getAvatar());
+            }
+        }
+        // For GROUP conversations, use the stored name and avatarUrl from conversation entity
 
         ChatMessage lastMsg = chatMessageRepository.findTopByConversation_IdOrderByCreatedDateDesc(conversation.getId());
-        int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), user.getId());
+        int unreadCount = chatMessageRepository.countUnreadMessages(conversation.getId(), currentUser.getId());
 
         response.setUnread(unreadCount);
         response.setLastMessage(lastMsg != null ? lastMsg.getMessage() : null);
