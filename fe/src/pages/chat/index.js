@@ -26,13 +26,16 @@ export default function Chat() {
   const messageContainerRef = useRef(null);
   const socketRef = useRef(null);
 
-  // Function to scroll to the bottom of the message container instantly
+  // Function to scroll to the bottom of the message container
   const scrollToBottom = useCallback(() => {
     if (messageContainerRef.current) {
       const container = messageContainerRef.current;
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "auto", // Changed from 'smooth' to 'auto' for instant scrolling
+      // Use requestAnimationFrame to ensure DOM is fully updated
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth",
+        });
       });
     }
   }, []);
@@ -137,7 +140,13 @@ export default function Chat() {
               ...prev,
               [conversationId]: sortedMessages,
             }));
+            
+            // Scroll to bottom after messages are loaded
+            setTimeout(() => scrollToBottom(), 500);
           }
+        } else {
+          // If messages already exist, still scroll to bottom
+          setTimeout(() => scrollToBottom(), 200);
         }
         // Mark conversation as read when selected
         setConversations((prevConversations) =>
@@ -156,33 +165,18 @@ export default function Chat() {
     if (selectedConversation?.id) {
       fetchMessagesForConversation(selectedConversation.id);
     }
-  }, [selectedConversation, messagesMap]);
+  }, [selectedConversation, scrollToBottom]);
 
   const currentMessages = selectedConversation
     ? messagesMap[selectedConversation.id] || []
     : [];
 
-  // Auto-scroll to bottom only when new messages arrive or conversation changes
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    // Only auto-scroll if user is near the bottom (within 100px)
-    if (messageContainerRef.current) {
-      const container = messageContainerRef.current;
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight <
-        100;
-
-      if (isNearBottom) {
-        scrollToBottom(); // Removed setTimeout for instant scrolling
-      }
+    if (currentMessages.length > 0) {
+      setTimeout(() => scrollToBottom(), 100);
     }
-  }, [currentMessages, scrollToBottom]);
-
-  // Scroll to bottom instantly when conversation changes
-  useEffect(() => {
-    if (selectedConversation) {
-      scrollToBottom(); // Removed setTimeout for instant scrolling
-    }
-  }, [selectedConversation, scrollToBottom]);
+  }, [currentMessages.length, scrollToBottom]);
 
   // Socket connection setup
   useEffect(() => {
@@ -291,6 +285,58 @@ export default function Chat() {
           });
         } catch (error) {
           console.error("Error handling reaction:", error);
+        }
+      });
+
+      // Socket listener cho tin nhắn được cập nhật
+      socketRef.current.on("messageUpdated", (data) => {
+        try {
+          const updatedMessage = JSON.parse(data);
+          console.log("Message updated received:", updatedMessage);
+
+          // Cập nhật tin nhắn trong messagesMap
+          setMessagesMap((prev) => {
+            const updatedMap = { ...prev };
+
+            for (const convId in updatedMap) {
+              updatedMap[convId] = updatedMap[convId].map((msg) =>
+                msg.id === updatedMessage.id 
+                  ? { 
+                      ...msg, 
+                      message: updatedMessage.message,
+                      updatedDate: updatedMessage.updatedDate
+                    } 
+                  : msg
+              );
+            }
+
+            return updatedMap;
+          });
+
+          // Cập nhật lastMessage trong conversation list nếu đây là tin nhắn cuối
+          setConversations((prev) => {
+            return prev.map((conv) => {
+              if (conv.id === updatedMessage.conversationId) {
+                // Kiểm tra xem tin nhắn được cập nhật có phải là tin nhắn cuối không
+                const messages = messagesMap[conv.id] || [];
+                const isLastMessage = messages.length > 0 && 
+                  messages[messages.length - 1].id === updatedMessage.id;
+                
+                if (isLastMessage) {
+                  return {
+                    ...conv,
+                    lastMessage: updatedMessage.message,
+                    lastTimestamp: new Date(updatedMessage.updatedDate || new Date()).toLocaleString(),
+                    modifiedDate: updatedMessage.updatedDate || new Date().toISOString(),
+                  };
+                }
+              }
+              return conv;
+            });
+          });
+
+        } catch (err) {
+          console.error("Error handling message update:", err);
         }
       });
     }

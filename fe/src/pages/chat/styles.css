@@ -538,3 +538,24 @@ footer {
   align-items: center;
 }
 
+/* Edited message indicator */
+.message-edited-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  color: #8c8c8c;
+  font-style: italic;
+  margin-left: 6px;
+  cursor: help;
+  transition: color 0.2s ease;
+}
+
+.message-edited-indicator:hover {
+  color: #1890ff;
+}
+
+.message-edited-icon {
+  font-size: 9px;
+}
+

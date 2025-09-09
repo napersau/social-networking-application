@@ -156,9 +156,15 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 .orElseThrow(() -> new AppException(ErrorCode.MESSAGE_NOT_FOUND));
 
         chatMessage.setMessage(request.getMessage());
+        chatMessage.setUpdatedDate(Instant.now());
         chatMessageRepository.save(chatMessage);
 
-        return toChatMessageResponse(chatMessage);
+        ChatMessageResponse response = toChatMessageResponse(chatMessage);
+
+        // Gửi socket event cho các client
+        notifyWebSocketEvent(response, chatMessage.getConversation(), "messageUpdated");
+
+        return response;
     }
 
     private List<MediaResponse> createMediaList(List<String> mediaUrls, Long messageId) {

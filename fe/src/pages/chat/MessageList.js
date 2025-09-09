@@ -8,7 +8,7 @@ import {
   Tooltip,
   message,
 } from "antd";
-import { MoreOutlined, SmileOutlined } from "@ant-design/icons";
+import { MoreOutlined, SmileOutlined, EditOutlined } from "@ant-design/icons";
 import {
   recallMessage,
   reactToMessage,
@@ -67,16 +67,12 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
       ),
       onOk: async () => {
         try {
-          const res = await updateMessage(msg.id, {
+          await updateMessage(msg.id, {
             message: editedText,
             conversationId: msg.conversationId,
           });
-          const updated = res.data.result;
-
-          const updatedMessages = messages.map((m) =>
-            m.id === msg.id ? { ...m, message: updated.message } : m
-          );
-          setMessages(updatedMessages);
+          
+          // Không cần update local state nữa, chờ socket event "message_updated"
           message.success("Sửa tin nhắn thành công");
         } catch (err) {
           console.error("Lỗi khi sửa tin nhắn:", err);
@@ -230,6 +226,14 @@ const MessageList = forwardRef(({ messages, setMessages }, ref) => {
                           day: "2-digit",
                           month: "2-digit",
                         })}
+                        {msg.updatedDate && (
+                          <Tooltip title={`Đã chỉnh sửa lúc ${new Date(msg.updatedDate).toLocaleString("vi-VN")}`}>
+                            <span className="message-edited-indicator">
+                              <EditOutlined className="message-edited-icon" />
+                              (đã sửa)
+                            </span>
+                          </Tooltip>
+                        )}
                       </Text>
 
                       {msg.reactions && msg.reactions.length > 0 && (

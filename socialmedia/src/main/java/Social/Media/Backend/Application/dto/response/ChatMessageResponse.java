@@ -21,6 +21,7 @@ public class ChatMessageResponse {
     String message;
     ParticipantInfo sender;
     Instant createdDate;
+    Instant updatedDate;
     String clientId;
     List<MediaResponse> mediaList;
     Boolean isRead;

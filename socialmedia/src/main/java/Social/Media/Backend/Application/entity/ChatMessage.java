@@ -33,6 +33,9 @@ public class ChatMessage {
     @Column(name = "created_date")
     Instant createdDate;
 
+    @Column(name = "updated_date")
+    Instant updatedDate;
+
     @Column(name = "is_read")
     Boolean isRead = false;
 
