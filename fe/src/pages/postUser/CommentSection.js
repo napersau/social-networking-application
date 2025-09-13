@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -21,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import { commentService } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
+import { getMyInfo } from "../../services/userService";
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
 
@@ -30,6 +31,7 @@ const CommentSection = ({
   setCommentingPosts,
   setPosts,
   commentForms,
+  currentUser,
 }) => {
   const isCommenting = commentingPosts.has(post.id);
   const comments = post.comments || [];
@@ -41,6 +43,25 @@ const CommentSection = ({
   const [expandedReplies, setExpandedReplies] = useState(new Set()); // Quản lý trạng thái mở rộng replies
   const currentUserId = parseInt(localStorage.getItem("userId"));
   const [likedCommentIds, setLikedCommentIds] = useState(new Set());
+  const [localCurrentUser, setLocalCurrentUser] = useState(null);
+  const [commentValue, setCommentValue] = useState("");
+
+  // Fetch current user info if not provided via props
+  useEffect(() => {
+    if (!currentUser) {
+      const fetchCurrentUser = async () => {
+        try {
+          const response = await getMyInfo();
+          if (response.data && response.data.code === 1000) {
+            setLocalCurrentUser(response.data.result);
+          }
+        } catch (error) {
+          console.error("Error fetching current user info:", error);
+        }
+      };
+      fetchCurrentUser();
+    }
+  }, [currentUser]);
 
   // Xây dựng cây comment từ danh sách phẳng
   const buildCommentTree = (flatComments) => {
@@ -82,6 +103,9 @@ const CommentSection = ({
   };
 
   const handleSubmitComment = async (postId, content) => {
+    console.log("handleSubmitComment called with:", { postId, content });
+    console.log("setCommentingPosts:", typeof setCommentingPosts);
+    
     if (!content.trim()) {
       message.warning("Vui lòng nhập nội dung bình luận!");
       return;
@@ -100,10 +124,32 @@ const CommentSection = ({
       );
 
       if (response.data && response.data.code === 1000) {
+        const newComment = response.data.result;
+        const activeUser = currentUser || localCurrentUser;
+        
+        // Ensure the comment has proper user information
+        if (!newComment.user && activeUser) {
+          newComment.user = {
+            id: activeUser.id,
+            firstName: activeUser.firstName,
+            lastName: activeUser.lastName,
+            avatarUrl: activeUser.avatarUrl,
+            username: activeUser.username
+          };
+        } else if (!newComment.user) {
+          // Fallback if no user info is available
+          newComment.user = {
+            id: currentUserId,
+            firstName: "User",
+            lastName: "",
+            avatarUrl: null,
+            username: "unknown"
+          };
+        }
+
         setPosts((prevPosts) =>
           prevPosts.map((post) => {
             if (post.id === postId) {
-              const newComment = response.data.result;
               return {
                 ...post,
                 comments: [...(post.comments || []), newComment],
@@ -114,7 +160,7 @@ const CommentSection = ({
           })
         );
 
-        commentForms.resetFields([`comment_${postId}`]);
+        setCommentValue(""); // Clear local state
         message.success("Đã gửi bình luận!");
       } else {
         message.error("Không thể gửi bình luận!");
@@ -484,43 +530,44 @@ const CommentSection = ({
   return (
     <div className="comment-section">
       <Divider className="comment-divider" />
-      <Form
-        form={commentForms}
-        onFinish={(values) =>
-          handleSubmitComment(post.id, values[`comment_${post.id}`])
-        }
-      >
-        <Form.Item name={`comment_${post.id}`} style={{ marginBottom: 8 }}>
-          <div className="comment-input-container">
-            <Avatar
-              src={post.user.avatarUrl}
-              size={32}
-              icon={<UserOutlined />}
-            />
-            <TextArea
-              placeholder="Viết bình luận..."
-              autoSize={{ minRows: 1, maxRows: 3 }}
-              className="comment-input"
-              onPressEnter={(e) => {
-                if (e.shiftKey) return;
-                e.preventDefault();
-                const content = e.target.value;
-                handleSubmitComment(post.id, content);
-              }}
-            />
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isCommenting}
-              icon={<SendOutlined />}
-              size="small"
-              className="comment-submit-btn"
-            >
-              Gửi
-            </Button>
-          </div>
-        </Form.Item>
-      </Form>
+      <div className="comment-input-container" style={{ marginBottom: 8 }}>
+        <Avatar
+          src={(currentUser || localCurrentUser)?.avatarUrl}
+          size={32}
+          icon={<UserOutlined />}
+        />
+        <TextArea
+          placeholder="Viết bình luận..."
+          autoSize={{ minRows: 1, maxRows: 3 }}
+          className="comment-input"
+          value={commentValue}
+          onChange={(e) => setCommentValue(e.target.value)}
+          onPressEnter={(e) => {
+            if (e.shiftKey) return;
+            e.preventDefault();
+            const content = commentValue;
+            if (content.trim()) {
+              handleSubmitComment(post.id, content);
+              setCommentValue(""); // Clear input immediately
+            }
+          }}
+        />
+        <Button
+          type="primary"
+          onClick={() => {
+            if (commentValue.trim()) {
+              handleSubmitComment(post.id, commentValue);
+              setCommentValue("");
+            }
+          }}
+          loading={isCommenting}
+          icon={<SendOutlined />}
+          size="small"
+          className="comment-submit-btn"
+        >
+          Gửi
+        </Button>
+      </div>
 
       {/* Comments List */}
       {nestedComments.length > 0 ? (

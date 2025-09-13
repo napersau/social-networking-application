@@ -6,6 +6,7 @@ import { likeService } from "../../services/likeService";
 import { commentService } from "../../services/commentService";
 import { createNotification } from "../../services/notificationService";
 import { createPostShare, getPostSharesByUserId, deletePostShare } from "../../services/postShareService";
+import { getMyInfo } from "../../services/userService";
 import UserInfoCard from "./UserInfoCard";
 import PostCard from "./PostCard";
 import PostShare from "./PostShare";
@@ -22,6 +23,7 @@ const PostUser = () => {
   const [expandedComments, setExpandedComments] = useState(new Set());
   const [commentForms] = Form.useForm();
   const [userInfo, setUserInfo] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Share modal states
   const [shareModalVisible, setShareModalVisible] = useState(false);
@@ -35,8 +37,20 @@ const PostUser = () => {
   useEffect(() => {
     if (userId) {
       fetchUserPosts();
+      fetchCurrentUser();
     }
   }, [userId]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await getMyInfo();
+      if (response.data && response.data.code === 1000) {
+        setCurrentUser(response.data.result);
+      }
+    } catch (error) {
+      console.error("Error fetching current user info:", error);
+    }
+  };
 
   const fetchUserPosts = async () => {
     setLoading(true);
@@ -198,6 +212,27 @@ const PostUser = () => {
       );
       if (response.data && response.data.code === 1000) {
         const newComment = response.data.result;
+        
+        // Ensure the comment has proper user information
+        if (!newComment.user && currentUser) {
+          newComment.user = {
+            id: currentUser.id,
+            firstName: currentUser.firstName,
+            lastName: currentUser.lastName,
+            avatarUrl: currentUser.avatarUrl,
+            username: currentUser.username
+          };
+        } else if (!newComment.user) {
+          // Fallback if currentUser is not available
+          newComment.user = {
+            id: parseInt(myId),
+            firstName: "User",
+            lastName: "",
+            avatarUrl: null,
+            username: "unknown"
+          };
+        }
+        
         const updatedPosts = posts.map((post) => {
           if (post.id === postId) {
             return {
@@ -317,6 +352,7 @@ const PostUser = () => {
                             setCommentingPosts={setCommentingPosts}
                             setPosts={setPosts}
                             commentForms={commentForms}
+                            currentUser={currentUser}
                             onLike={handleLike}
                             onComment={handleComment}
                             onShare={handleShare}
@@ -327,10 +363,12 @@ const PostUser = () => {
                           <PostCard
                             post={post}
                             userInfo={userInfo}
+                            currentUser={currentUser}
                             likingPosts={likingPosts}
                             expandedComments={expandedComments}
                             setExpandedComments={setExpandedComments}
                             commentingPosts={commentingPosts}
+                            setCommentingPosts={setCommentingPosts}
                             commentForms={commentForms}
                             handleLike={handleLike}
                             onLike={handleLike}

@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import vi from "date-fns/locale/vi";
 import { commentService } from "../../services/commentService";
 import { likeService } from "../../services/likeService";
+import { getMyInfo } from "../../services/userService";
 
 const { Text, Paragraph } = Typography;
 
@@ -38,6 +39,7 @@ const PostShare = ({
   setCommentingPosts,
   setPosts,
   commentForms,
+  currentUser,
   onLike,
   onComment,
   onShare,
@@ -47,6 +49,7 @@ const PostShare = ({
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [localCurrentUser, setLocalCurrentUser] = useState(null);
 
   // Modal danh sách reactions
   const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
@@ -54,6 +57,23 @@ const PostShare = ({
   const [loadingLikes, setLoadingLikes] = useState(false);
 
   console.log("comment",comments)
+
+  // Fetch current user info if not provided via props
+  useEffect(() => {
+    if (!currentUser) {
+      const fetchCurrentUser = async () => {
+        try {
+          const response = await getMyInfo();
+          if (response.data && response.data.code === 1000) {
+            setLocalCurrentUser(response.data.result);
+          }
+        } catch (error) {
+          console.error("Error fetching current user info:", error);
+        }
+      };
+      fetchCurrentUser();
+    }
+  }, [currentUser]);
 
   // Function to fetch comments for this post share
   const fetchComments = async () => {
@@ -212,50 +232,47 @@ const PostShare = ({
     </div>
   );
 
-  // Render reaction summary giống Facebook
-  const renderReactionSummary = () => {
-    if (totalCount === 0) return null;
+  // Render like count và comment count giống Facebook
+  const renderCountSummary = () => {
+    const commentCount = comments.length || postShare.commentsCount || 0;
+    
+    if (totalCount === 0 && commentCount === 0) return null;
+    
     return (
-      <div className="reaction-summary" style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div className="reaction-icons" style={{ display: 'flex' }}>
-          {topReactions.map((reaction, index) => (
-            <span
-              key={reaction.type}
-              className="reaction-icon-small"
-              style={{ 
-                fontSize: '16px',
-                marginLeft: index > 0 ? '-4px' : '0',
-                zIndex: topReactions.length - index,
-                background: 'white',
-                borderRadius: '50%',
-                padding: '2px'
-              }}
-              title={`${reactionCounts[reaction.type] || 0} ${reaction.label}`}
-            >
-              {reaction.icon}
-            </span>
-          ))}
-        </div>
-        <span
-          className="reaction-count"
-          title="Xem ai đã thả cảm xúc"
-          style={{ cursor: "pointer", fontSize: '13px', color: '#65676b' }}
-          onClick={() => {
-            setIsReactionModalVisible(true);
-            fetchPostShareLikes();
-          }}
-        >
+      <div className="count-summary" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 0',
+        fontSize: '13px',
+        color: '#65676b'
+      }}>
+        <div className="left-counts">
           {totalCount > 0 && (
-            <>
-              {Object.entries(reactionCounts).length === 1 &&
-              currentUserReaction
-                ? `Bạn${
-                    totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""
-                  }`
-                : `${totalCount} lượt thả cảm xúc`}
-            </>
+            <span
+              className="like-count-text"
+              style={{ cursor: 'pointer' }}
+              title="Xem ai đã thả cảm xúc"
+              onClick={() => {
+                setIsReactionModalVisible(true);
+                fetchPostShareLikes();
+              }}
+            >
+              {totalCount === 1 ? '1 lượt thích' : `${totalCount} lượt thích`}
+            </span>
           )}
-        </span>
+        </div>
+        <div className="right-counts">
+          {commentCount > 0 && (
+            <span
+              className="comment-count-text"
+              style={{ cursor: 'pointer' }}
+              onClick={() => onComment(post.id)}
+            >
+              {commentCount === 1 ? '1 bình luận' : `${commentCount} bình luận`}
+            </span>
+          )}
+        </div>
       </div>
     );
   };
@@ -348,8 +365,8 @@ const PostShare = ({
         </div>
       </Card>
 
-      {/* Hiển thị reaction summary */}
-      {renderReactionSummary()}
+      {/* Hiển thị số lượng like và comment */}
+      {renderCountSummary()}
 
       {/* Actions giống post thường */}
       <Divider className="post-divider" />
@@ -375,7 +392,6 @@ const PostShare = ({
             <span className={`button-text ${currentUserReaction ? "reacted" : ""}`}>
               {currentUserReaction || "Thích"}
             </span>
-            {likeCount > 0 && ` (${likeCount})`}
           </Button>
         </Popover>
 
@@ -386,7 +402,7 @@ const PostShare = ({
           className={`action-button ${isCommentsExpanded ? "active" : ""}`}
           aria-label="Bình luận bài viết"
         >
-          Bình luận {commentCount > 0 && `(${commentCount})`}
+          Bình luận
         </Button>
 
         <Button
@@ -412,7 +428,7 @@ const PostShare = ({
               {/* Comment Form */}
               <div className="comment-form" style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <Avatar size={32} src={user.avatarUrl} icon={<UserOutlined />} />
+                  <Avatar size={32} src={(currentUser || localCurrentUser)?.avatarUrl} icon={<UserOutlined />} />
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input

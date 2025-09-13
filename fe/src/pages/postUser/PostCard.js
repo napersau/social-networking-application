@@ -30,6 +30,7 @@ const PostCard = ({
   setCommentingPosts,
   setPosts,
   commentForms,
+  currentUser,
   onLike,
 }) => {
   const isLiking = likingPosts.has(post.id);
@@ -37,6 +38,45 @@ const PostCard = ({
   const likeCount = post.likes?.length || 0;
   const commentCount = post.commentCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+
+  // Render like count và comment count trên cùng một hàng giống Facebook
+  const renderCountSummary = () => {
+    if (likeCount === 0 && commentCount === 0) return null;
+    
+    return (
+      <div className="count-summary" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 0',
+        fontSize: '13px',
+        color: '#65676b'
+      }}>
+        <div className="left-counts">
+          {likeCount > 0 && (
+            <span
+              className="like-count-text"
+              style={{ cursor: 'pointer' }}
+              title="Xem ai đã thích"
+            >
+              {likeCount === 1 ? '1 lượt thích' : `${likeCount} lượt thích`}
+            </span>
+          )}
+        </div>
+        <div className="right-counts">
+          {commentCount > 0 && (
+            <span
+              className="comment-count-text"
+              style={{ cursor: 'pointer' }}
+              onClick={handleToggleComments}
+            >
+              {commentCount === 1 ? '1 bình luận' : `${commentCount} bình luận`}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const handleToggleComments = async () => {
     if (isCommentsExpanded) {
@@ -116,6 +156,9 @@ const PostCard = ({
         )}
       </div>
 
+      {/* Hiển thị số lượng like và comment */}
+      {renderCountSummary()}
+
       <Divider className="post-divider" />
 
       <div className="post-actions">
@@ -127,7 +170,7 @@ const PostCard = ({
           className={`action-button ${isLiked ? "liked" : ""}`}
           style={{ color: isLiked ? "#ff4d4f" : undefined }}
         >
-          {isLiked ? "Đã thích" : "Thích"} {likeCount > 0 && `(${likeCount})`}
+          {isLiked ? "Đã thích" : "Thích"}
         </Button>
 
         <Button
@@ -136,7 +179,7 @@ const PostCard = ({
           onClick={handleToggleComments}
           className={`action-button ${isCommentsExpanded ? "active" : ""}`}
         >
-          Bình luận {commentCount > 0 && `(${commentCount})`}
+          Bình luận
         </Button>
 
         <Button
@@ -156,6 +199,7 @@ const PostCard = ({
           setCommentingPosts={setCommentingPosts}
           setPosts={setPosts}
           commentForms={commentForms}
+          currentUser={currentUser}
         />
       )}
     </Card>
