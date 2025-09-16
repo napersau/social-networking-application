@@ -106,6 +106,29 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public CommentResponse replyCommentPostShare(CommentRequest request) {
+
+        User user = securityUtil.getCurrentUser();
+
+        PostShare postShare = postShareRepository.findById(request.getPostShareId()).orElseThrow(()
+                -> new AppException(ErrorCode.POST_SHARE_NOT_EXISTED));
+
+        Comment tmp = commentRepository.findById(request.getCommentId()).orElseThrow(() ->
+                new RuntimeException("Comment not found"));
+        Comment comment = Comment.builder()
+                .content(request.getContent())
+                .user(user)
+                .imageUrl(request.getImageUrl())
+                .post(postShare.getPost())
+                .postShare(postShare)
+                .createdAt(Instant.now())
+                .parentComment(tmp)
+                .build();
+        commentRepository.save(comment);
+        return modelMapper.map(comment, CommentResponse.class);
+    }
+
+    @Override
     public List<CommentResponse> getCommentsByPostId(Long postId) {
         User user = securityUtil.getCurrentUser();
 

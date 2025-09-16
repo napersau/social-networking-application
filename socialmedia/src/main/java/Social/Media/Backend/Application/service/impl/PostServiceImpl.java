@@ -7,6 +7,7 @@ import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.mapper.PostMapper;
+import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.LikeRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.service.PostService;
@@ -28,6 +29,7 @@ public class PostServiceImpl implements PostService {
     private final LikeRepository likeRepository;
     private final PostMapper postMapper;
     private final SecurityUtil securityUtil;
+    private final CommentRepository commentRepository;
 
     @Override
     public PostResponse createPost(PostRequest request) {
@@ -49,11 +51,10 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostResponse> getPostsByUser() {
-
         User user = securityUtil.getCurrentUser();
 
         List<Post> posts = postRepository.findAllByUserId(user.getId());
-        List<PostResponse> result =  posts.stream().map(postMapper::toPostResponse).toList();
+        List<PostResponse> result = posts.stream().map(postMapper::toPostResponse).toList();
         return getPostResponses(user, result);
     }
 
@@ -69,6 +70,7 @@ public class PostServiceImpl implements PostService {
 
     private List<PostResponse> getPostResponses(User user, List<PostResponse> result) {
         for (PostResponse postResponse : result) {
+            // Set like information
             likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId())
                     .ifPresentOrElse(like -> {
                         postResponse.setIsLiked(true);
@@ -77,6 +79,14 @@ public class PostServiceImpl implements PostService {
                         postResponse.setIsLiked(false);
                         postResponse.setReactionType(null);
                     });
+        
+            // Set comment count (only original comments, not from shares)
+            Integer commentCount = commentRepository.countByPostIdAndPostShareIdIsNull(postResponse.getId());
+            postResponse.setCommentsCount(commentCount);
+        
+            // Optional: Set like count as well
+            Integer likeCount = likeRepository.countByPostId(postResponse.getId());
+            postResponse.setLikesCount(likeCount);
         }
         return result;
     }

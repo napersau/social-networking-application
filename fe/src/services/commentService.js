@@ -99,7 +99,7 @@ export const commentService = {
    */
   replyCommentForPostShare: async (postShareId, commentId, content, imageUrl = null) => {
     return await httpClient.post(
-      API.REPLY_COMMENT || "/api/v1/comments/reply",
+      API.REPLY_COMMENT_POSTSHARE || "/api/v1/comments/reply/postShare",
       {
         postShareId,
         commentId, // ID của comment cha (reply vào comment này)

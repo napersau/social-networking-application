@@ -10,6 +10,7 @@ public interface CommentService {
     CommentResponse updateComment(CommentRequest request, Long id);
     void deleteComment(Long id);
     CommentResponse replyComment(CommentRequest request);
+    CommentResponse replyCommentPostShare(CommentRequest request);
     List<CommentResponse> getCommentsByPostId(Long postId);
     List<CommentResponse> getCommentsByPostShareId(Long postShareId);
 }

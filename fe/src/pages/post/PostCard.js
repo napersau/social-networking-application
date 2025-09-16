@@ -41,7 +41,7 @@ const PostCard = ({
   onShare,
 }) => {
   const isLiking = likingPosts.has(post.id);
-  const commentCount = post.commentCount || post.comments?.length || 0;
+  const commentCount = post.commentsCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
@@ -125,7 +125,7 @@ const PostCard = ({
   // Render like count và comment count trên cùng một hàng giống Facebook
   const renderCountSummary = () => {
     const likeCount = totalCount;
-    const commentCount = post.commentCount || post.comments?.length || 0;
+    const commentCount = post.commentsCount || post.comments?.length || 0;
     
     if (likeCount === 0 && commentCount === 0) return null;
     
