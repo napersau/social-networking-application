@@ -36,7 +36,7 @@ const PostCard = ({
   const isLiking = likingPosts.has(post.id);
   const isLiked = post.isLiked || false;
   const likeCount = post.likes?.length || 0;
-  const commentCount = post.commentCount || post.comments?.length || 0;
+  const commentCount = post.commentsCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
 
   // Render like count và comment count trên cùng một hàng giống Facebook
