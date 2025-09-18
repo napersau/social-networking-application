@@ -9,6 +9,7 @@ import Social.Media.Backend.Application.exception.AppException;
 import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.repository.*;
 import Social.Media.Backend.Application.service.ChatMessageService;
+import Social.Media.Backend.Application.utils.MediaUtil;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,6 +38,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     private final SocketIOServer socketIOServer;
     private final ObjectMapper objectMapper;
     private final MediaRepository mediaRepository;
+    private final MediaUtil mediaUtil;
     private final SecurityUtil securityUtil;
     private final MessageReactionRepository messageReactionRepository;
 
@@ -77,7 +79,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         chatMessage = chatMessageRepository.save(chatMessage);
 
-        List<MediaResponse> mediaList = createMediaList(request.getMediaUrls(), chatMessage.getId());
+        mediaUtil.createMediaList(request.getMediaUrls(), chatMessage.getId(), "message");
 
         ChatMessageResponse chatMessageResponse = toChatMessageResponse(chatMessage);
 
@@ -167,24 +169,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         return response;
     }
 
-    private List<MediaResponse> createMediaList(List<String> mediaUrls, Long messageId) {
-        List<MediaResponse> mediaList = new ArrayList<>();
 
-        for (String mediaUrl : mediaUrls) {
-            Media media = Media.builder()
-                    .url(mediaUrl)
-                    .sourceId(messageId)
-                    .sourceType("message")
-                    .type("image")
-                    .createdDate(Instant.now())
-                    .build();
-
-            mediaRepository.save(media);
-            mediaList.add(modelMapper.map(media, MediaResponse.class));
-        }
-
-        return mediaList;
-    }
 
     private ChatMessageResponse toChatMessageResponse(ChatMessage chatMessage) {
         User user = securityUtil.getCurrentUser();

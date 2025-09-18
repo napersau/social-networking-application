@@ -17,6 +17,7 @@ public class PostResponse {
     private User user;
     private List<LikeResponse> likes;
     private List<CommentResponse> comments;
+    private List<MediaResponse> media;
     private String content;
     private String imageUrl;
     private String videoUrl;

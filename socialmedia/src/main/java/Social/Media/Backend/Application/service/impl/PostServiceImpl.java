@@ -1,7 +1,9 @@
 package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.dto.request.PostRequest;
+import Social.Media.Backend.Application.dto.response.MediaResponse;
 import Social.Media.Backend.Application.dto.response.PostResponse;
+import Social.Media.Backend.Application.entity.Media;
 import Social.Media.Backend.Application.entity.Post;
 import Social.Media.Backend.Application.entity.User;
 import Social.Media.Backend.Application.exception.AppException;
@@ -9,8 +11,10 @@ import Social.Media.Backend.Application.exception.ErrorCode;
 import Social.Media.Backend.Application.mapper.PostMapper;
 import Social.Media.Backend.Application.repository.CommentRepository;
 import Social.Media.Backend.Application.repository.LikeRepository;
+import Social.Media.Backend.Application.repository.MediaRepository;
 import Social.Media.Backend.Application.repository.PostRepository;
 import Social.Media.Backend.Application.service.PostService;
+import Social.Media.Backend.Application.utils.MediaUtil;
 import Social.Media.Backend.Application.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,8 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final SecurityUtil securityUtil;
     private final CommentRepository commentRepository;
+    private final MediaUtil mediaUtil;
+    private final MediaRepository mediaRepository;
 
     @Override
     public PostResponse createPost(PostRequest request) {
@@ -40,6 +46,9 @@ public class PostServiceImpl implements PostService {
         post.setUser(user);
         post.setCreatedAt(Instant.now());
         postRepository.save(post);
+
+        mediaUtil.createMediaList(request.getMediaUrls(), post.getId(), "post");
+
         return modelMapper.map(post, PostResponse.class);
     }
 
@@ -70,7 +79,6 @@ public class PostServiceImpl implements PostService {
 
     private List<PostResponse> getPostResponses(User user, List<PostResponse> result) {
         for (PostResponse postResponse : result) {
-            // Set like information
             likeRepository.findByUserIdAndPostId(user.getId(), postResponse.getId())
                     .ifPresentOrElse(like -> {
                         postResponse.setIsLiked(true);
@@ -79,12 +87,17 @@ public class PostServiceImpl implements PostService {
                         postResponse.setIsLiked(false);
                         postResponse.setReactionType(null);
                     });
-        
-            // Set comment count (only original comments, not from shares)
+
+            List<Media> mediaList = mediaRepository.findBySourceTypeAndSourceId("post", postResponse.getId());
+            List<MediaResponse> mediaResponses = mediaList.stream()
+                    .map(media -> modelMapper.map(media, MediaResponse.class))
+                    .toList();
+
+            postResponse.setMedia(mediaResponses);
+
             Integer commentCount = commentRepository.countByPostIdAndPostShareIdIsNull(postResponse.getId());
             postResponse.setCommentsCount(commentCount);
         
-            // Optional: Set like count as well
             Integer likeCount = likeRepository.countByPostId(postResponse.getId());
             postResponse.setLikesCount(likeCount);
         }
@@ -98,11 +111,11 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse updatePost(PostRequest request, Long id) {
-
         Post post = postRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
         post.setContent(request.getContent());
         post.setUpdatedAt(Instant.now());
         postRepository.save(post);
         return modelMapper.map(post, PostResponse.class);
     }
+
 }
