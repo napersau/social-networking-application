@@ -20,7 +20,7 @@ const PostPage = () => {
   const [commentForms] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [fileList, setFileList] = useState([]);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [uploadedMediaUrls, setUploadedMediaUrls] = useState([]);
 
   useEffect(() => {
     fetchPosts();
@@ -226,8 +226,8 @@ const PostPage = () => {
         form={form}
         fileList={fileList}
         setFileList={setFileList}
-        uploadedImageUrl={uploadedImageUrl}
-        setUploadedImageUrl={setUploadedImageUrl}
+        uploadedMediaUrls={uploadedMediaUrls}
+        setUploadedMediaUrls={setUploadedMediaUrls}
         onPostCreated={fetchPosts}
       />
     </div>

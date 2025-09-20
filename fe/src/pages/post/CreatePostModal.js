@@ -25,8 +25,8 @@ const CreatePostModal = ({
   form,
   fileList,
   setFileList,
-  uploadedImageUrl,
-  setUploadedImageUrl,
+  uploadedMediaUrls,
+  setUploadedMediaUrls,
   onPostCreated
 }) => {
   
@@ -49,15 +49,17 @@ const CreatePostModal = ({
 
       if (response.data.code === 1000) {
         const imageUrl = response.data.result.url;
-        setUploadedImageUrl(imageUrl);
-        setFileList([
-          {
-            uid: file.uid,
-            name: file.name,
-            status: "done",
-            url: imageUrl,
-          },
-        ]);
+        
+        // Thêm URL mới vào mảng uploadedMediaUrls
+        setUploadedMediaUrls(prev => [...(prev || []), imageUrl]);
+        
+        // Cập nhật fileList để hiển thị ảnh đã upload
+        setFileList(prev => [...prev, {
+          uid: file.uid,
+          name: file.name,
+          status: "done",
+          url: imageUrl,
+        }]);
 
         onSuccess(response.data.result);
       } else {
@@ -76,7 +78,7 @@ const CreatePostModal = ({
     try {
       const postData = {
         content: values.content,
-        imageUrl: uploadedImageUrl,
+        mediaUrls: uploadedMediaUrls || [], // Gửi mảng mediaUrls thay vì imageUrl đơn lẻ
       };
 
       const response = await postService.createPost(postData);
@@ -84,7 +86,7 @@ const CreatePostModal = ({
         message.success("Đăng bài viết thành công!");
         form.resetFields();
         setFileList([]);
-        setUploadedImageUrl(null);
+        setUploadedMediaUrls([]);
         onCancel();
         onPostCreated();
       }
@@ -100,7 +102,7 @@ const CreatePostModal = ({
     onCancel();
     form.resetFields();
     setFileList([]);
-    setUploadedImageUrl(null);
+    setUploadedMediaUrls([]);
   };
 
   return (
@@ -131,14 +133,19 @@ const CreatePostModal = ({
             listType="picture-card"
             fileList={fileList}
             customRequest={handlePostImageUpload}
-            onRemove={() => {
-              setFileList([]);
-              setUploadedImageUrl(null);
+            onRemove={(file) => {
+              // Xóa ảnh khỏi fileList
+              const newFileList = fileList.filter(item => item.uid !== file.uid);
+              setFileList(newFileList);
+              
+              // Xóa URL tương ứng khỏi uploadedMediaUrls
+              const newMediaUrls = (uploadedMediaUrls || []).filter(url => url !== file.url);
+              setUploadedMediaUrls(newMediaUrls);
             }}
             accept="image/*"
-            maxCount={1}
+            maxCount={5} // Cho phép tối đa 5 ảnh
           >
-            {fileList.length >= 1 ? null : (
+            {fileList.length >= 5 ? null : (
               <div>
                 <PictureOutlined />
                 <div style={{ marginTop: 8 }}>Tải ảnh</div>
