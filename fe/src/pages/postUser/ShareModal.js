@@ -21,6 +21,41 @@ const ShareModal = ({
   setShareContent,
   selectedPost,
 }) => {
+  // Helper function để lấy images từ imageUrl hoặc media
+  const getPostImages = (post) => {
+    if (!post) return [];
+    
+    console.log('ShareModal - Checking images for post:', post.id);
+    console.log('ShareModal - imageUrl:', post.imageUrl);
+    console.log('ShareModal - media:', post.media);
+    
+    // Nếu có imageUrl, ưu tiên sử dụng imageUrl (logic cũ)
+    if (post.imageUrl) {
+      console.log('ShareModal - Using imageUrl:', post.imageUrl);
+      return [post.imageUrl];
+    }
+    
+    // Nếu imageUrl null, kiểm tra media array
+    if (post.media && Array.isArray(post.media) && post.media.length > 0) {
+      console.log('ShareModal - Checking media array, length:', post.media.length);
+      
+      // Lọc chỉ lấy media type là image - kiểm tra cả mediaType và type
+      const imageUrls = post.media
+        .filter(media => {
+          console.log('ShareModal - Media item:', media);
+          const isImage = (media.mediaType === 'IMAGE' || media.type === 'image') && (media.mediaUrl || media.url);
+          console.log('ShareModal - Is image:', isImage);
+          return isImage;
+        })
+        .map(media => media.mediaUrl || media.url);
+      
+      console.log('ShareModal - Filtered image URLs:', imageUrls);
+      return imageUrls;
+    }
+    
+    console.log('ShareModal - No images found');
+    return [];
+  };
   return (
     <Modal
       title="Chia sẻ bài viết"
@@ -64,13 +99,47 @@ const ShareModal = ({
             {selectedPost.content}
           </Paragraph>
 
-          {selectedPost.imageUrl && (
-            <Image
-              src={selectedPost.imageUrl}
-              width="100%"
-              style={{ borderRadius: 8, marginTop: 8 }}
-            />
-          )}
+          {(() => {
+            const images = getPostImages(selectedPost);
+            if (images.length === 0) return null;
+
+            return (
+              <div style={{ marginTop: 8 }}>
+                {images.length === 1 ? (
+                  <Image
+                    src={images[0]}
+                    width="100%"
+                    style={{ borderRadius: 8 }}
+                  />
+                ) : (
+                  <div className="preview-images-grid">
+                    {images.slice(0, 3).map((imageUrl, index) => (
+                      <Image
+                        key={index}
+                        src={imageUrl}
+                        width={images.length === 2 ? "49%" : "32%"}
+                        style={{ 
+                          borderRadius: 4, 
+                          marginRight: index !== images.length - 1 ? 8 : 0,
+                          marginBottom: 4
+                        }}
+                      />
+                    ))}
+                    {images.length > 3 && (
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: '#65676b', 
+                        textAlign: 'center',
+                        marginTop: 4
+                      }}>
+                        +{images.length - 3} ảnh khác
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </Card>
       )}
     </Modal>

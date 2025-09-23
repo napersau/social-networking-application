@@ -46,6 +46,40 @@ const PostCard = ({
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
 
+  // Helper function để lấy images từ imageUrl hoặc media
+  const getPostImages = () => {
+    console.log('PostCard - Checking images for post:', post.id);
+    console.log('PostCard - imageUrl:', post.imageUrl);
+    console.log('PostCard - media:', post.media);
+    
+    // Nếu có imageUrl, ưu tiên sử dụng imageUrl (logic cũ)
+    if (post.imageUrl) {
+      console.log('PostCard - Using imageUrl:', post.imageUrl);
+      return [post.imageUrl];
+    }
+    
+    // Nếu imageUrl null, kiểm tra media array
+    if (post.media && Array.isArray(post.media) && post.media.length > 0) {
+      console.log('PostCard - Checking media array, length:', post.media.length);
+      
+      // Lọc chỉ lấy media type là image - kiểm tra cả mediaType và type
+      const imageUrls = post.media
+        .filter(media => {
+          console.log('PostCard - Media item:', media);
+          const isImage = (media.mediaType === 'IMAGE' || media.type === 'image') && (media.mediaUrl || media.url);
+          console.log('PostCard - Is image:', isImage);
+          return isImage;
+        })
+        .map(media => media.mediaUrl || media.url);
+      
+      console.log('PostCard - Filtered image URLs:', imageUrls);
+      return imageUrls;
+    }
+    
+    console.log('PostCard - No images found');
+    return [];
+  };
+
   // Modal danh sách reactions
   const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
 
@@ -292,11 +326,38 @@ const PostCard = ({
 
         <div className="post-content">
           <Paragraph>{post.content}</Paragraph>
-          {post.imageUrl && (
-            <div className="post-images">
-              <Image src={post.imageUrl} className="post-image" />
-            </div>
-          )}
+          {(() => {
+            const images = getPostImages();
+            if (images.length === 0) return null;
+
+            return (
+              <div className="post-images">
+                {images.length === 1 ? (
+                  // Hiển thị 1 ảnh
+                  <Image src={images[0]} className="post-image" />
+                ) : (
+                  // Hiển thị nhiều ảnh trong grid
+                  <div className={`post-images-grid ${images.length > 4 ? 'grid-many' : `grid-${images.length}`}`}>
+                    {images.slice(0, 5).map((imageUrl, index) => (
+                      <div key={index} className="image-container">
+                        <Image 
+                          src={imageUrl} 
+                          className="post-image-grid"
+                          style={{ objectFit: 'cover' }}
+                        />
+                        {/* Hiển thị overlay "+X" nếu có nhiều hơn 5 ảnh */}
+                        {index === 4 && images.length > 5 && (
+                          <div className="more-images-overlay">
+                            +{images.length - 5}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Hiển thị số lượng like và comment trên cùng một hàng */}

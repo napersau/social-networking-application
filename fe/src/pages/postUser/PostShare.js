@@ -58,6 +58,40 @@ const PostShare = ({
   const [postShareLikes, setPostShareLikes] = useState([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
+  // Helper function để lấy images từ imageUrl hoặc media
+  const getPostImages = (post) => {
+    console.log('PostUserShare - Checking images for post:', post.id);
+    console.log('PostUserShare - imageUrl:', post.imageUrl);
+    console.log('PostUserShare - media:', post.media);
+    
+    // Nếu có imageUrl, ưu tiên sử dụng imageUrl (logic cũ)
+    if (post.imageUrl) {
+      console.log('PostUserShare - Using imageUrl:', post.imageUrl);
+      return [post.imageUrl];
+    }
+    
+    // Nếu imageUrl null, kiểm tra media array
+    if (post.media && Array.isArray(post.media) && post.media.length > 0) {
+      console.log('PostUserShare - Checking media array, length:', post.media.length);
+      
+      // Lọc chỉ lấy media type là image - kiểm tra cả mediaType và type
+      const imageUrls = post.media
+        .filter(media => {
+          console.log('PostUserShare - Media item:', media);
+          const isImage = (media.mediaType === 'IMAGE' || media.type === 'image') && (media.mediaUrl || media.url);
+          console.log('PostUserShare - Is image:', isImage);
+          return isImage;
+        })
+        .map(media => media.mediaUrl || media.url);
+      
+      console.log('PostUserShare - Filtered image URLs:', imageUrls);
+      return imageUrls;
+    }
+    
+    console.log('PostUserShare - No images found');
+    return [];
+  };
+
   console.log("comment",comments)
 
   // Fetch current user info if not provided via props
@@ -299,16 +333,45 @@ const PostShare = ({
 
         <div className="post-content">
           <Paragraph>{post.content}</Paragraph>
-          {post.imageUrl && (
-            <div className="post-images">
-              <Image
-                src={post.imageUrl}
-                className="post-image"
-                placeholder={<div>Loading...</div>}
-                onError={() => console.error("Failed to load image")}
-              />
-            </div>
-          )}
+          {(() => {
+            const images = getPostImages(post);
+            if (images.length === 0) return null;
+
+            return (
+              <div className="post-images">
+                {images.length === 1 ? (
+                  // Hiển thị 1 ảnh
+                  <Image 
+                    src={images[0]} 
+                    className="post-image"
+                    placeholder={<div>Loading...</div>}
+                    onError={() => console.error("Failed to load image")}
+                  />
+                ) : (
+                  // Hiển thị nhiều ảnh trong grid
+                  <div className={`post-images-grid ${images.length > 4 ? 'grid-many' : `grid-${images.length}`}`}>
+                    {images.slice(0, 5).map((imageUrl, index) => (
+                      <div key={index} className="image-container">
+                        <Image 
+                          src={imageUrl} 
+                          className="post-image-grid"
+                          style={{ objectFit: 'cover' }}
+                          placeholder={<div>Loading...</div>}
+                          onError={() => console.error("Failed to load image")}
+                        />
+                        {/* Hiển thị overlay "+X" nếu có nhiều hơn 5 ảnh */}
+                        {index === 4 && images.length > 5 && (
+                          <div className="more-images-overlay">
+                            +{images.length - 5}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </Card>
 
