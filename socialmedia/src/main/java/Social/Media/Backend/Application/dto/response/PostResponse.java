@@ -19,8 +19,6 @@ public class PostResponse {
     private List<CommentResponse> comments;
     private List<MediaResponse> media;
     private String content;
-    private String imageUrl;
-    private String videoUrl;
     private String location;
     private String privacy;
     private Boolean isActive;
