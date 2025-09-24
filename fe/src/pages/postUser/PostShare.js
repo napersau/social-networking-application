@@ -58,37 +58,21 @@ const PostShare = ({
   const [postShareLikes, setPostShareLikes] = useState([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
 
-  // Helper function để lấy images từ imageUrl hoặc media
+  // Helper function để lấy images từ media array
   const getPostImages = (post) => {
-    console.log('PostUserShare - Checking images for post:', post.id);
-    console.log('PostUserShare - imageUrl:', post.imageUrl);
-    console.log('PostUserShare - media:', post.media);
-    
-    // Nếu có imageUrl, ưu tiên sử dụng imageUrl (logic cũ)
-    if (post.imageUrl) {
-      console.log('PostUserShare - Using imageUrl:', post.imageUrl);
-      return [post.imageUrl];
-    }
-    
-    // Nếu imageUrl null, kiểm tra media array
+    // Chỉ sử dụng media array
     if (post.media && Array.isArray(post.media) && post.media.length > 0) {
-      console.log('PostUserShare - Checking media array, length:', post.media.length);
-      
-      // Lọc chỉ lấy media type là image - kiểm tra cả mediaType và type
+      // Lọc chỉ lấy media type là image
       const imageUrls = post.media
         .filter(media => {
-          console.log('PostUserShare - Media item:', media);
           const isImage = (media.mediaType === 'IMAGE' || media.type === 'image') && (media.mediaUrl || media.url);
-          console.log('PostUserShare - Is image:', isImage);
           return isImage;
         })
         .map(media => media.mediaUrl || media.url);
       
-      console.log('PostUserShare - Filtered image URLs:', imageUrls);
       return imageUrls;
     }
     
-    console.log('PostUserShare - No images found');
     return [];
   };
 

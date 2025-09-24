@@ -18,6 +18,7 @@ import {
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 import { createPostShare } from "../../services/postShareService";
+import "./styles.css";
 
 const { Text, Paragraph } = Typography;
 
@@ -38,6 +39,24 @@ const PostCard = ({
   const likeCount = post.likes?.length || 0;
   const commentCount = post.commentsCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+
+  // Helper function để lấy images từ media array
+  const getPostImages = () => {
+    // Chỉ sử dụng media array
+    if (post.media && Array.isArray(post.media) && post.media.length > 0) {
+      // Lọc chỉ lấy media type là image
+      const imageUrls = post.media
+        .filter(media => {
+          const isImage = (media.mediaType === 'IMAGE' || media.type === 'image') && (media.mediaUrl || media.url);
+          return isImage;
+        })
+        .map(media => media.mediaUrl || media.url);
+      
+      return imageUrls;
+    }
+    
+    return [];
+  };
 
   // Render like count và comment count trên cùng một hàng giống Facebook
   const renderCountSummary = () => {
@@ -149,11 +168,38 @@ const PostCard = ({
 
       <div className="post-content">
         <Paragraph>{post.content}</Paragraph>
-        {post.imageUrl && (
-          <div className="post-images">
-            <Image src={post.imageUrl} className="post-image" />
-          </div>
-        )}
+        {(() => {
+          const images = getPostImages();
+          if (images.length === 0) return null;
+
+          return (
+            <div className="post-images">
+              {images.length === 1 ? (
+                // Hiển thị 1 ảnh
+                <Image src={images[0]} className="post-image" />
+              ) : (
+                // Hiển thị nhiều ảnh trong grid
+                <div className={`post-images-grid ${images.length > 4 ? 'grid-many' : `grid-${images.length}`}`}>
+                  {images.slice(0, 5).map((imageUrl, index) => (
+                    <div key={index} className="image-container">
+                      <Image 
+                        src={imageUrl} 
+                        className="post-image-grid"
+                        style={{ objectFit: 'cover' }}
+                      />
+                      {/* Hiển thị overlay "+X" nếu có nhiều hơn 5 ảnh */}
+                      {index === 4 && images.length > 5 && (
+                        <div className="more-images-overlay">
+                          +{images.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Hiển thị số lượng like và comment */}
