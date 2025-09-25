@@ -106,7 +106,6 @@ const PostShare = ({
     setLoadingLikes(true);
     try {
       const response = await likeService.getPostShareLikes(postShare.id);
-      console.log("response",response)
       if (response.data && response.data.code === 1000) {
         setPostShareLikes(response.data.result || []);
       } else {

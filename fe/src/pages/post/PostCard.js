@@ -23,6 +23,7 @@ import {
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 import { postService } from "../../services/postService";
+import { likeService } from "../../services/likeService";
 import "./PostCard.css";
 
 const { Text, Paragraph } = Typography;
@@ -45,6 +46,8 @@ const PostCard = ({
   const isCommentsExpanded = expandedComments.has(post.id);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editingContent, setEditingContent] = useState(post.content);
+  const [postLikes, setPostLikes] = useState([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
 
   // Helper function để lấy images từ media array
   const getPostImages = () => {
@@ -66,6 +69,26 @@ const PostCard = ({
 
   // Modal danh sách reactions
   const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
+
+  // Function để fetch likes của post
+  const fetchPostLikes = async () => {
+    if (loadingLikes || !post?.id) return;
+
+    setLoadingLikes(true);
+    try {
+      const response = await likeService.getPostLikes(post.id);
+      if (response.data && response.data.code === 1000) {
+        setPostLikes(response.data.result || []);
+      } else {
+        message.error("Không thể tải danh sách người thích!");
+      }
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+      message.error("Đã xảy ra lỗi khi tải danh sách người thích!");
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   const reactionOptions = [
     { type: "Like", icon: "👍", label: "Thích", color: "#1877f2" },
@@ -154,11 +177,12 @@ const PostCard = ({
             <span
               className="like-count-text"
               title="Xem ai đã thả cảm xúc"
-              onClick={() => setIsReactionModalVisible(true)}
+              onClick={() => {
+                setIsReactionModalVisible(true);
+                fetchPostLikes();
+              }}
             >
-              {Object.entries(reactionCounts).length === 1 && currentUserReaction
-                ? `Bạn${totalCount > 1 ? ` và ${totalCount - 1} người khác` : ""}`
-                : `${totalCount} lượt thả cảm xúc`}
+              {totalCount} lượt thả cảm xúc
             </span>
           )}
         </div>
@@ -250,16 +274,15 @@ const PostCard = ({
     }
   };
 
-  // Nhóm người theo reactionType
-  const groupedReactions =
-    post.likes?.reduce((acc, r) => {
-      const type = r.reactionType || "Like";
-      if (!acc[type]) acc[type] = [];
-      acc[type].push(r);
-      return acc;
-    }, {}) || {};
+  // Nhóm người theo reactionType từ postLikes (đã fetch)
+  const groupedReactions = postLikes.reduce((acc, like) => {
+    const type = like.reactionType || "Like";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(like);
+    return acc;
+  }, {});
 
-  const allReactions = Object.values(groupedReactions).flat();
+  const allReactions = postLikes; // Sử dụng trực tiếp postLikes
 
   return (
     <>
@@ -430,6 +453,7 @@ const PostCard = ({
         open={isReactionModalVisible}
         onCancel={() => setIsReactionModalVisible(false)}
         footer={null}
+        loading={loadingLikes}
       >
         <Tabs
           defaultActiveKey="all"

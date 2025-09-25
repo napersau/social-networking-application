@@ -293,12 +293,10 @@ const CommentSection = ({
       if (response.data && response.data.code === 1000) {
 
         const result = response.data.result;
-        console.log("result", result)
         setPosts((prevPosts) =>
           prevPosts.map((postItem) => {
             if (postItem.id === post.id) {
               const updatedComments = postItem.comments.map((c) => {
-                console.log("cmt",c)
                 if (c.id === commentId) {
                   if (result) {
                     return {

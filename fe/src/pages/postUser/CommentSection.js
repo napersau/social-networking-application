@@ -103,9 +103,6 @@ const CommentSection = ({
   };
 
   const handleSubmitComment = async (postId, content) => {
-    console.log("handleSubmitComment called with:", { postId, content });
-    console.log("setCommentingPosts:", typeof setCommentingPosts);
-    
     if (!content.trim()) {
       message.warning("Vui lòng nhập nội dung bình luận!");
       return;
@@ -313,12 +310,10 @@ const CommentSection = ({
       if (response.data && response.data.code === 1000) {
 
         const result = response.data.result;
-        console.log("result", result)
         setPosts((prevPosts) =>
           prevPosts.map((postItem) => {
             if (postItem.id === post.id) {
               const updatedComments = postItem.comments.map((c) => {
-                console.log("cmt",c)
                 if (c.id === commentId) {
                   if (result) {
                     return {

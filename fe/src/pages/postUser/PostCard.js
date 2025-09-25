@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   message,
@@ -7,6 +7,9 @@ import {
   Divider,
   Typography,
   Image,
+  Modal,
+  List,
+  Tabs,
 } from "antd";
 import {
   HeartOutlined,
@@ -18,6 +21,7 @@ import {
 import CommentSection from "./CommentSection";
 import { commentService } from "../../services/commentService";
 import { createPostShare } from "../../services/postShareService";
+import { likeService } from "../../services/likeService";
 import "./styles.css";
 
 const { Text, Paragraph } = Typography;
@@ -39,6 +43,31 @@ const PostCard = ({
   const likeCount = post.likes?.length || 0;
   const commentCount = post.commentsCount || post.comments?.length || 0;
   const isCommentsExpanded = expandedComments.has(post.id);
+  
+  // Modal danh sách reactions
+  const [isReactionModalVisible, setIsReactionModalVisible] = useState(false);
+  const [postLikes, setPostLikes] = useState([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
+
+  // Function để fetch likes của post
+  const fetchPostLikes = async () => {
+    if (loadingLikes || !post?.id) return;
+
+    setLoadingLikes(true);
+    try {
+      const response = await likeService.getPostLikes(post.id);
+      if (response.data && response.data.code === 1000) {
+        setPostLikes(response.data.result || []);
+      } else {
+        message.error("Không thể tải danh sách người thích!");
+      }
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+      message.error("Đã xảy ra lỗi khi tải danh sách người thích!");
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   // Helper function để lấy images từ media array
   const getPostImages = () => {
@@ -76,9 +105,13 @@ const PostCard = ({
             <span
               className="like-count-text"
               style={{ cursor: 'pointer' }}
-              title="Xem ai đã thích"
+              title="Xem ai đã thả cảm xúc"
+              onClick={() => {
+                setIsReactionModalVisible(true);
+                fetchPostLikes();
+              }}
             >
-              {likeCount === 1 ? '1 lượt thích' : `${likeCount} lượt thích`}
+              {likeCount} lượt thả cảm xúc
             </span>
           )}
         </div>
@@ -248,6 +281,45 @@ const PostCard = ({
           currentUser={currentUser}
         />
       )}
+
+      {/* Modal hiển thị danh sách reactions */}
+      <Modal
+        title="Người đã thả cảm xúc"
+        open={isReactionModalVisible}
+        onCancel={() => setIsReactionModalVisible(false)}
+        footer={null}
+        loading={loadingLikes}
+      >
+        <Tabs
+          defaultActiveKey="all"
+          items={[
+            {
+              key: "all",
+              label: `Tất cả (${postLikes.length})`,
+              children: (
+                <List
+                  dataSource={postLikes}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar src={item.user?.avatarUrl}>
+                            {item.user?.firstName?.[0]}
+                          </Avatar>
+                        }
+                        title={`${item.user?.firstName || ""} ${
+                          item.user?.lastName || ""
+                        }`}
+                        description={item.reactionType}
+                      />
+                    </List.Item>
+                  )}
+                />
+              ),
+            },
+          ]}
+        />
+      </Modal>
     </Card>
   );
 };
