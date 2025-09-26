@@ -59,9 +59,8 @@ export const likeService = {
 
 
   // Lấy danh sách người đã like một bài viết
-  getPostLikes: async (postId, page = 0, size = 10) => {
-    return await httpClient.get(`/posts/${postId}/likes`, {
-      params: { page, size },
+  getPostLikes: async (postId) => {    
+    return await httpClient.get(API.GET_POST_LIKES_LIST(postId), {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
@@ -89,14 +88,12 @@ export const likeService = {
 
   // Lấy danh sách bài viết đã like của user hiện tại
   getMyLikes: async () => {
-    return await httpClient.get(`/likes/me`, {
+    return await httpClient.get(`/like/me`, {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
     });
   },
-
-
 };
 
 // Export default

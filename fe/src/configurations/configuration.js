@@ -42,6 +42,7 @@ export const API = {
   LIKE_POST: "/like", // POST - like a post
   LIKE_POST_SHARE: "/like/postShare", // POST - like a post share
   GET_POST_SHARE_LIKES: (postShareId) => `/like/list/${postShareId}`, // GET - get users who liked a post share
+  GET_POST_LIKES_LIST: (postId) => `/like/list/post/${postId}`, 
   UNLIKE_POST: "/{postId}/like", // DELETE - unlike a post
   TOGGLE_LIKE: "/like", // POST - toggle like/unlike
   GET_POST_LIKES: "/{postId}/likes", // GET - get users who liked a post

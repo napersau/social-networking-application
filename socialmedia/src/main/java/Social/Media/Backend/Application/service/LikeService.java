@@ -10,4 +10,5 @@ public interface LikeService {
     LikeResponse likeComment(LikeRequest request);
     LikeResponse likePostShare(LikeRequest request);
     List<LikeResponse> getLikesByPostShareId(Long postShareId);
+    List<LikeResponse> getLikesByPostId(Long postId);
 }

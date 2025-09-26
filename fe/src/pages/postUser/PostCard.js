@@ -55,6 +55,7 @@ const PostCard = ({
 
     setLoadingLikes(true);
     try {
+      // Sửa: Gọi đúng method getLikesByPostId thay vì getPostLikes
       const response = await likeService.getPostLikes(post.id);
       if (response.data && response.data.code === 1000) {
         setPostLikes(response.data.result || []);

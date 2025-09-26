@@ -99,6 +99,14 @@ public class LikeServiceImpl implements LikeService {
                 .toList();
     }
 
+    @Override
+    public List<LikeResponse> getLikesByPostId(Long postId) {
+        List<Like> likes = likeRepository.findAllByPostIdAndPostShareIdIsNull(postId);
+        return likes.stream()
+                .map(like -> modelMapper.map(like, LikeResponse.class))
+                .toList();
+    }
+
     private Like buildLike(User user, String reactionType, Post post, Comment comment) {
         return Like.builder()
                 .user(user)
