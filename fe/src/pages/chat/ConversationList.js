@@ -172,9 +172,38 @@ const ConversationList = ({
             <>
               <List sx={{ width: "100%", p: 0 }}>
                 {conversations.map((conversation, index) => {
-                  const otherUserId = conversation.participants.find(
-                    (p) => p.userId != currentUserId
-                  )?.userId;
+                  // Debug: ghi lại cấu trúc conversation để kiểm tra
+                  console.log("Conversation:", conversation);
+                  console.log("Online users:", onlineUsers);
+                  
+                  // Kiểm tra xem conversation có thuộc tính participants không
+                  if (!conversation.participants || !Array.isArray(conversation.participants)) {
+                    console.error("Invalid conversation structure:", conversation);
+                    // Nếu không có participants, tạo mảng rỗng để tránh lỗi
+                    conversation.participants = [];
+                  }
+
+                  // Với cuộc trò chuyện nhóm, sẽ có nhiều participants
+                  // Với cuộc trò chuyện 1-1, lấy userId của người còn lại
+                  let otherUserId;
+                  let isOnline = false;
+
+                  if (conversation.type === 'GROUP') {
+                    // Cuộc trò chuyện nhóm: kiểm tra có bất kỳ thành viên nào đang online không
+                    isOnline = conversation.participants.some(
+                      (p) => p.userId !== currentUserId && onlineUsers?.includes(p.userId)
+                    );
+                  } else {
+                    // Cuộc trò chuyện 1-1: lấy ID người dùng khác
+                    const otherParticipant = conversation.participants.find(
+                      (p) => p.userId !== currentUserId
+                    );
+                    otherUserId = otherParticipant?.userId;
+                    isOnline = otherUserId && onlineUsers?.includes(otherUserId);
+                  }
+                  
+                  console.log(`Conversation ${conversation.id} - ${conversation.name} - otherUserId: ${otherUserId} - isOnline: ${isOnline}`);
+                  
                   return (
                     <React.Fragment key={conversation.id}>
                       <ListItem
@@ -218,7 +247,7 @@ const ConversationList = ({
                             </Badge>
 
                             {/* 🔹 Chấm xanh báo online */}
-                            {onlineUsers?.includes(otherUserId) && (
+                            {isOnline && (
                               <Box
                                 sx={{
                                   position: "absolute",

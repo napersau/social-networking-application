@@ -13,6 +13,7 @@ import {
   createConversationGroup,
 } from "../../services/chatService";
 import { getToken } from "../../services/localStorageService";
+import { useOnlineUsers } from "../../context/OnlineUsersContext";
 
 export default function Chat() {
   const [message, setMessage] = useState("");
@@ -22,7 +23,8 @@ export default function Chat() {
   const [error, setError] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
-  const [onlineUsers, setOnlineUsers] = useState([]);
+  // Use the OnlineUsersContext instead of local state
+  const { onlineUsers } = useOnlineUsers();
   const messageContainerRef = useRef(null);
   const socketRef = useRef(null);
 
@@ -195,17 +197,8 @@ export default function Chat() {
         console.log("Socket disconnected");
       });
 
-      // 🔹 Khi có user online
-      socketRef.current.on("user_online", (userId) => {
-        console.log("User online:", userId);
-        setOnlineUsers((prev) => [...new Set([...prev, userId])]); // thêm nếu chưa có
-      });
-
-      // 🔹 Khi có user offline
-      socketRef.current.on("user_offline", (userId) => {
-        console.log("User offline:", userId);
-        setOnlineUsers((prev) => prev.filter((id) => id !== userId));
-      });
+      // User online/offline events are now handled by OnlineUsersContext
+      // so we don't need to duplicate the listeners here
 
       socketRef.current.on("message", (message) => {
         console.log("New message received:", message);

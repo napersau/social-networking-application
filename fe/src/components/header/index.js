@@ -33,6 +33,7 @@ import {
 } from "../../services/notificationService";
 import { getMyInfo } from "../../services/userService";
 import { useSocket } from "../../hooks/useSocket";
+import { useOnlineUsers } from "../../context/OnlineUsersContext";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -45,6 +46,7 @@ function Header() {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const [info, setInfo] = useState(null);
+  const { onlineUsers } = useOnlineUsers(); // Access the online users from context
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -293,6 +295,8 @@ function Header() {
                 />
               </Badge>
             </Dropdown>
+            
+            {/* Icon hiển thị số người dùng đang online đã được loại bỏ */}
 
             <Dropdown
               menu={{ items: userMenuItems, onClick: handleMenuClick }}
