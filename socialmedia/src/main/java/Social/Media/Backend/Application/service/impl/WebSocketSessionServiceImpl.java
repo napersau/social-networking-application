@@ -2,6 +2,7 @@ package Social.Media.Backend.Application.service.impl;
 
 import Social.Media.Backend.Application.entity.WebSocketSession;
 import Social.Media.Backend.Application.repository.WebSocketSessionRepository;
+import Social.Media.Backend.Application.service.TypingStatusService;
 import Social.Media.Backend.Application.service.WebSocketSessionService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.List;
 public class WebSocketSessionServiceImpl implements WebSocketSessionService {
 
     private final WebSocketSessionRepository webSocketSessionRepository;
+    private final TypingStatusService typingStatusService;
 
     @Override
     public WebSocketSession create(WebSocketSession webSocketSession) {
@@ -35,4 +37,10 @@ public class WebSocketSessionServiceImpl implements WebSocketSessionService {
                 .map(WebSocketSession::getUserId)
                 .toList();
     }
+
+    @Override
+    public void handleTypingStatus(Long conversationId, Long userId, Boolean isTyping) {
+        typingStatusService.updateTypingStatus(conversationId, userId, isTyping);
+    }
+
 }

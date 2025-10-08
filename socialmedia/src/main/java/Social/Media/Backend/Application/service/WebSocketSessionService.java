@@ -8,4 +8,5 @@ public interface WebSocketSessionService {
     WebSocketSession create(WebSocketSession webSocketSession);
     Long deleteSession(String sessionId);
     List<Long> getOnlineUsers();
+    void handleTypingStatus(Long conversationId, Long userId, Boolean isTyping);
 }

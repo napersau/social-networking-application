@@ -75,6 +75,8 @@ npm start</code></pre>
         <br></br>
         <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/15.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
         <br></br>
+        <img src="https://raw.githubusercontent.com/napersau/social-networking-application/main/fe/public/img/16.png" alt="Ảnh Demo" style="max-width:100%; height:auto; border:1px solid #ddd; border-radius:5px; padding:5px;"> 
+        <br></br>
     </div>
     <div class="section">
         <h2>Yêu cầu Phiên bản</h2>
