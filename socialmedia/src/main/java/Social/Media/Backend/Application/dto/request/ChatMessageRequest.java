@@ -21,4 +21,6 @@ public class ChatMessageRequest {
     private String clientId;
     private List<String> mediaUrls;
     private String reactionType;
+
+
 }
