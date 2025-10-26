@@ -1,0 +1,181 @@
+/* Incoming Call Modal Styles */
+.incoming-call-modal .ant-modal-content {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+}
+
+.incoming-call-modal .ant-modal-body {
+  padding: 40px 30px;
+}
+
+.incoming-call-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+/* ==================== Caller Info ==================== */
+.caller-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.caller-avatar {
+  border: 5px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ringing-animation {
+  animation: ringPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3),
+                0 0 0 10px rgba(255, 255, 255, 0.3),
+                0 0 0 20px rgba(255, 255, 255, 0.2),
+                0 0 0 30px rgba(255, 255, 255, 0.1);
+  }
+}
+
+.caller-name {
+  color: white;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.call-type-text {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.5s ease-out 0.1s backwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== Call Actions ==================== */
+.call-actions {
+  animation: fadeInUp 0.5s ease-out 0.2s backwards;
+}
+
+.call-actions .ant-btn {
+  width: 70px;
+  height: 70px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.call-actions .ant-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.call-actions .ant-btn:active {
+  transform: scale(1.05);
+}
+
+/* Decline Button */
+.decline-btn {
+  animation: shake 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  2%, 6% { transform: rotate(-5deg); }
+  4%, 8% { transform: rotate(5deg); }
+  10% { transform: rotate(0deg); }
+}
+
+.decline-btn:hover {
+  background: #cf1322 !important;
+  border-color: #cf1322 !important;
+  animation: none;
+}
+
+/* Accept Button */
+.accept-btn {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.accept-btn:hover {
+  background: #389e0d !important;
+  border-color: #389e0d !important;
+  animation: none;
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+  .incoming-call-modal .ant-modal-body {
+    padding: 30px 20px;
+  }
+
+  .incoming-call-container {
+    gap: 30px;
+  }
+
+  .caller-avatar {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .caller-name {
+    font-size: 24px;
+  }
+
+  .call-type-text {
+    font-size: 14px;
+  }
+
+  .call-actions .ant-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+}
+
+/* ==================== Vibration Effect ==================== */
+@keyframes vibrate {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 0); }
+  20%, 40%, 60%, 80% { transform: translate(2px, 0); }
+}
+
+.incoming-call-container.vibrating {
+  animation: vibrate 0.3s ease-in-out;
+}

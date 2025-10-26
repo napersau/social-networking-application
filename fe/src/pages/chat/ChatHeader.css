@@ -11,6 +11,32 @@
   cursor: pointer;
 }
 
+/* Call Buttons */
+.call-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.call-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.call-btn:hover {
+  background: rgba(24, 144, 255, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.call-btn:active {
+  transform: scale(0.95);
+}
+
 .drawer-content {
   display: flex;
   flex-direction: column;

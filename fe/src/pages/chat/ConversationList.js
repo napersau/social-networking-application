@@ -172,10 +172,6 @@ const ConversationList = ({
             <>
               <List sx={{ width: "100%", p: 0 }}>
                 {conversations.map((conversation, index) => {
-                  // Debug: ghi lại cấu trúc conversation để kiểm tra
-                  console.log("Conversation:", conversation);
-                  console.log("Online users:", onlineUsers);
-                  
                   // Kiểm tra xem conversation có thuộc tính participants không
                   if (!conversation.participants || !Array.isArray(conversation.participants)) {
                     console.error("Invalid conversation structure:", conversation);
@@ -200,10 +196,7 @@ const ConversationList = ({
                     );
                     otherUserId = otherParticipant?.userId;
                     isOnline = otherUserId && onlineUsers?.includes(otherUserId);
-                  }
-                  
-                  console.log(`Conversation ${conversation.id} - ${conversation.name} - otherUserId: ${otherUserId} - isOnline: ${isOnline}`);
-                  
+                  }    
                   return (
                     <React.Fragment key={conversation.id}>
                       <ListItem

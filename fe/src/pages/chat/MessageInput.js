@@ -1,19 +1,24 @@
 import React, { useState } from "react";
+import { 
+  Input, 
+  Button, 
+  Upload, 
+  Popover, 
+  Space, 
+  Image,
+  message as antMessage 
+} from "antd";
 import {
-  Box,
-  TextField,
-  IconButton,
-  Popover,
-  Stack,
-  Typography,
-} from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
-import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
-import ImageIcon from "@mui/icons-material/Image";
+  SendOutlined,
+  SmileOutlined,
+  PictureOutlined,
+  CloseCircleFilled,
+  EyeOutlined,
+} from "@ant-design/icons";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import axios from "axios";
-import "./styles.css";
+import "./MessageInput.css";
 
 const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -27,6 +32,8 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     const token = localStorage.getItem("token");
+
+    console.log("Files selected:", files);
 
     for (const file of files) {
       const formData = new FormData();
@@ -44,6 +51,8 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
           }
         );
 
+        console.log("Upload response:", response.data);
+
         if (response.data.code === 1000) {
           const result = response.data.result;
           setUploadedFiles((prev) => [
@@ -57,12 +66,14 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
               fileName: file.name,
             },
           ]);
+          console.log("File uploaded successfully:", result.url);
         } else {
-          message.error("Tải ảnh thất bại");
+          console.error("Upload failed:", response.data);
+          alert("Tải ảnh thất bại");
         }
       } catch (err) {
         console.error("Upload failed:", err);
-        message.error("Có lỗi khi tải ảnh");
+        alert("Có lỗi khi tải ảnh");
       }
     }
   };
@@ -85,9 +96,9 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
 
       if (response.data.code === 1000) {
         setUploadedFiles((prev) => prev.filter((file) => file.url !== url));
-        message.success("Xoá ảnh thành công");
+        antMessage.success("Xoá ảnh thành công");
       } else {
-        message.error("Xoá ảnh thất bại");
+        antMessage.error("Xoá ảnh thất bại");
       }
     } catch (err) {
       console.error("Delete failed:", err);
@@ -96,11 +107,32 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!message.trim() && uploadedFiles.length === 0) return;
-    const mediaUrls = uploadedFiles.map((f) => f.url);
-    onSendMessage({ message, mediaUrls });
-    onMessageChange("");
-    setUploadedFiles([]);
+    
+    // Validate input
+    const messageText = message?.trim() || '';
+    const validFiles = uploadedFiles.filter(file => 
+      file && file.url && file.status === 'done'
+    );
+    const mediaUrls = validFiles.map(f => f.url);
+
+    if (!messageText && mediaUrls.length === 0) {
+      console.log('No content to send');
+      return;
+    }
+    const messageData = {
+      message: messageText || null, // Send null instead of empty string
+      mediaUrls: mediaUrls
+    };
+    console.log('Final message data being sent:', messageData);
+    
+    try {
+      onSendMessage(messageData);
+      onMessageChange("");
+      setUploadedFiles([]);
+      console.log('Message sent successfully');
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -111,99 +143,112 @@ const MessageInput = ({ message, onMessageChange, onSendMessage }) => {
   };
 
   return (
-    <>
-      <Box component="form" onSubmit={handleSubmit} className="message-form">
+    <div className="message-input-container">
+      <form onSubmit={handleSubmit} className="message-form">
+        {/* Media Preview */}
         {uploadedFiles.length > 0 && (
-          <Stack direction="row" spacing={1} className="media-preview">
-            {uploadedFiles.map((file, index) => {
-              const isImage = file.contentType?.startsWith("image");
-
-              return (
-                <Box key={index} className="media-item">
-                  {isImage && (
-                    <>
-                      <img
+          <div className="media-preview-container">
+            <Space wrap size={8}>
+              {uploadedFiles.map((file, index) => {
+                const isImage = file.contentType?.startsWith("image");
+                return (
+                  isImage && (
+                    <div key={index} className="media-preview-item">
+                      <Image
                         src={file.url}
                         alt="preview"
-                        className="media-image"
+                        width={80}
+                        height={80}
+                        style={{ 
+                          borderRadius: 8, 
+                          objectFit: 'cover',
+                          cursor: 'pointer' 
+                        }}
+                        preview={{
+                          mask: <EyeOutlined style={{ fontSize: 20 }} />,
+                        }}
                       />
-                      <span
-                        className="eye-icon"
-                        onClick={() => setViewImage(file.url)}
-                      >
-                        👁️
-                      </span>
-                      <IconButton
-                        size="small"
-                        className="remove-button"
+                      <CloseCircleFilled
+                        className="remove-icon"
                         onClick={() => handleRemoveFile(file.url)}
-                      >
-                        ✕
-                      </IconButton>
-                    </>
-                  )}
-                </Box>
-              );
-            })}
-          </Stack>
+                      />
+                    </div>
+                  )
+                );
+              })}
+            </Space>
+          </div>
         )}
 
-        <Box className="input-row">
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <EmojiEmotionsIcon />
-          </IconButton>
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={() => setAnchorEl(null)}
-            anchorOrigin={{ vertical: "top", horizontal: "left" }}
-          >
-            <Picker data={data} onEmojiSelect={handleEmojiSelect} />
-          </Popover>
+        {/* Input Area */}
+        <div className="input-wrapper">
+          <Space.Compact className="input-controls">
+            {/* Emoji Picker */}
+            <Popover
+              content={<Picker data={data} onEmojiSelect={handleEmojiSelect} />}
+              trigger="click"
+              placement="topLeft"
+              open={Boolean(anchorEl)}
+              onOpenChange={(visible) => setAnchorEl(visible ? {} : null)}
+            >
+              <Button
+                type="text"
+                icon={<SmileOutlined style={{ fontSize: 20 }} />}
+                className="action-button emoji-button"
+              />
+            </Popover>
 
-          <input
-            accept="image/*,video/*"
-            type="file"
-            multiple
-            hidden
-            id="file-upload"
-            onChange={handleFileChange}
-          />
-          <label htmlFor="file-upload">
-            <IconButton component="span">
-              <ImageIcon />
-            </IconButton>
-          </label>
+            {/* Image Upload */}
+            <input
+              accept="image/*,video/*"
+              type="file"
+              multiple
+              hidden
+              id="file-upload-input"
+              onChange={handleFileChange}
+              ref={(input) => {
+                if (input) {
+                  window.fileInputRef = input;
+                }
+              }}
+            />
+            <Button
+              type="text"
+              icon={<PictureOutlined style={{ fontSize: 20 }} />}
+              className="action-button image-button"
+              onClick={() => document.getElementById('file-upload-input').click()}
+            />
 
-          <TextField
-            fullWidth
-            placeholder="Aa"
-            variant="outlined"
-            value={message}
-            onChange={(e) => onMessageChange(e.target.value)}
-            onKeyPress={handleKeyPress}
-            size="small"
-            multiline
-            maxRows={4}
-            className="input-spacing"
-          />
+            {/* Text Input */}
+            <Input.TextArea
+              placeholder="Aa"
+              value={message}
+              onChange={(e) => onMessageChange(e.target.value)}
+              onPressEnter={(e) => {
+                if (!e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              autoSize={{ minRows: 1, maxRows: 4 }}
+              className="message-textarea"
+              bordered={false}
+            />
 
-          <IconButton
-            color="primary"
-            type="submit"
-            disabled={!message.trim() && uploadedFiles.length === 0}
-          >
-            <SendIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {viewImage && (
-        <Box className="modal" onClick={() => setViewImage(null)}>
-          <img src={viewImage} alt="zoom" className="modal-img" />
-        </Box>
-      )}
-    </>
+            {/* Send Button */}
+            <Button
+              type="primary"
+              icon={<SendOutlined style={{ fontSize: 18 }} />}
+              onClick={handleSubmit}
+              disabled={!message.trim() && uploadedFiles.length === 0}
+              className="send-button"
+              shape="circle"
+              size="large"
+            />
+          </Space.Compact>
+        </div>
+      </form>
+    </div>
   );
 };
 

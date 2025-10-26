@@ -14,6 +14,8 @@ import {
   UserOutlined,
   CloseOutlined,
   MoreOutlined,
+  PhoneOutlined,
+  VideoCameraOutlined,
 } from "@ant-design/icons";
 import {
   updateConversation,
@@ -23,11 +25,13 @@ import {
 import { getAllUsers, searchUsersByFullName } from "../../services/userService";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import CallModal from "../../components/CallModal";
+import IncomingCallModal from "../../components/IncomingCallModal";
 import "./ChatHeader.css";
 
 const { Title, Text } = Typography;
 
-const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
+const ChatHeader = ({ selectedConversation, onUpdateConversation, socket }) => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [groupName, setGroupName] = useState(selectedConversation?.name || "");
@@ -39,6 +43,12 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
+
+  // Call states
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [showIncomingCall, setShowIncomingCall] = useState(false);
+  const [currentCall, setCurrentCall] = useState(null);
+  const [incomingCallData, setIncomingCallData] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -58,6 +68,23 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     };
     fetchUsers();
   }, [openAddMember]);
+
+  // Socket listeners for incoming calls
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleIncomingCall = (data) => {
+      console.log("Incoming call:", data);
+      setIncomingCallData(data);
+      setShowIncomingCall(true);
+    };
+
+    socket.on("incoming-call", handleIncomingCall);
+
+    return () => {
+      socket.off("incoming-call", handleIncomingCall);
+    };
+  }, [socket]);
 
   const handleSearchUsers = async () => {
     if (!searchKeyword.trim()) return;
@@ -189,6 +216,109 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
     }
   };
 
+  // Call handlers
+  const handleStartCall = (callType) => {
+    console.log('=== START CALL DEBUG ===');
+    console.log('Call type:', callType);
+    console.log('Socket:', socket);
+    console.log('Selected conversation:', selectedConversation);
+    
+    if (!socket) {
+      alert('Socket chưa kết nối! Vui lòng reload trang.');
+      return;
+    }
+    
+    const targetUser = getTargetUser();
+    console.log('Target user:', targetUser);
+    
+    if (!targetUser) {
+      alert('Không tìm thấy người nhận cuộc gọi!');
+      return;
+    }
+
+    setCurrentCall({
+      targetUser,
+      conversationId: selectedConversation.id,
+      callType,
+      isCaller: true,
+    });
+    
+    console.log('Opening call modal...');
+    setShowCallModal(true);
+  };
+
+  const handleAcceptIncomingCall = (localStream) => {
+    const targetUser = {
+      id: incomingCallData.callerId,
+      name: incomingCallData.callerName,
+      avatar: incomingCallData.callerAvatar,
+    };
+
+    setCurrentCall({
+      targetUser,
+      conversationId: selectedConversation.id,
+      callType: incomingCallData.callType,
+      isCaller: false,
+      callLogId: incomingCallData.callLogId,
+    });
+
+    setShowIncomingCall(false);
+    setShowCallModal(true);
+  };
+
+  const handleDeclineIncomingCall = () => {
+    setShowIncomingCall(false);
+    setIncomingCallData(null);
+  };
+
+  const handleCloseCallModal = () => {
+    setShowCallModal(false);
+    setCurrentCall(null);
+  };
+
+  const getTargetUser = () => {
+    console.log('Getting target user...');
+    console.log('Conversation type:', selectedConversation.type);
+    console.log('Participants:', selectedConversation.participants);
+    
+    if (selectedConversation.type === "PRIVATE") {
+      const currentUserId = parseInt(localStorage.getItem("userId"));
+      console.log('Current user ID:', currentUserId);
+      
+      const targetParticipant = selectedConversation.participants.find(
+        (p) => p.userId !== currentUserId
+      );
+      
+      console.log('Target participant:', targetParticipant);
+      
+      if (targetParticipant) {
+        return {
+          id: targetParticipant.userId,
+          name: `${targetParticipant.firstName} ${targetParticipant.lastName}`,
+          avatar: targetParticipant.avatar,
+        };
+      }
+    } else {
+      // GROUP chat - chọn người đầu tiên khác bạn (tạm thời)
+      const currentUserId = parseInt(localStorage.getItem("userId"));
+      const targetParticipant = selectedConversation.participants.find(
+        (p) => p.userId !== currentUserId
+      );
+      
+      if (targetParticipant) {
+        console.log('Group call - selected first participant:', targetParticipant);
+        return {
+          id: targetParticipant.userId,
+          name: `${targetParticipant.firstName} ${targetParticipant.lastName}`,
+          avatar: targetParticipant.avatar,
+        };
+      }
+    }
+    
+    console.warn('No target user found!');
+    return null;
+  };
+
   return (
     <>
       {/* Header */}
@@ -208,9 +338,28 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
           onClick={() =>
             selectedConversation.type === "GROUP" && setOpenDrawer(true)
           }
+          style={{ margin: 0, flex: 1 }}
         >
           {selectedConversation.name}
         </Title>
+
+        {/* Call Buttons - Hiện với cả PRIVATE và GROUP chat */}
+        <div className="call-buttons">
+          <Button
+            type="text"
+            icon={<PhoneOutlined style={{ fontSize: 20, color: "#1890ff" }} />}
+            onClick={() => handleStartCall("VOICE")}
+            className="call-btn"
+            title="Gọi thoại"
+          />
+          <Button
+            type="text"
+            icon={<VideoCameraOutlined style={{ fontSize: 20, color: "#1890ff" }} />}
+            onClick={() => handleStartCall("VIDEO")}
+            className="call-btn"
+            title="Gọi video"
+          />
+        </div>
       </div>
 
       {/* Drawer sidebar */}
@@ -391,6 +540,60 @@ const ChatHeader = ({ selectedConversation, onUpdateConversation }) => {
           Rời nhóm chat
         </Button>
       </Drawer>
+
+      {/* Call Modal */}
+      {showCallModal && currentCall && (
+        <CallModal
+          visible={showCallModal}
+          onClose={handleCloseCallModal}
+          callType={currentCall.callType}
+          targetUser={currentCall.targetUser}
+          conversationId={currentCall.conversationId}
+          socket={socket}
+          isCaller={currentCall.isCaller}
+          callLogId={currentCall.callLogId}
+        />
+      )}
+
+      {/* Debug - Show modal state */}
+      {showCallModal && !currentCall && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          background: 'red',
+          color: 'white',
+          padding: 20,
+          zIndex: 99999
+        }}>
+          Modal mở nhưng currentCall = null!
+        </div>
+      )}
+
+      {!showCallModal && currentCall && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          background: 'orange',
+          color: 'white',
+          padding: 20,
+          zIndex: 99999
+        }}>
+          currentCall có data nhưng modal không mở!
+        </div>
+      )}
+
+      {/* Incoming Call Modal */}
+      {showIncomingCall && incomingCallData && (
+        <IncomingCallModal
+          visible={showIncomingCall}
+          onAccept={handleAcceptIncomingCall}
+          onDecline={handleDeclineIncomingCall}
+          callData={incomingCallData}
+          socket={socket}
+        />
+      )}
     </>
   );
 };

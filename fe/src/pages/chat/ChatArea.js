@@ -12,7 +12,8 @@ const ChatArea = ({
   onMessageChange,
   onSendMessage,
   messageContainerRef,
-  onUpdateConversation, // 👈 thêm prop này
+  onUpdateConversation,
+  socket, // 👈 thêm socket prop
 }) => {
   if (!selectedConversation) {
     return (
@@ -42,10 +43,11 @@ const ChatArea = ({
         minHeight: 0, // Important for flex scrolling
       }}
     >
-      {/* Truyền callback xuống Header */}
+      {/* Truyền callback và socket xuống Header */}
       <ChatHeader
         selectedConversation={selectedConversation}
         onUpdateConversation={onUpdateConversation}
+        socket={socket}
       />
       <MessageList
         ref={messageContainerRef}

@@ -1,0 +1,306 @@
+/* ==================== Container ==================== */
+.message-input-container {
+  background: #ffffff;
+  border-top: 1px solid #e8e8e8;
+  padding: 16px;
+}
+
+.message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==================== Media Preview ==================== */
+.media-preview-container {
+  padding: 8px 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.media-preview-item {
+  position: relative;
+  display: inline-block;
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.media-preview-item:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+.remove-icon {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 20px;
+  color: #ff4d4f;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.remove-icon:hover {
+  transform: scale(1.2) rotate(90deg);
+  color: #cf1322;
+}
+
+/* ==================== Input Wrapper ==================== */
+.input-wrapper {
+  background: #f5f5f5;
+  border-radius: 24px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.input-wrapper:focus-within {
+  background: #ffffff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+.input-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ==================== Action Buttons ==================== */
+.action-button {
+  color: #1890ff !important;
+  border: none !important;
+  height: 40px !important;
+  width: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.action-button:hover {
+  background: rgba(24, 144, 255, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.action-button:active {
+  transform: scale(0.95);
+}
+
+.emoji-button,
+.image-button {
+  cursor: pointer;
+}
+
+/* ==================== Text Area ==================== */
+.message-textarea {
+  flex: 1 !important;
+  background: transparent !important;
+  resize: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 15px !important;
+  line-height: 20px !important;
+  padding: 10px 8px !important;
+  min-height: 40px !important;
+}
+
+.message-textarea:focus {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.message-textarea::placeholder {
+  color: #bfbfbf;
+  font-size: 15px;
+}
+
+/* Remove Ant Design default textarea styles */
+.message-textarea.ant-input {
+  padding: 10px 8px !important;
+}
+
+.message-textarea.ant-input:focus,
+.message-textarea.ant-input:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ==================== Send Button ==================== */
+.send-button {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  height: 40px !important;
+  width: 40px !important;
+  flex-shrink: 0 !important;
+}
+
+.send-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+  transform: scale(1.1) rotate(15deg) !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4) !important;
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95) rotate(15deg) !important;
+}
+
+.send-button:disabled {
+  background: #f5f5f5 !important;
+  color: #bfbfbf !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* ==================== Emoji Picker Popover ==================== */
+.ant-popover-inner {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ==================== Image Preview Enhancement ==================== */
+.ant-image {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.ant-image:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+/* ==================== Scrollbar ==================== */
+.media-preview-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.media-preview-container::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.media-preview-container::-webkit-scrollbar-thumb {
+  background: #bfbfbf;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.media-preview-container::-webkit-scrollbar-thumb:hover {
+  background: #8c8c8c;
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+  .message-input-container {
+    padding: 12px;
+  }
+
+  .input-wrapper {
+    padding: 6px 10px;
+  }
+
+  .action-button {
+    height: 36px !important;
+    width: 36px !important;
+  }
+
+  .send-button {
+    height: 36px !important;
+    width: 36px !important;
+  }
+
+  .message-textarea {
+    font-size: 14px !important;
+    padding: 8px 6px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .media-preview-item .ant-image {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .remove-icon {
+    font-size: 16px;
+    top: -4px;
+    right: -4px;
+  }
+}
+
+/* ==================== Loading Animation ==================== */
+.media-preview-item.uploading {
+  position: relative;
+  opacity: 0.6;
+}
+
+.media-preview-item.uploading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #1890ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== Focus & Active States ==================== */
+.input-controls:focus-within .action-button {
+  color: #40a9ff !important;
+}
+
+/* ==================== Smooth Transitions ==================== */
+* {
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+/* ==================== Label fix for file input ==================== */
+label[for="file-upload-input"] {
+  display: inline-flex;
+  cursor: pointer;
+  margin: 0;
+}

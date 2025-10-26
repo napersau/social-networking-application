@@ -533,6 +533,7 @@ export default function Chat() {
           onSendMessage={handleSendMessage}
           messageContainerRef={messageContainerRef}
           onUpdateConversation={handleUpdateConversation}
+          socket={socketRef.current}
         />
       </Card>
     </Box>
