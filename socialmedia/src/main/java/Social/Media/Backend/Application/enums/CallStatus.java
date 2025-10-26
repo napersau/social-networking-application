@@ -6,5 +6,7 @@ public enum CallStatus {
     COMPLETED, // Hoàn thành
     MISSED,    // Bị lỡ
     DECLINED,  // Bị từ chối
-    CANCELLED  // Người gọi hủy trước khi có trả lời
+    CANCELLED , // Người gọi hủy trước khi có trả lời
+    RINGING
+
 }

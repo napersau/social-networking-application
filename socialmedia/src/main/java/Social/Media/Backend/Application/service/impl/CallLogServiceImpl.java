@@ -64,7 +64,7 @@ public class CallLogServiceImpl implements CallLogService {
 
     @Override
     public List<CallLogResponse> getCallLogs(CallLogRequest callLogRequest) {
-        List<CallLog> callLogs = callLogRepository.findCallLogsByConversation(callLogRequest.getConversationId());
+        List<CallLog> callLogs = callLogRepository.findCallLogsByConversation_Id(callLogRequest.getConversationId());
         return callLogs.stream().map(callLog -> modelMapper.map(callLog, CallLogResponse.class)).toList();
     }
 

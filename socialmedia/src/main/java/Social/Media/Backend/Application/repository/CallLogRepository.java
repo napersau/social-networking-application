@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface CallLogRepository extends JpaRepository<CallLog, Long> {
-    List<CallLog> findCallLogsByConversation(Long conversationId);
+    List<CallLog> findCallLogsByConversation_Id(Long conversationId);
 }
