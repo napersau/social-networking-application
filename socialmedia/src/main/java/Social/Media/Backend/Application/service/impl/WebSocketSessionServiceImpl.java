@@ -43,4 +43,16 @@ public class WebSocketSessionServiceImpl implements WebSocketSessionService {
         typingStatusService.updateTypingStatus(conversationId, userId, isTyping);
     }
 
+  @Override
+  public String getSessionIdForUser(Long userId) {
+      WebSocketSession session = webSocketSessionRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
+      return session != null ? session.getSocketSessionId() : null;
+  }
+
+    @Override
+    public Long getUserIdBySessionId(String sessionId) {
+        return webSocketSessionRepository.findBySocketSessionId(sessionId)
+                .getUserId();
+    }
+
 }

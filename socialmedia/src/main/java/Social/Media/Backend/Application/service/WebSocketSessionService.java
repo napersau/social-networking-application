@@ -9,4 +9,6 @@ public interface WebSocketSessionService {
     Long deleteSession(String sessionId);
     List<Long> getOnlineUsers();
     void handleTypingStatus(Long conversationId, Long userId, Boolean isTyping);
+    String getSessionIdForUser(Long userId);
+    Long getUserIdBySessionId(String sessionId);
 }

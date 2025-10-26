@@ -12,4 +12,5 @@ public interface WebSocketSessionRepository extends JpaRepository<WebSocketSessi
     List<WebSocketSession> findAllByUserIdIn(List<Long> userIds);
 
     WebSocketSession findBySocketSessionId(String socketSessionId);
+    WebSocketSession findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 }
