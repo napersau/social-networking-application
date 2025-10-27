@@ -87,45 +87,73 @@ public class SocketHandler {
 
     @OnEvent("invite-call")
     public void onInviteCall(SocketIOClient client, Map<String, Object> data) {
-        Long targetUserId = ((Number) data.get("targetUserId")).longValue();
-        String callTypeStr = (String) data.get("callType");
-        CallType callType = CallType.valueOf(callTypeStr); // Chuyển String sang Enum
+        try {
+            log.info("📞 Received invite-call event: {}", data);
 
-        Long callerId = webSocketSessionService.getUserIdBySessionId(client.getSessionId().toString());
-        if (callerId == null) {
-            log.warn("Invite-call: Cannot find user for session {}", client.getSessionId());
-            return;
-        }
+            Long targetUserId = ((Number) data.get("targetUserId")).longValue();
+            String callTypeStr = (String) data.get("callType");
+            CallType callType = CallType.valueOf(callTypeStr);
 
-        // 1. TẠO LOG CUỘC GỌI
-        CallLogRequest createRequest = CallLogRequest.builder()
-                .callerId(callerId)
-                .receiverId(targetUserId)
-                .conversationId(((Number) data.get("conversationId")).longValue()) // Giả sử FE gửi conversationId
-                .callType(callType)
-                .status(CallStatus.RINGING) // Trạng thái ban đầu
-                .startTime(Instant.now())
-                .build();
-
-        var newLog = callLogService.createCallLog(createRequest);
-        Long callLogId = newLog.getId();
-
-        // 2. GỬI LỜI MỜI CHO NGƯỜI NHẬN
-        String targetSessionId = webSocketSessionService.getSessionIdForUser(targetUserId);
-        if (targetSessionId != null) {
-            SocketIOClient targetClient = server.getClient(UUID.fromString(targetSessionId));
-            if (targetClient != null) {
-                // Lấy thông tin người gọi để hiển thị cho người nhận
-                User callerUser = modelMapper.map(userService.getUserById(callerId), User.class); // Bạn cần hàm này
-
-                targetClient.sendEvent("incoming-call", Map.of(
-                        "callLogId", callLogId,
-                        "callerId", callerId,
-                        "callerName", callerUser.getFirstName() + callerUser.getLastName(), // Tên người gọi
-                        "callerAvatar", callerUser.getAvatarUrl(), // Avatar người gọi
-                        "callType", callTypeStr
-                ));
+            Long callerId = webSocketSessionService.getUserIdBySessionId(client.getSessionId().toString());
+            if (callerId == null) {
+                log.warn("Invite-call: Cannot find user for session {}", client.getSessionId());
+                return;
             }
+
+            log.info("📞 Caller ID: {}, Target ID: {}", callerId, targetUserId);
+
+            // 1. TẠO LOG CUỘC GỌI
+            CallLogRequest createRequest = CallLogRequest.builder()
+                    .callerId(callerId)
+                    .receiverId(targetUserId)
+                    .conversationId(((Number) data.get("conversationId")).longValue())
+                    .callType(callType)
+                    .status(CallStatus.RINGING)
+                    .startTime(Instant.now())
+                    .build();
+
+            var newLog = callLogService.createCallLog(createRequest);
+            Long callLogId = newLog.getId();
+
+            log.info("📞 Created call log ID: {}", callLogId);
+
+            // 2. GỬI LỜI MỜI CHO NGƯỜI NHẬN
+            String targetSessionId = webSocketSessionService.getSessionIdForUser(targetUserId);
+            log.info("📞 Target session ID: {}", targetSessionId);
+
+            if (targetSessionId != null) {
+                SocketIOClient targetClient = server.getClient(UUID.fromString(targetSessionId));
+                if (targetClient != null) {
+                    log.info("📞 Target client found, fetching caller info...");
+
+                    // Lấy thông tin người gọi
+                    var callerUserResponse = userService.getUserById(callerId);
+                    if (callerUserResponse == null) {
+                        log.error("❌ Caller user not found: {}", callerId);
+                        return;
+                    }
+
+                    User callerUser = modelMapper.map(callerUserResponse, User.class);
+
+                    Map<String, Object> payload = Map.of(
+                            "callLogId", callLogId,
+                            "callerId", callerId,
+                            "callerName", callerUser.getFirstName() + " " + callerUser.getLastName(),
+                            "callerAvatar", callerUser.getAvatarUrl() != null ? callerUser.getAvatarUrl() : "",
+                            "callType", callTypeStr
+                    );
+
+                    log.info("📤 Sending incoming-call to target: {}", payload);
+                    targetClient.sendEvent("incoming-call", payload);
+                    log.info("✅ incoming-call sent successfully");
+                } else {
+                    log.warn("❌ Target client not found for session: {}", targetSessionId);
+                }
+            } else {
+                log.warn("❌ Target user {} is not online", targetUserId);
+            }
+        } catch (Exception e) {
+            log.error("❌ Error in invite-call handler", e);
         }
     }
 

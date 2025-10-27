@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class TypingStatusScheduler {
     
-    private final TypingStatusService typingStatusService;
-    
-    @Scheduled(fixedRate = 5000) // Run every 5 seconds
-    public void cleanupExpiredTypingStatus() {
-        try {
-            typingStatusService.cleanupExpiredTypingStatus();
-        } catch (Exception e) {
-            log.error("Error in typing status cleanup scheduler", e);
-        }
-    }
+//    private final TypingStatusService typingStatusService;
+//
+//    @Scheduled(fixedRate = 5000) // Run every 5 seconds
+//    public void cleanupExpiredTypingStatus() {
+//        try {
+//            typingStatusService.cleanupExpiredTypingStatus();
+//        } catch (Exception e) {
+//            log.error("Error in typing status cleanup scheduler", e);
+//        }
+//    }
 }
