@@ -79,8 +79,28 @@ const CallModal = ({
   };
 
   const handleCallAccepted = async () => {
+    console.log('📞 Call accepted! Creating offer...');
     setCallStatus('connected');
-    startTimer();
+    
+    // Bây giờ mới tạo offer và gửi
+    try {
+      const offer = await callService.peerConnection.createOffer();
+      await callService.peerConnection.setLocalDescription(offer);
+      
+      console.log('📤 Sending offer via webrtc-signal');
+      socket.emit('webrtc-signal', {
+        targetUserId: targetUser.id,
+        payload: {
+          type: 'offer',
+          offer: offer
+        }
+      });
+      
+      startTimer();
+    } catch (error) {
+      console.error('Error creating offer:', error);
+      message.error('Không thể tạo kết nối');
+    }
   };
 
   const handleWebRTCSignal = async (payload) => {

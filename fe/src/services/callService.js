@@ -86,17 +86,17 @@ class CallService {
         this.peerConnection.addTrack(track, this.localStream);
       });
 
-      // 4. Tạo offer
-      const offer = await this.peerConnection.createOffer();
-      await this.peerConnection.setLocalDescription(offer);
-
-      // 5. Gửi invite call qua socket
+      // 4. GỬI INVITE CALL TRƯỚC (để người nhận thấy UI)
+      console.log('📞 Sending invite-call to:', targetUserId);
       this.socket.emit('invite-call', {
         targetUserId,
         conversationId,
         callType,
       });
 
+      // 5. Tạo offer và gửi sau khi người nhận accept
+      // Offer sẽ được tạo khi nhận event 'call-accepted'
+      
       return this.localStream;
     } catch (error) {
       console.error('Error starting call:', error);
