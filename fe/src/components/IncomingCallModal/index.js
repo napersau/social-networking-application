@@ -36,11 +36,14 @@ const IncomingCallModal = ({
   }, [visible]);
 
   const handleAccept = async () => {
+    console.log('🎯 Accepting call...', callData);
     setRinging(false);
     
     try {
       // Setup call service
       callService.setSocket(socket);
+      
+      console.log('📹 Requesting media for callType:', callData.callType);
       
       const localStream = await callService.acceptCall({
         callLogId: callData.callLogId,
@@ -48,9 +51,22 @@ const IncomingCallModal = ({
         callType: callData.callType,
       });
 
+      console.log('✅ Local stream obtained:', localStream);
       onAccept(localStream);
     } catch (error) {
-      console.error('Error accepting call:', error);
+      console.error('❌ Error accepting call:', error);
+      
+      // Hiển thị lỗi cụ thể
+      if (error.name === 'NotAllowedError') {
+        alert('❌ Bạn cần cấp quyền truy cập Camera/Microphone để thực hiện cuộc gọi!');
+      } else if (error.name === 'NotFoundError') {
+        alert('❌ Không tìm thấy Camera hoặc Microphone!');
+      } else if (error.name === 'NotReadableError') {
+        alert('❌ Camera/Microphone đang được sử dụng bởi ứng dụng khác!\n\nVui lòng:\n- Đóng các tab/ứng dụng khác đang dùng camera\n- Hoặc test trên 2 browser khác nhau\n- Hoặc test trên 2 máy tính khác nhau');
+      } else {
+        alert('❌ Lỗi: ' + error.message);
+      }
+      
       handleDecline();
     }
   };

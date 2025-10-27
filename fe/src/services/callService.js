@@ -208,6 +208,8 @@ class CallService {
    * Lấy local media stream
    */
   async getLocalStream(includeVideo = false) {
+    console.log('🎥 getLocalStream called with includeVideo:', includeVideo);
+    
     const constraints = {
       audio: {
         echoCancellation: true,
@@ -221,12 +223,39 @@ class CallService {
       } : false
     };
 
+    console.log('📋 Media constraints:', constraints);
+
     try {
+      console.log('⏳ Requesting getUserMedia...');
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('✅ Stream obtained:', stream);
+      console.log('📊 Audio tracks:', stream.getAudioTracks().length);
+      console.log('📊 Video tracks:', stream.getVideoTracks().length);
       return stream;
     } catch (error) {
-      console.error('Error getting local stream:', error);
-      throw new Error('Không thể truy cập camera/microphone. Vui lòng cấp quyền.');
+      console.error('❌ Error getting local stream:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      
+      // Nếu video bị lỗi (device in use, not found, etc), fallback về audio-only
+      if (includeVideo && error.name !== 'NotAllowedError') {
+        console.warn('⚠️ Video failed, falling back to audio-only...');
+        try {
+          const audioOnlyStream = await navigator.mediaDevices.getUserMedia({
+            audio: constraints.audio,
+            video: false
+          });
+          console.log('✅ Fallback to audio-only successful');
+          alert('⚠️ Không thể truy cập camera. Cuộc gọi sẽ chỉ có âm thanh.');
+          return audioOnlyStream;
+        } catch (audioError) {
+          console.error('❌ Audio-only fallback also failed:', audioError);
+          throw audioError;
+        }
+      }
+      
+      // Throw original error nếu không thể fallback
+      throw error;
     }
   }
 
